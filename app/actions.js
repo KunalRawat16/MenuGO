@@ -7,11 +7,43 @@ import { cookies } from "next/headers";
 import fs from "fs/promises";
 import path from "path";
 
+import { v2 as cloudinary } from "cloudinary";
+
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
 export async function uploadImageAction(formData) {
-  // CLOUDINARY INTEGRATION:
-  // Once you add Cloudinary keys to .env, I will update this to send to the cloud.
-  // For now, we return an error to prevent local filesystem issues in production.
-  return { error: "Cloud storage not configured. Please use Image URLs for now." };
+  try {
+    const file = formData.get("file");
+    if (!file) return { error: "No file provided" };
+
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+
+    // Upload to Cloudinary using a promise to handle the stream
+    const result = await new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          folder: "menugo",
+          resource_type: "auto",
+        },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      );
+      uploadStream.end(buffer);
+    });
+
+    return { success: true, url: result.secure_url };
+  } catch (error) {
+    console.error("Cloudinary upload error:", error);
+    return { error: "Failed to upload to cloud storage. Check your Cloudinary keys." };
+  }
 }
 
 export async function saveMenuItemAction(slug, item) {
