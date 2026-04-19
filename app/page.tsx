@@ -11,7 +11,7 @@ const slides = [
     id: 1,
     title: "Scan Menu",
     description: "Scan the QR code on your table",
-    image: "/uploads/slider1.jpeg",
+    image: "/slider1.jpeg",
     icon: <ScanLine size={24} />,
     bgColor: "bg-white",
   },
@@ -19,7 +19,7 @@ const slides = [
     id: 2,
     title: "View Menu",
     description: "Browse the full menu anytime",
-    image: "/uploads/slider2.jpeg",
+    image: "/slider2.jpeg",
     icon: <Utensils size={24} />,
     bgColor: "bg-white",
   },
@@ -27,7 +27,7 @@ const slides = [
     id: 3,
     title: "Order Menu",
     description: "Place your order in seconds",
-    image: "/uploads/slider3.jpeg",
+    image: "/slider3.jpeg",
     icon: <ShoppingBag size={24} />,
     bgColor: "bg-white",
   },
@@ -37,8 +37,8 @@ export default function OnboardingPage() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [mounted, setMounted] = useState(false);
   const router = useRouter();
-  const touchStart = useRef(null);
-  const touchEnd = useRef(null);
+  const touchStart = useRef<number | null>(null);
+  const touchEnd = useRef<number | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -57,12 +57,12 @@ export default function OnboardingPage() {
   };
 
   // Swipe logic for real "Slider" feel
-  const onTouchStart = (e) => {
+  const onTouchStart = (e: React.TouchEvent) => {
     touchEnd.current = null;
     touchStart.current = e.targetTouches[0].clientX;
   };
 
-  const onTouchMove = (e) => {
+  const onTouchMove = (e: React.TouchEvent) => {
     touchEnd.current = e.targetTouches[0].clientX;
   };
 

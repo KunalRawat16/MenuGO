@@ -8,27 +8,10 @@ import fs from "fs/promises";
 import path from "path";
 
 export async function uploadImageAction(formData) {
-  try {
-    const file = formData.get("file");
-    if (!file) return { error: "No file provided" };
-
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const ext = file.name.split(".").pop() || "png";
-    const filename = `img-${uniqueSuffix}.${ext}`;
-
-    const uploadDir = path.join(process.cwd(), "public", "uploads");
-    const filepath = path.join(uploadDir, filename);
-
-    await fs.writeFile(filepath, buffer);
-
-    return { success: true, url: `/uploads/${filename}` };
-  } catch (error) {
-    console.error("Upload error:", error);
-    return { error: "Failed to upload image" };
-  }
+  // CLOUDINARY INTEGRATION:
+  // Once you add Cloudinary keys to .env, I will update this to send to the cloud.
+  // For now, we return an error to prevent local filesystem issues in production.
+  return { error: "Cloud storage not configured. Please use Image URLs for now." };
 }
 
 export async function saveMenuItemAction(slug, item) {
