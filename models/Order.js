@@ -48,4 +48,9 @@ const OrderSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
+// Add indexes for performance
+OrderSchema.index({ restaurantId: 1, status: 1 });
+OrderSchema.index({ restaurantSlug: 1, status: 1 });
+OrderSchema.index({ createdAt: -1 });
+
 export default mongoose.models.Order || mongoose.model('Order', OrderSchema);

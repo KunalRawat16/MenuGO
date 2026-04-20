@@ -25,12 +25,24 @@ export async function GET(req) {
     const { searchParams } = new URL(req.url);
     const restaurantId = searchParams.get("restaurantId");
     const slug = searchParams.get("slug");
+    const status = searchParams.get("status");
 
     let query = {};
     if (restaurantId) query.restaurantId = restaurantId;
     if (slug) query.restaurantSlug = slug;
+    
+    // Default to excluding Completed/Cancelled if status not specified for admin view
+    if (status) {
+      query.status = status;
+    } else if (restaurantId) {
+      // If we're fetching for admin but no status specified, usually we want "live" orders
+      query.status = { $nin: ['Completed', 'Cancelled'] };
+    }
 
-    const orders = await Order.find(query).sort({ createdAt: -1 });
+    const orders = await Order.find(query)
+      .sort({ createdAt: -1 })
+      .limit(50) // Basic limit for safety
+      .lean();
 
     return NextResponse.json({ success: true, orders });
   } catch (error) {

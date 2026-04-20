@@ -30,12 +30,11 @@ export default function OrdersDashboard({ restaurantId, slug }) {
 
   const fetchOrders = async () => {
     try {
+      // The API now defaults to live orders if no status is specified
       const res = await fetch(`/api/orders?restaurantId=${restaurantId}`);
       const data = await res.json();
       if (data.success) {
-        // Only show live orders (Pending, Preparing, Served)
-        const liveOrders = data.orders.filter(o => !['Completed', 'Cancelled'].includes(o.status));
-        setOrders(liveOrders);
+        setOrders(data.orders);
       }
     } catch (error) {
       console.error("Error fetching orders:", error);
@@ -46,7 +45,7 @@ export default function OrdersDashboard({ restaurantId, slug }) {
 
   useEffect(() => {
     fetchOrders();
-    const interval = setInterval(fetchOrders, 10000); // Poll every 10 seconds
+    const interval = setInterval(fetchOrders, 15000); // Increased to 15 seconds to reduce server load
     return () => clearInterval(interval);
   }, [restaurantId]);
 

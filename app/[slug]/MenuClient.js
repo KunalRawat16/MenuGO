@@ -57,28 +57,26 @@ export default function MenuClient({ restaurant }) {
 
     const checkStatus = async () => {
       try {
+        // Fetch only this specific order's status if possible (future API optimization)
+        // For now, keep it simple but less frequent
         const res = await fetch(`/api/orders`);
         const data = await res.json();
         if (data.success) {
           const myOrder = data.orders.find(o => o._id === activeOrder._id);
           if (myOrder) {
-            setActiveOrder(myOrder);
-            // If order status just changed to Completed, start the disappearance timer
-            if (myOrder.status === 'Completed' && activeOrder.status !== 'Completed') {
-              setTimeout(() => {
-                setActiveOrder(null);
-                localStorage.removeItem(`activeOrder_${restaurant.slug}`);
-              }, 5000);
+            // Only update if status changed
+            if (myOrder.status !== activeOrder.status) {
+              setActiveOrder(myOrder);
+              // If order status just changed to Completed, start the disappearance timer
+              if (myOrder.status === 'Completed') {
+                setTimeout(() => {
+                  setActiveOrder(null);
+                  localStorage.removeItem(`activeOrder_${restaurant.slug}`);
+                }, 5000);
+              }
             }
-          } else if (activeOrder.status === 'Served' || activeOrder.status === 'Completed') {
-            // Order was deleted after being served or completed
-            setActiveOrder({ ...activeOrder, status: 'Completed' });
-            setTimeout(() => {
-              setActiveOrder(null);
-              localStorage.removeItem(`activeOrder_${restaurant.slug}`);
-            }, 5000);
           } else {
-            // Order not found (cancelled or error)
+            // Order not found (cancelled or deleted)
             setActiveOrder(null);
             localStorage.removeItem(`activeOrder_${restaurant.slug}`);
           }
@@ -88,7 +86,7 @@ export default function MenuClient({ restaurant }) {
       }
     };
 
-    const interval = setInterval(checkStatus, 5000);
+    const interval = setInterval(checkStatus, 8000); // Relaxed polling for customers
     checkStatus(); // Initial check
     return () => clearInterval(interval);
   }, [activeOrder?._id, activeOrder?.status, restaurant.slug]);
@@ -170,16 +168,15 @@ export default function MenuClient({ restaurant }) {
     }
   }, [cart, mounted, restaurant.slug]);
 
-  if (!mounted) {
-    return <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }} suppressHydrationWarning />;
-  }
+  // Note: We no longer return null here to allow SSR of the menu shell.
+  // We use the 'mounted' state only for things that depend on localStorage.
 
   return (
     <Box sx={{ pb: activeOrder ? 20 : 12 }} suppressHydrationWarning>
       <Header restaurant={restaurant} />
       
       {/* Premium Order Status Bar (Option 3: Premium Floating) */}
-      {activeOrder && (
+      {mounted && activeOrder && (
         <Box sx={{ 
           position: 'fixed', 
           bottom: cartCount > 0 ? 110 : 30, 
@@ -453,7 +450,7 @@ export default function MenuClient({ restaurant }) {
       </Container>
 
       {/* Floating View Cart Bar (Zomato Style) */}
-      {cartCount > 0 && (
+      {mounted && cartCount > 0 && (
         <Box 
           onClick={() => setIsCartOpen(true)}
           sx={{
