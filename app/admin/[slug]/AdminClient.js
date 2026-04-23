@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Plus, Edit2, Trash2, QrCode, X, Check, Eye, Settings, CreditCard, LayoutList, Info, Menu, ShoppingBag, MapPin, Star, Timer, IndianRupee, Store } from "lucide-react";
 import { QRCodeCanvas } from "qrcode.react";
-import { saveMenuItemAction, deleteMenuItemAction, updateRestaurantInfoAction, uploadImageAction, logoutAction, upgradeSubscriptionAction, updateRestaurantCategoriesAction } from "@/app/actions";
+import { saveMenuItemAction, deleteMenuItemAction, updateRestaurantInfoAction, uploadImageAction, logoutAction, updateRestaurantCategoriesAction } from "@/app/actions";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -18,9 +18,9 @@ export default function AdminClient({ restaurant }) {
   const [isUpgrading, setIsUpgrading] = useState(false);
 
   const subscription = restaurant.subscription || { plan: 'free' };
-  const isFreePlan = subscription.plan === 'free';
+  const isRestricted = subscription.plan === 'free';
   const FREE_ITEM_LIMIT = 10;
-  const canAddItem = !isFreePlan || items.length < FREE_ITEM_LIMIT;
+  const canAddItem = !isRestricted || items.length < FREE_ITEM_LIMIT;
   const [editingItem, setEditingItem] = useState(null);
   const [restaurantInfo, setRestaurantInfo] = useState({
     name: restaurant.name,
@@ -83,7 +83,7 @@ export default function AdminClient({ restaurant }) {
   const handleSaveItem = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     let imageUrl = editingItem.image;
     if (selectedImageFile) {
       const formData = new FormData();
@@ -97,7 +97,7 @@ export default function AdminClient({ restaurant }) {
         return;
       }
     }
-    
+
     // Ensure price is a number
     const itemToSave = {
       ...editingItem,
@@ -123,7 +123,7 @@ export default function AdminClient({ restaurant }) {
 
   const handleDeleteItem = async (id) => {
     if (!confirm("Are you sure you want to delete this item?")) return;
-    
+
     const res = await deleteMenuItemAction(restaurant.slug, id);
     if (res.success) {
       setItems(items.filter(i => i.id !== id));
@@ -135,7 +135,7 @@ export default function AdminClient({ restaurant }) {
   const handleSaveSettings = async (e) => {
     e.preventDefault();
     setIsSavingSettings(true);
-    
+
     let logoUrl = restaurantInfo.logo;
     if (selectedLogoFile) {
       const formData = new FormData();
@@ -215,20 +215,6 @@ export default function AdminClient({ restaurant }) {
     router.push("/login");
   };
 
-  const handleUpgrade = async () => {
-    setIsUpgrading(true);
-    // Simulating Razorpay delay
-    setTimeout(async () => {
-      const res = await upgradeSubscriptionAction(restaurant.slug);
-      if (res.success) {
-        alert("Payment successful! You are now on the Paid plan.");
-        window.location.reload();
-      } else {
-        alert("Payment failed.");
-        setIsUpgrading(false);
-      }
-    }, 1500);
-  };
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 font-sans selection:bg-orange-500/30 pb-20" suppressHydrationWarning>
@@ -259,7 +245,7 @@ export default function AdminClient({ restaurant }) {
       </nav>
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        
+
         {/* Subscription Banner */}
         <div className="mb-8 p-5 rounded-2xl bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-sm">
           <div>
@@ -267,18 +253,18 @@ export default function AdminClient({ restaurant }) {
               <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded text-xs font-bold uppercase tracking-wider">{subscription.plan} Plan</span>
             </div>
             <p className="text-sm font-medium text-indigo-900">
-              {isFreePlan ? `You are on the free plan. Add up to ${FREE_ITEM_LIMIT} items.` : (
+              {isRestricted ? `Your current plan has a limit of ${FREE_ITEM_LIMIT} items.` : (
                 mounted ? `Premium features active until: ${new Date(subscription.validUntil).toLocaleDateString()}` : "Loading subscription details..."
               )}
             </p>
           </div>
           {subscription.plan !== 'paid' && (
-            <button 
-              onClick={() => setShowUpgradeModal(true)}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-md shadow-indigo-200 flex items-center gap-2 shrink-0"
-            >
-              <CreditCard size={18} /> Upgrade to Premium
-            </button>
+            <div className="flex flex-col items-end text-right">
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Membership Management</span>
+              <p className="text-xs font-semibold text-indigo-600 bg-white border border-indigo-100 px-3 py-1.5 rounded-lg shadow-sm">
+                Contact Platform Admin to upgrade
+              </p>
+            </div>
           )}
         </div>
 
@@ -289,13 +275,13 @@ export default function AdminClient({ restaurant }) {
             <p className="text-gray-500 font-medium mt-1">Manage your menu, settings, and QR codes.</p>
           </div>
           <div className="flex gap-3 w-full md:w-auto">
-            <button 
+            <button
               onClick={downloadQR}
               className="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-white border border-gray-200 hover:border-gray-300 hover:bg-gray-50 rounded-xl text-sm font-bold text-gray-700 transition-all shadow-sm"
             >
               <QrCode size={18} /> Download QR
             </button>
-            <button 
+            <button
               onClick={() => handleOpenModal()}
               className="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-orange-500 hover:bg-orange-600 rounded-xl text-sm font-bold text-white transition-all shadow-lg shadow-orange-200"
             >
@@ -311,19 +297,19 @@ export default function AdminClient({ restaurant }) {
 
         {/* Tabs */}
         <div className="flex gap-2 mb-6 border-b border-gray-200 overflow-x-auto hide-scrollbar">
-          <button 
+          <button
             onClick={() => setActiveTab("orders")}
             className={`flex items-center gap-2 px-5 py-3 border-b-2 font-bold text-sm whitespace-nowrap transition-colors ${activeTab === "orders" ? "border-orange-500 text-orange-600" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"}`}
           >
             <ShoppingBag size={18} /> Live Orders
           </button>
-          <button 
+          <button
             onClick={() => setActiveTab("menu")}
             className={`flex items-center gap-2 px-5 py-3 border-b-2 font-bold text-sm whitespace-nowrap transition-colors ${activeTab === "menu" ? "border-orange-500 text-orange-600" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"}`}
           >
             <LayoutList size={18} /> Menu Items
           </button>
-          <button 
+          <button
             onClick={() => setActiveTab("info")}
             className={`flex items-center gap-2 px-5 py-3 border-b-2 font-bold text-sm whitespace-nowrap transition-colors ${activeTab === "info" ? "border-orange-500 text-orange-600" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"}`}
           >
@@ -346,7 +332,7 @@ export default function AdminClient({ restaurant }) {
               <div className="col-span-2">Status</div>
               <div className="col-span-1 text-right">Actions</div>
             </div>
-            
+
             <div className="divide-y divide-gray-100">
               {items.map(item => (
                 <div key={item.id} className="p-4 hover:bg-gray-50/80 transition-colors flex flex-col md:grid md:grid-cols-12 md:items-center gap-4">
@@ -363,7 +349,7 @@ export default function AdminClient({ restaurant }) {
                         </div>
                       </div>
                       {item.isPopular && <span className="text-[10px] bg-gradient-to-r from-yellow-400 to-yellow-500 text-white px-1.5 py-0.5 rounded flex w-max font-bold mt-1 shadow-sm">POPULAR</span>}
-                      
+
                       {/* Mobile only elements */}
                       <div className="md:hidden mt-2 text-sm flex items-center gap-2">
                         <span className="text-gray-500 font-medium">{item.category}</span>
@@ -372,10 +358,10 @@ export default function AdminClient({ restaurant }) {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="hidden md:block md:col-span-2 text-sm font-medium text-gray-600">{item.category}</div>
                   <div className="hidden md:block md:col-span-2 text-sm font-extrabold text-gray-900">₹{item.price}</div>
-                  
+
                   <div className="md:col-span-2 flex justify-between items-center md:block pt-2 md:pt-0">
                     <span className="md:hidden text-sm text-gray-500 font-medium">Availability:</span>
                     {item.isAvailable ? (
@@ -388,7 +374,7 @@ export default function AdminClient({ restaurant }) {
                       </span>
                     )}
                   </div>
-                  
+
                   {/* Actions */}
                   <div className="md:col-span-1 flex justify-end gap-2 mt-2 md:mt-0 pt-3 md:pt-0 border-t border-gray-100 md:border-0">
                     <button onClick={() => handleOpenModal(item)} className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors flex-1 md:flex-none flex justify-center items-center">
@@ -419,7 +405,7 @@ export default function AdminClient({ restaurant }) {
               <h3 className="text-xl font-extrabold text-gray-900">Restaurant Settings</h3>
               <p className="text-sm text-gray-500 font-medium mt-1">Update your public profile and branding details.</p>
             </div>
-            
+
             <div className="p-8">
               <form onSubmit={handleSaveSettings} className="space-y-8 max-w-4xl mx-auto">
                 {/* Basic Details Section */}
@@ -429,11 +415,11 @@ export default function AdminClient({ restaurant }) {
                       <label className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-2">
                         <Store size={16} className="text-orange-500" /> Restaurant Name
                       </label>
-                      <input 
+                      <input
                         required
-                        type="text" 
-                        value={restaurantInfo.name} 
-                        onChange={e => setRestaurantInfo({...restaurantInfo, name: e.target.value})}
+                        type="text"
+                        value={restaurantInfo.name}
+                        onChange={e => setRestaurantInfo({ ...restaurantInfo, name: e.target.value })}
                         className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all shadow-sm bg-white hover:border-gray-400"
                       />
                     </div>
@@ -442,11 +428,11 @@ export default function AdminClient({ restaurant }) {
                       <label className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-2">
                         <MapPin size={16} className="text-orange-500" /> Location / Address
                       </label>
-                      <textarea 
+                      <textarea
                         required
                         rows={1}
-                        value={restaurantInfo.address} 
-                        onChange={e => setRestaurantInfo({...restaurantInfo, address: e.target.value})}
+                        value={restaurantInfo.address}
+                        onChange={e => setRestaurantInfo({ ...restaurantInfo, address: e.target.value })}
                         className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all shadow-sm bg-white hover:border-gray-400 resize-none"
                         placeholder="e.g. 123 Street Name, City"
                       />
@@ -458,14 +444,14 @@ export default function AdminClient({ restaurant }) {
                       <label className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-2">
                         <Star size={16} className="text-yellow-500 fill-yellow-500" /> Rating (1-5)
                       </label>
-                      <input 
+                      <input
                         required
-                        type="number" 
+                        type="number"
                         step="0.1"
                         min="1"
                         max="5"
-                        value={restaurantInfo.rating} 
-                        onChange={e => setRestaurantInfo({...restaurantInfo, rating: e.target.value})}
+                        value={restaurantInfo.rating}
+                        onChange={e => setRestaurantInfo({ ...restaurantInfo, rating: e.target.value })}
                         className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all shadow-sm bg-white hover:border-gray-400"
                         placeholder="e.g. 4.5"
                       />
@@ -474,11 +460,11 @@ export default function AdminClient({ restaurant }) {
                       <label className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-2">
                         <Timer size={16} className="text-blue-500" /> Prep Time
                       </label>
-                      <input 
+                      <input
                         required
-                        type="text" 
-                        value={restaurantInfo.avgTime} 
-                        onChange={e => setRestaurantInfo({...restaurantInfo, avgTime: e.target.value})}
+                        type="text"
+                        value={restaurantInfo.avgTime}
+                        onChange={e => setRestaurantInfo({ ...restaurantInfo, avgTime: e.target.value })}
                         className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all shadow-sm bg-white hover:border-gray-400"
                         placeholder="e.g. 20-30 mins"
                       />
@@ -487,18 +473,18 @@ export default function AdminClient({ restaurant }) {
                       <label className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-2">
                         <IndianRupee size={16} className="text-green-600" /> Cost for One
                       </label>
-                      <input 
+                      <input
                         required
-                        type="number" 
-                        value={restaurantInfo.costForOne} 
-                        onChange={e => setRestaurantInfo({...restaurantInfo, costForOne: e.target.value})}
+                        type="number"
+                        value={restaurantInfo.costForOne}
+                        onChange={e => setRestaurantInfo({ ...restaurantInfo, costForOne: e.target.value })}
                         className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all shadow-sm bg-white hover:border-gray-400"
                         placeholder="e.g. 250"
                       />
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Branding Section */}
                 <div className="p-6 bg-gray-50/80 rounded-3xl border border-gray-200 space-y-6">
                   <div className="flex items-center gap-3 border-b border-gray-200 pb-4">
@@ -508,73 +494,36 @@ export default function AdminClient({ restaurant }) {
                       <p className="text-xs text-gray-500 font-medium">Customize your restaurant's digital appearance.</p>
                     </div>
                   </div>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div>
                       <label className="block text-sm font-bold text-gray-700 mb-3 flex justify-between">
-                        Logo URL {isFreePlan && <span className="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">Premium</span>}
+                        Banner Image {isRestricted && <span className="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">Premium</span>}
                       </label>
-                      <div className={`space-y-3 ${isFreePlan ? 'opacity-60 pointer-events-none' : ''}`}>
-                        <input 
-                          type="text" 
-                          value={restaurantInfo.logo} 
-                          onChange={e => setRestaurantInfo({...restaurantInfo, logo: e.target.value})}
+                      <div className={`space-y-3 ${isRestricted ? 'opacity-60 pointer-events-none' : ''}`}>
+                        <input
+                          type="text"
+                          value={restaurantInfo.banner}
+                          onChange={e => setRestaurantInfo({ ...restaurantInfo, banner: e.target.value })}
                           className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-orange-500 outline-none bg-white shadow-sm transition-all hover:border-gray-400"
-                          disabled={isFreePlan}
+                          disabled={isRestricted}
                           placeholder="Image URL..."
                         />
                         <div className="relative group">
-                          <input 
+                          <input
                             type="file"
                             accept="image/*"
                             onChange={e => {
-                              if(e.target.files && e.target.files[0]) {
-                                setSelectedLogoFile(e.target.files[0]);
-                                setRestaurantInfo({...restaurantInfo, logo: ""});
-                              }
-                            }}
-                            className="hidden"
-                            id="logo-upload"
-                            disabled={isFreePlan}
-                          />
-                          <label 
-                            htmlFor="logo-upload"
-                            className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-gray-300 rounded-xl text-sm font-bold text-gray-500 cursor-pointer hover:border-orange-400 hover:text-orange-600 hover:bg-orange-50/30 transition-all bg-white"
-                          >
-                            Upload New Logo
-                          </label>
-                        </div>
-                      </div>
-                    </div>
-    
-                    <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-3 flex justify-between">
-                        Banner Image {isFreePlan && <span className="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">Premium</span>}
-                      </label>
-                      <div className={`space-y-3 ${isFreePlan ? 'opacity-60 pointer-events-none' : ''}`}>
-                        <input 
-                          type="text" 
-                          value={restaurantInfo.banner} 
-                          onChange={e => setRestaurantInfo({...restaurantInfo, banner: e.target.value})}
-                          className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-orange-500 outline-none bg-white shadow-sm transition-all hover:border-gray-400"
-                          disabled={isFreePlan}
-                          placeholder="Image URL..."
-                        />
-                        <div className="relative group">
-                          <input 
-                            type="file"
-                            accept="image/*"
-                            onChange={e => {
-                              if(e.target.files && e.target.files[0]) {
+                              if (e.target.files && e.target.files[0]) {
                                 setSelectedBannerFile(e.target.files[0]);
-                                setRestaurantInfo({...restaurantInfo, banner: ""});
+                                setRestaurantInfo({ ...restaurantInfo, banner: "" });
                               }
                             }}
                             className="hidden"
                             id="banner-upload"
-                            disabled={isFreePlan}
+                            disabled={isRestricted}
                           />
-                          <label 
+                          <label
                             htmlFor="banner-upload"
                             className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-gray-300 rounded-xl text-sm font-bold text-gray-500 cursor-pointer hover:border-orange-400 hover:text-orange-600 hover:bg-orange-50/30 transition-all bg-white"
                           >
@@ -587,9 +536,9 @@ export default function AdminClient({ restaurant }) {
                 </div>
 
                 <div className="pt-6 border-t border-gray-100 flex flex-col sm:flex-row justify-end">
-                  <button 
-                    type="submit" 
-                    disabled={isSavingSettings} 
+                  <button
+                    type="submit"
+                    disabled={isSavingSettings}
                     className="w-full sm:w-auto px-12 py-4 text-sm font-black text-white bg-gray-900 hover:bg-black rounded-2xl transition-all shadow-2xl shadow-gray-200 active:scale-95 disabled:opacity-50"
                   >
                     {isSavingSettings ? "Saving Changes..." : "Update Restaurant Info"}
@@ -607,18 +556,18 @@ export default function AdminClient({ restaurant }) {
                   <p className="text-sm text-gray-500 font-medium mt-0.5">Manage and organize your menu grouping.</p>
                 </div>
               </div>
-              
+
               <div className="max-w-4xl space-y-8 mx-auto">
                 <div className="flex flex-col sm:flex-row gap-4">
-                  <input 
-                    type="text" 
-                    value={newCategory} 
+                  <input
+                    type="text"
+                    value={newCategory}
                     onChange={e => setNewCategory(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && handleAddCategory()}
                     placeholder="e.g. Signature Starters"
                     className="w-full sm:flex-1 border border-gray-300 rounded-xl px-5 py-4 text-sm text-gray-900 focus:ring-2 focus:ring-orange-500 outline-none transition-all shadow-sm bg-white hover:border-gray-400"
                   />
-                  <button 
+                  <button
                     onClick={handleAddCategory}
                     className="w-full sm:w-auto px-10 py-4 bg-orange-500 hover:bg-orange-600 text-white font-black rounded-xl transition-all shadow-xl shadow-orange-100 active:scale-95 flex items-center justify-center gap-2"
                   >
@@ -628,12 +577,12 @@ export default function AdminClient({ restaurant }) {
 
                 <div className="flex flex-wrap gap-3">
                   {categories.map((cat, index) => (
-                    <div 
+                    <div
                       key={index}
                       className="flex items-center gap-3 px-5 py-2.5 bg-white border border-gray-200 rounded-2xl shadow-sm group hover:border-orange-200 transition-all hover:shadow-lg hover:-translate-y-0.5"
                     >
                       <span className="text-sm font-black text-gray-800 tracking-tight">{cat}</span>
-                      <button 
+                      <button
                         onClick={() => handleDeleteCategory(cat)}
                         className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
                       >
@@ -644,7 +593,7 @@ export default function AdminClient({ restaurant }) {
                 </div>
 
                 <div className="pt-6 flex flex-col sm:flex-row justify-end">
-                  <button 
+                  <button
                     onClick={handleSaveCategories}
                     disabled={isSavingCategories}
                     className="w-full sm:w-auto px-12 py-4 text-sm font-black text-white bg-green-600 hover:bg-green-700 rounded-2xl transition-all shadow-2xl shadow-green-100 disabled:opacity-50 flex items-center justify-center gap-2 active:scale-95"
@@ -664,7 +613,7 @@ export default function AdminClient({ restaurant }) {
 
       {/* Floating Add Button for Mobile */}
       {activeTab === "menu" && (
-        <button 
+        <button
           onClick={() => handleOpenModal()}
           className="md:hidden fixed bottom-6 right-6 w-14 h-14 bg-orange-500 text-white rounded-full shadow-xl flex items-center justify-center hover:bg-orange-600 transition-transform hover:scale-105 active:scale-95 z-40"
         >
@@ -684,37 +633,37 @@ export default function AdminClient({ restaurant }) {
                 <X size={18} />
               </button>
             </div>
-            
+
             <form onSubmit={handleSaveItem} className="p-6 overflow-y-auto space-y-5">
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-1.5">Name</label>
-                <input 
+                <input
                   required
-                  type="text" 
-                  value={editingItem.name} 
-                  onChange={e => setEditingItem({...editingItem, name: e.target.value})}
+                  type="text"
+                  value={editingItem.name}
+                  onChange={e => setEditingItem({ ...editingItem, name: e.target.value })}
                   className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-shadow"
                   placeholder="e.g. Butter Chicken"
                 />
               </div>
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-1.5">Price (₹)</label>
-                  <input 
+                  <input
                     required
-                    type="number" 
-                    value={editingItem.price} 
-                    onChange={e => setEditingItem({...editingItem, price: e.target.value})}
+                    type="number"
+                    value={editingItem.price}
+                    onChange={e => setEditingItem({ ...editingItem, price: e.target.value })}
                     className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-shadow"
                     placeholder="e.g. 250"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-1.5">Category</label>
-                  <select 
-                    value={editingItem.category} 
-                    onChange={e => setEditingItem({...editingItem, category: e.target.value})}
+                  <select
+                    value={editingItem.category}
+                    onChange={e => setEditingItem({ ...editingItem, category: e.target.value })}
                     className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-shadow bg-white"
                   >
                     {categories.map(c => (
@@ -727,20 +676,20 @@ export default function AdminClient({ restaurant }) {
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-1.5">Image URL or Upload</label>
                 <div className="flex flex-col gap-3">
-                  <input 
-                    type="url" 
-                    value={editingItem.image} 
-                    onChange={e => setEditingItem({...editingItem, image: e.target.value})}
+                  <input
+                    type="url"
+                    value={editingItem.image}
+                    onChange={e => setEditingItem({ ...editingItem, image: e.target.value })}
                     className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-shadow"
                     placeholder="https://..."
                   />
-                  <input 
+                  <input
                     type="file"
                     accept="image/*"
                     onChange={e => {
-                      if(e.target.files && e.target.files[0]) {
+                      if (e.target.files && e.target.files[0]) {
                         setSelectedImageFile(e.target.files[0]);
-                        setEditingItem({...editingItem, image: ""});
+                        setEditingItem({ ...editingItem, image: "" });
                       }
                     }}
                     className="w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 cursor-pointer"
@@ -750,9 +699,9 @@ export default function AdminClient({ restaurant }) {
 
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-1.5">Description</label>
-                <textarea 
-                  value={editingItem.description} 
-                  onChange={e => setEditingItem({...editingItem, description: e.target.value})}
+                <textarea
+                  value={editingItem.description}
+                  onChange={e => setEditingItem({ ...editingItem, description: e.target.value })}
                   className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none resize-none h-24 transition-shadow"
                   placeholder="Short description of the item..."
                 />
@@ -761,10 +710,10 @@ export default function AdminClient({ restaurant }) {
               <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 space-y-4">
                 <label className="flex items-center gap-3 cursor-pointer group">
                   <div className="relative flex items-center justify-center">
-                    <input 
-                      type="checkbox" 
-                      checked={editingItem.isVeg} 
-                      onChange={e => setEditingItem({...editingItem, isVeg: e.target.checked})}
+                    <input
+                      type="checkbox"
+                      checked={editingItem.isVeg}
+                      onChange={e => setEditingItem({ ...editingItem, isVeg: e.target.checked })}
                       className="peer appearance-none w-5 h-5 border-2 border-gray-400 rounded-md checked:bg-green-500 checked:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/30 transition-all cursor-pointer"
                     />
                     <Check size={14} strokeWidth={4} className="absolute pointer-events-none opacity-0 peer-checked:opacity-100 text-white transform scale-50 peer-checked:scale-100 transition-all" />
@@ -774,10 +723,10 @@ export default function AdminClient({ restaurant }) {
 
                 <label className="flex items-center gap-3 cursor-pointer group">
                   <div className="relative flex items-center justify-center">
-                    <input 
-                      type="checkbox" 
-                      checked={editingItem.isAvailable} 
-                      onChange={e => setEditingItem({...editingItem, isAvailable: e.target.checked})}
+                    <input
+                      type="checkbox"
+                      checked={editingItem.isAvailable}
+                      onChange={e => setEditingItem({ ...editingItem, isAvailable: e.target.checked })}
                       className="peer appearance-none w-5 h-5 border-2 border-gray-400 rounded-md checked:bg-blue-500 checked:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all cursor-pointer"
                     />
                     <Check size={14} strokeWidth={4} className="absolute pointer-events-none opacity-0 peer-checked:opacity-100 text-white transform scale-50 peer-checked:scale-100 transition-all" />
@@ -785,19 +734,19 @@ export default function AdminClient({ restaurant }) {
                   <span className="text-sm font-bold text-gray-700 group-hover:text-gray-900">Available (In Stock)</span>
                 </label>
 
-                <label className={`flex items-center gap-3 group ${isFreePlan ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
+                <label className={`flex items-center gap-3 group ${isRestricted ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
                   <div className="relative flex items-center justify-center">
-                    <input 
-                      type="checkbox" 
-                      checked={editingItem.isPopular} 
-                      onChange={e => setEditingItem({...editingItem, isPopular: e.target.checked})}
-                      disabled={isFreePlan}
+                    <input
+                      type="checkbox"
+                      checked={editingItem.isPopular}
+                      onChange={e => setEditingItem({ ...editingItem, isPopular: e.target.checked })}
+                      disabled={isRestricted}
                       className="peer appearance-none w-5 h-5 border-2 border-gray-400 rounded-md checked:bg-yellow-500 checked:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/30 transition-all cursor-pointer"
                     />
                     <Check size={14} strokeWidth={4} className="absolute pointer-events-none opacity-0 peer-checked:opacity-100 text-white transform scale-50 peer-checked:scale-100 transition-all" />
                   </div>
                   <span className="text-sm font-bold text-gray-700 group-hover:text-gray-900">
-                    Mark as Popular {isFreePlan && <span className="text-xs font-normal text-red-500 ml-1">(Premium feature)</span>}
+                    Mark as Popular {isRestricted && <span className="text-xs font-normal text-red-500 ml-1">(Premium feature)</span>}
                   </span>
                 </label>
               </div>
@@ -815,59 +764,6 @@ export default function AdminClient({ restaurant }) {
         </div>
       )}
 
-      {/* Upgrade Modal */}
-      {showUpgradeModal && (
-        <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden flex flex-col border border-gray-100 animate-fade-in-up">
-            <div className="p-8 text-center relative overflow-hidden">
-              <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-indigo-100 rounded-full mix-blend-multiply filter blur-3xl opacity-70"></div>
-              <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-100 rounded-full mix-blend-multiply filter blur-3xl opacity-70"></div>
-              
-              <div className="relative z-10">
-                <div className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-blue-600 text-white rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-indigo-200 rotate-3">
-                  <CreditCard size={36} className="-rotate-3" />
-                </div>
-                <h2 className="font-extrabold text-2xl text-gray-900 mb-2">Upgrade to Premium</h2>
-                <p className="text-gray-500 text-sm mb-6 font-medium leading-relaxed">
-                  Unlock unlimited menu items, custom branding, and popular tags for just ₹999/year.
-                </p>
-                
-                <div className="border border-indigo-100 rounded-xl p-5 bg-white shadow-sm mb-8 text-left space-y-4 relative">
-                  <div className="flex items-center gap-3 text-sm font-bold text-gray-800">
-                    <div className="w-6 h-6 rounded-full bg-indigo-50 flex items-center justify-center"><Check size={14} className="text-indigo-600" /></div>
-                    Unlimited menu items
-                  </div>
-                  <div className="flex items-center gap-3 text-sm font-bold text-gray-800">
-                    <div className="w-6 h-6 rounded-full bg-indigo-50 flex items-center justify-center"><Check size={14} className="text-indigo-600" /></div>
-                    Custom logo & banner
-                  </div>
-                  <div className="flex items-center gap-3 text-sm font-bold text-gray-800">
-                    <div className="w-6 h-6 rounded-full bg-indigo-50 flex items-center justify-center"><Check size={14} className="text-indigo-600" /></div>
-                    Mark items as "Popular"
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-3">
-                  <button 
-                    onClick={handleUpgrade} 
-                    className="w-full py-3.5 text-sm font-bold text-white bg-gray-900 hover:bg-gray-800 rounded-xl transition-all shadow-lg hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
-                    disabled={isUpgrading}
-                  >
-                    {isUpgrading ? "Processing Payment..." : "Pay ₹999"}
-                  </button>
-                  <button 
-                    onClick={() => setShowUpgradeModal(false)} 
-                    className="w-full py-3 text-sm font-bold text-gray-500 hover:text-gray-900 transition-colors"
-                    disabled={isUpgrading}
-                  >
-                    Maybe later
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

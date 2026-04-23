@@ -128,7 +128,7 @@ export default function CartDrawer({
                 borderRadius: 3, 
                 fontWeight: 800, 
                 fontSize: '1rem',
-                boxShadow: '0 8px 16px -4px rgb(249 115 22 / 0.4)'
+                boxShadow: '0 8px 16px -4px rgba(34, 197, 94, 0.4)'
               }}
             >
               {isSubmitting ? "Placing Order..." : "Place Order"}

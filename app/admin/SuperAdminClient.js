@@ -36,11 +36,26 @@ export default function SuperAdminClient({ initialRestaurants }) {
     setBannerFile(null);
   };
 
-  const handleUpdatePlan = async (slug, newPlan) => {
-    if (!confirm(`Are you sure you want to change the plan to ${newPlan.toUpperCase()}?`)) return;
-    const res = await updateSubscriptionPlanAction(slug, newPlan);
+  const handleUpdatePlan = async (slug, newPlan, cycle = 'none', customDate = null) => {
+    const confirmMsg = cycle !== 'none' 
+      ? `Change plan to ${newPlan.toUpperCase()} (${cycle})?`
+      : `Change plan to ${newPlan.toUpperCase()}?`;
+      
+    if (!customDate && !confirm(confirmMsg)) return;
+    
+    const res = await updateSubscriptionPlanAction(slug, newPlan, cycle, customDate);
     if (res.success) {
-      setRestaurants(restaurants.map(r => r.slug === slug ? { ...r, subscription: { ...r.subscription, plan: newPlan } } : r));
+      setRestaurants(restaurants.map(r => 
+        r.slug === slug ? { 
+          ...r, 
+          subscription: { 
+            ...r.subscription, 
+            plan: newPlan, 
+            billingCycle: cycle,
+            validUntil: customDate || (newPlan === 'free' ? null : new Date(Date.now() + (cycle === 'monthly' ? 30 : 365) * 24 * 60 * 60 * 1000).toISOString())
+          } 
+        } : r
+      ));
     } else {
       alert("Error updating plan");
     }
@@ -225,17 +240,45 @@ export default function SuperAdminClient({ initialRestaurants }) {
                   </div>
                   
                   {/* Plan Management */}
-                  <div className="mt-5 pt-4 border-t border-white/10 flex items-center justify-between">
-                    <span className="text-xs text-gray-400 font-medium">Plan:</span>
-                    <select 
-                      value={r.subscription?.plan || 'free'}
-                      onChange={(e) => handleUpdatePlan(r.slug, e.target.value)}
-                      className="text-xs border border-white/10 rounded-lg px-2 py-1.5 bg-white/5 text-gray-200 outline-none focus:ring-2 focus:ring-orange-500 cursor-pointer"
-                    >
-                      <option value="free" className="bg-gray-900 text-white">Free</option>
-                      <option value="trial" className="bg-gray-900 text-white">Trial</option>
-                      <option value="paid" className="bg-gray-900 text-white">Paid</option>
-                    </select>
+                  <div className="mt-5 pt-4 border-t border-white/10 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-gray-400 font-medium">Plan Type:</span>
+                      <select 
+                        value={r.subscription?.plan || 'free'}
+                        onChange={(e) => handleUpdatePlan(r.slug, e.target.value, r.subscription?.billingCycle || 'none')}
+                        className="text-xs border border-white/10 rounded-lg px-2 py-1.5 bg-white/5 text-gray-200 outline-none focus:ring-2 focus:ring-orange-500 cursor-pointer"
+                      >
+                        <option value="free" className="bg-gray-900 text-white">Free</option>
+                        <option value="trial" className="bg-gray-900 text-white">Trial</option>
+                        <option value="paid" className="bg-gray-900 text-white">Paid</option>
+                      </select>
+                    </div>
+
+                    {r.subscription?.plan === 'paid' && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-400 font-medium">Billing:</span>
+                        <select 
+                          value={r.subscription?.billingCycle || 'yearly'}
+                          onChange={(e) => handleUpdatePlan(r.slug, 'paid', e.target.value)}
+                          className="text-xs border border-white/10 rounded-lg px-2 py-1.5 bg-white/5 text-gray-200 outline-none focus:ring-2 focus:ring-orange-500 cursor-pointer"
+                        >
+                          <option value="monthly" className="bg-gray-900 text-white">Monthly</option>
+                          <option value="yearly" className="bg-gray-900 text-white">Yearly</option>
+                        </select>
+                      </div>
+                    )}
+
+                    {r.subscription?.plan !== 'free' && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-400 font-medium">Valid Until:</span>
+                        <input 
+                          type="date"
+                          value={r.subscription?.validUntil ? new Date(r.subscription.validUntil).toISOString().split('T')[0] : ''}
+                          onChange={(e) => handleUpdatePlan(r.slug, r.subscription?.plan || 'trial', r.subscription?.billingCycle || 'none', e.target.value)}
+                          className="text-[10px] border border-white/10 rounded-lg px-2 py-1 bg-white/5 text-gray-400 outline-none focus:ring-1 focus:ring-orange-500 cursor-pointer"
+                        />
+                      </div>
+                    )}
                   </div>
 
                   <div className="mt-5 flex gap-2">

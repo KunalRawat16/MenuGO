@@ -12,7 +12,7 @@ export default async function RestaurantMenuPage({ params }) {
   }
 
   return (
-    <main className="min-h-screen bg-background text-foreground pb-20">
+    <main className="min-h-screen bg-background text-foreground pb-20" suppressHydrationWarning>
       <MenuClient restaurant={restaurant} />
     </main>
   );

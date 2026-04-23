@@ -14,6 +14,8 @@ const MenuItemSchema = new mongoose.Schema({
 
 const SubscriptionSchema = new mongoose.Schema({
   plan: { type: String, enum: ['free', 'trial', 'paid'], default: 'trial' },
+  billingCycle: { type: String, enum: ['monthly', 'yearly', 'none'], default: 'none' },
+  status: { type: String, enum: ['active', 'expired', 'cancelled'], default: 'active' },
   validUntil: { type: Date }
 });
 

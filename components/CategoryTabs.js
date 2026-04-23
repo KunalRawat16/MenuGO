@@ -1,78 +1,68 @@
-"use client";
+'use client';
 
-import { cn } from "@/lib/utils";
 import { Tabs, Tab, Box, Container } from "@mui/material";
 
 export default function CategoryTabs({ categories, activeCategory, setActiveCategory }) {
+  const allCategories = ["All", ...categories];
+
   const handleChange = (event, newValue) => {
     setActiveCategory(newValue);
   };
 
+  const BRAND_COLOR = "#22c55e"; // Emerald Green
+
   return (
-    <Box 
-      sx={{ 
+    <Box
+      sx={{
         bgcolor: 'background.paper',
         borderBottom: '1px solid',
-        borderColor: 'divider'
+        borderColor: 'rgba(0,0,0,0.06)',
       }}
+      suppressHydrationWarning
     >
-      <Container maxWidth="md">
-        <Box 
-          sx={{ 
-            py: 2,
-            display: 'flex',
-            gap: 1.5,
-            overflowX: 'auto',
-            whiteSpace: 'nowrap',
-            '::-webkit-scrollbar': { display: 'none' },
-            msOverflowStyle: 'none',
-            scrollbarWidth: 'none'
+      <Container maxWidth="md" suppressHydrationWarning>
+        <Tabs
+          value={activeCategory}
+          onChange={handleChange}
+          variant="scrollable"
+          scrollButtons={false}
+          sx={{
+            '& .MuiTabs-indicator': {
+              backgroundColor: BRAND_COLOR, // Brand Emerald Green
+              height: 3,
+              borderRadius: '3px 3px 0 0'
+            },
+            '& .MuiTabs-flexContainer': {
+              gap: 4
+            }
           }}
+          suppressHydrationWarning
         >
-          <Box 
-            onClick={() => setActiveCategory("All")}
-            sx={{ 
-              px: 2.5, 
-              py: 1, 
-              borderRadius: 10, 
-              cursor: 'pointer',
-              fontWeight: 800,
-              fontSize: '0.85rem',
-              transition: 'all 0.2s ease',
-              bgcolor: activeCategory === "All" ? '#1c1c1c' : '#f8f8f8',
-              color: activeCategory === "All" ? 'white' : '#1c1c1c',
-              border: '1px solid',
-              borderColor: activeCategory === "All" ? '#1c1c1c' : 'rgba(0,0,0,0.05)',
-              boxShadow: activeCategory === "All" ? '0 4px 12px rgba(0,0,0,0.1)' : 'none',
-              '&:hover': { bgcolor: activeCategory === "All" ? '#1c1c1c' : '#f0f0f0' }
-            }}
-          >
-            All
-          </Box>
-          {categories.map((category) => (
-            <Box 
+          {allCategories.map((category) => (
+            <Tab
               key={category}
-              onClick={() => setActiveCategory(category)}
-              sx={{ 
-                px: 2.5, 
-                py: 1, 
-                borderRadius: 10, 
-                cursor: 'pointer',
-                fontWeight: 800,
-                fontSize: '0.85rem',
+              value={category}
+              label={category}
+              sx={{
+                textTransform: 'none',
+                fontWeight: 900,
+                fontSize: { xs: '1rem', md: '1.2rem' },
+                color: '#64748b',
+                px: 2,
+                minWidth: 'auto',
                 transition: 'all 0.2s ease',
-                bgcolor: activeCategory === category ? '#1c1c1c' : '#f8f8f8',
-                color: activeCategory === category ? 'white' : '#1c1c1c',
-                border: '1px solid',
-                borderColor: activeCategory === category ? '#1c1c1c' : 'rgba(0,0,0,0.05)',
-                boxShadow: activeCategory === category ? '0 4px 12px rgba(0,0,0,0.1)' : 'none',
-                '&:hover': { bgcolor: activeCategory === category ? '#1c1c1c' : '#f0f0f0' }
+                '&.Mui-selected': {
+                  color: '#0f172a'
+                },
+                '&:hover': {
+                  color: '#0f172a',
+                  opacity: 0.8
+                }
               }}
-            >
-              {category}
-            </Box>
+              suppressHydrationWarning
+            />
           ))}
-        </Box>
+        </Tabs>
       </Container>
     </Box>
   );

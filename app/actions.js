@@ -202,22 +202,30 @@ export async function logoutAction() {
   return { success: true };
 }
 
-export async function upgradeSubscriptionAction(slug) {
+export async function upgradeSubscriptionAction(slug, planType = 'yearly') {
   const { cookies } = await import("next/headers");
   const cookieStore = await cookies();
   const sessionData = cookieStore.get("admin_session")?.value;
   
   if (!sessionData) return { error: "Unauthorized" };
   const session = JSON.parse(sessionData);
-  if (session.role !== "superadmin") return { error: "Forbidden: Only superadmin can manage subscriptions" };
+  
+  // SECURE: Only superadmin can manually upgrade without payment gateway
+  if (session.role !== "superadmin") {
+    return { error: "Forbidden: Upgrades must be handled by SuperAdmin or Payment Gateway" };
+  }
 
   await dbConnect();
   const restaurant = await Restaurant.findOne({ slug });
   if (!restaurant) return { error: "Restaurant not found" };
 
+  const durationDays = planType === 'monthly' ? 30 : 365;
+
   restaurant.subscription = {
     plan: "paid",
-    validUntil: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
+    billingCycle: planType,
+    status: "active",
+    validUntil: new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000)
   };
   
   await restaurant.save();
@@ -228,7 +236,7 @@ export async function upgradeSubscriptionAction(slug) {
   return { success: true };
 }
 
-export async function updateSubscriptionPlanAction(slug, plan) {
+export async function updateSubscriptionPlanAction(slug, plan, billingCycle = 'none', customValidUntil = null) {
   const { cookies } = await import("next/headers");
   const cookieStore = await cookies();
   const sessionData = cookieStore.get("admin_session")?.value;
@@ -241,13 +249,24 @@ export async function updateSubscriptionPlanAction(slug, plan) {
   const restaurant = await Restaurant.findOne({ slug });
   if (!restaurant) return { error: "Restaurant not found" };
 
-  const validUntil = plan === 'trial' 
-    ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-    : plan === 'paid' 
-      ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
-      : null;
+  let validUntil = customValidUntil ? new Date(customValidUntil) : null;
+  
+  if (!customValidUntil) {
+    if (plan === 'trial') {
+      validUntil = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    } else if (plan === 'paid') {
+      const durationDays = billingCycle === 'monthly' ? 30 : 365;
+      validUntil = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000);
+    }
+  }
 
-  restaurant.subscription = { plan, validUntil };
+  restaurant.subscription = { 
+    plan, 
+    billingCycle: plan === 'paid' ? billingCycle : 'none',
+    status: 'active',
+    validUntil 
+  };
+  
   await restaurant.save();
   
   revalidatePath(`/${slug}`);
