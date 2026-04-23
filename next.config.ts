@@ -15,10 +15,9 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     serverActions: {
-      allowedOrigins: ["10.109.86.53:3000", "localhost:3000"]
+      allowedOrigins: ["*.vercel.app", "localhost:3000"]
     }
-  },
-  allowedDevOrigins: ["10.109.86.53", "10.109.86.53:3000", "localhost", "localhost:3000"]
+  }
 };
 
 export default nextConfig;
