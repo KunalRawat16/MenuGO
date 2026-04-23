@@ -124,9 +124,9 @@ export default function OrdersDashboard({ restaurantId, slug }) {
 
       {/* Desktop View - Hidden on mobile */}
       <Box sx={{ display: { xs: 'none', md: 'block' } }}>
-        <TableContainer component={Paper} sx={{ borderRadius: 4, overflow: 'hidden', border: 1, borderColor: 'divider' }}>
+        <TableContainer component={Paper} sx={{ borderRadius: '24px', overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
           <Table>
-            <TableHead sx={{ bgcolor: 'grey.50' }}>
+            <TableHead sx={{ bgcolor: 'background.default' }}>
               <TableRow>
                 <TableCell />
                 <TableCell sx={{ fontWeight: 700 }}>Order ID</TableCell>
@@ -257,7 +257,7 @@ export default function OrdersDashboard({ restaurantId, slug }) {
       {/* Mobile View - Shown on mobile only */}
       <Box sx={{ display: { xs: 'flex', md: 'none' }, flexDirection: 'column', gap: 2 }}>
         {orders.length === 0 ? (
-          <Box sx={{ py: 8, textAlign: 'center', bgcolor: 'background.paper', borderRadius: 4, border: 1, borderColor: 'divider' }}>
+          <Box sx={{ py: 8, textAlign: 'center', bgcolor: 'background.paper', borderRadius: '24px', border: '1px solid', borderColor: 'divider' }}>
             <Typography color="text.secondary">No orders yet.</Typography>
           </Box>
         ) : (

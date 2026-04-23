@@ -5,7 +5,7 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { useMemo, useState, useEffect, createContext } from 'react';
 
-export const ColorModeContext = createContext({ toggleColorMode: () => {} });
+export const ColorModeContext = createContext({ toggleColorMode: () => { } });
 
 export default function ThemeRegistry({ children }) {
   const [mode, setMode] = useState('light');
@@ -16,8 +16,9 @@ export default function ThemeRegistry({ children }) {
     const savedMode = localStorage.getItem('theme-mode');
     if (savedMode) {
       setMode(savedMode);
-    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      setMode('dark');
+    } else {
+      // Defaulting to light mode to ensure consistent UI across devices
+      setMode('light');
     }
   }, []);
 
@@ -76,7 +77,7 @@ export default function ThemeRegistry({ children }) {
           MuiCard: {
             styleOverrides: {
               root: {
-                boxShadow: mode === 'light' 
+                boxShadow: mode === 'light'
                   ? '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)'
                   : '0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.2)',
                 border: '1px solid',
@@ -107,11 +108,11 @@ export default function ThemeRegistry({ children }) {
             We use suppressHydrationWarning here as a last resort for attributes 
             injected by browser extensions (like bis_skin_checked).
           */}
-          <div 
-            suppressHydrationWarning 
-            style={{ 
-              opacity: mounted ? 1 : 0, 
-              transition: 'opacity 0.2s ease-in' 
+          <div
+            suppressHydrationWarning
+            style={{
+              opacity: mounted ? 1 : 0,
+              transition: 'opacity 0.2s ease-in'
             }}
           >
             {children}

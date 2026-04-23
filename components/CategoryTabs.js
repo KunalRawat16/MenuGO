@@ -47,15 +47,15 @@ export default function CategoryTabs({ categories, activeCategory, setActiveCate
                 textTransform: 'none',
                 fontWeight: 900,
                 fontSize: { xs: '1rem', md: '1.2rem' },
-                color: '#64748b',
+                color: 'text.secondary',
                 px: 2,
                 minWidth: 'auto',
                 transition: 'all 0.2s ease',
                 '&.Mui-selected': {
-                  color: '#0f172a'
+                  color: 'text.primary'
                 },
                 '&:hover': {
-                  color: '#0f172a',
+                  color: 'text.primary',
                   opacity: 0.8
                 }
               }}
