@@ -1,32 +1,32 @@
 'use client';
 
-import { 
-  Star, 
-  Clock, 
-  IndianRupee, 
-  Search as SearchIcon, 
+import {
+  Star,
+  Clock,
+  IndianRupee,
+  Search as SearchIcon,
   X,
   Trophy,
   ArrowUpNarrowWide,
   ArrowDownWideNarrow
 } from "lucide-react";
 import Image from "next/image";
-import { 
-  Box, 
-  Typography, 
-  Container, 
-  TextField, 
-  InputAdornment, 
-  IconButton, 
+import {
+  Box,
+  Typography,
+  Container,
+  TextField,
+  InputAdornment,
+  IconButton,
   Drawer,
   Stack,
   Button
 } from "@mui/material";
 import { useState } from "react";
 
-export default function Header({ 
-  restaurant, 
-  searchQuery, 
+export default function Header({
+  restaurant,
+  searchQuery,
   setSearchQuery,
   vegOnly,
   setVegOnly,
@@ -64,8 +64,8 @@ export default function Header({
       }}
     >
       {Icon && <Icon size={16} color={active ? activeColor : "#64748b"} />}
-      <Typography variant="body2" sx={{ 
-        fontWeight: 700, 
+      <Typography variant="body2" sx={{
+        fontWeight: 700,
         color: active ? activeColor : "#1e293b",
         fontSize: '0.85rem'
       }}>
@@ -139,7 +139,7 @@ export default function Header({
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 <IndianRupee size={16} />
-                <Typography variant="body2" sx={{ fontWeight: 600 }}>₹150 per person</Typography>
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>150 per person</Typography>
               </Box>
             </Box>
           </Container>
@@ -174,9 +174,9 @@ export default function Header({
               }
             }}
           />
-          <IconButton 
+          <IconButton
             onClick={toggleDrawer(true)}
-            sx={{ 
+            sx={{
               bgcolor: 'white', width: 54, height: 54, borderRadius: '12px',
               boxShadow: '0 8px 30px rgba(0,0,0,0.08)',
               border: '1px solid rgba(0,0,0,0.05)',
@@ -220,24 +220,24 @@ export default function Header({
               <Box sx={{ bgcolor: 'white', p: 3, borderRadius: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
                 <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 2, color: '#1e293b' }}>Preference</Typography>
                 <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
-                  <FilterTag 
-                    label="Veg Only" 
-                    active={vegOnly} 
+                  <FilterTag
+                    label="Veg Only"
+                    active={vegOnly}
                     onClick={() => { setVegOnly(!vegOnly); if (!vegOnly) setNonVegOnly(false); }}
                     icon={() => (
                       <Box sx={{ width: 14, height: 14, border: '1px solid #22c55e', borderRadius: '2px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                         <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#22c55e' }} />
+                        <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#22c55e' }} />
                       </Box>
                     )}
                   />
-                  <FilterTag 
-                    label="Non-veg Only" 
-                    active={nonVegOnly} 
+                  <FilterTag
+                    label="Non-veg Only"
+                    active={nonVegOnly}
                     activeColor="#ef4444"
                     onClick={() => { setNonVegOnly(!nonVegOnly); if (!nonVegOnly) setVegOnly(false); }}
                     icon={() => (
                       <Box sx={{ width: 14, height: 14, border: '1px solid #ef4444', borderRadius: '2px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                         <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#ef4444' }} />
+                        <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#ef4444' }} />
                       </Box>
                     )}
                   />
@@ -248,39 +248,39 @@ export default function Header({
               <Box sx={{ bgcolor: 'white', p: 3, borderRadius: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
                 <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 2, color: '#1e293b' }}>Sorting by</Typography>
                 <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
-                  <FilterTag 
-                    label="Bestseller" 
-                    icon={Trophy} 
-                    active={sortBy === "popular"} 
-                    onClick={() => setSortBy(sortBy === "popular" ? "default" : "popular")} 
+                  <FilterTag
+                    label="Bestseller"
+                    icon={Trophy}
+                    active={sortBy === "popular"}
+                    onClick={() => setSortBy(sortBy === "popular" ? "default" : "popular")}
                   />
-                  <FilterTag 
-                    label="Price: Low to High" 
-                    icon={ArrowUpNarrowWide} 
-                    active={sortBy === "price_low"} 
-                    onClick={() => setSortBy(sortBy === "price_low" ? "default" : "price_low")} 
+                  <FilterTag
+                    label="Price: Low to High"
+                    icon={ArrowUpNarrowWide}
+                    active={sortBy === "price_low"}
+                    onClick={() => setSortBy(sortBy === "price_low" ? "default" : "price_low")}
                   />
-                  <FilterTag 
-                    label="Price: High to Low" 
-                    icon={ArrowDownWideNarrow} 
-                    active={sortBy === "price_high"} 
-                    onClick={() => setSortBy(sortBy === "price_high" ? "default" : "price_high")} 
+                  <FilterTag
+                    label="Price: High to Low"
+                    icon={ArrowDownWideNarrow}
+                    active={sortBy === "price_high"}
+                    onClick={() => setSortBy(sortBy === "price_high" ? "default" : "price_high")}
                   />
                 </Box>
               </Box>
             </Stack>
 
             <Box sx={{ mt: 5 }}>
-              <Button 
-                fullWidth 
-                variant="contained" 
+              <Button
+                fullWidth
+                variant="contained"
                 onClick={toggleDrawer(false)}
-                sx={{ 
-                  bgcolor: BRAND_COLOR, 
-                  color: 'white', 
-                  borderRadius: '16px', 
-                  py: 2, 
-                  fontWeight: 900, 
+                sx={{
+                  bgcolor: BRAND_COLOR,
+                  color: 'white',
+                  borderRadius: '16px',
+                  py: 2,
+                  fontWeight: 900,
                   fontSize: '1rem',
                   textTransform: 'none',
                   '&:hover': { bgcolor: '#16a34a' }
