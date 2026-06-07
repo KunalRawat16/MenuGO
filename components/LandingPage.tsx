@@ -452,6 +452,16 @@ export default function LandingPage({ restaurant }: LandingPageProps) {
                   <p className="text-slate-500 text-xs font-semibold">Meerut, Uttar Pradesh</p>
                 </div>
               </div>
+              
+              <div className="pt-2">
+                <Link 
+                  href={`/${restaurant?.slug || 'yellow-chilli-meerut'}`} 
+                  target="_blank"
+                  className="inline-flex items-center gap-1.5 bg-green-500 hover:bg-green-600 text-white font-black text-xs px-4 py-2.5 rounded-xl transition-all shadow-md hover:shadow-lg shadow-green-500/15"
+                >
+                  Open Live Customer Menu <ArrowRight size={14} className="rotate-[-45deg]" />
+                </Link>
+              </div>
             </div>
           </div>
 
