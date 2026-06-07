@@ -29,7 +29,7 @@ export function proxy(request) {
           return NextResponse.redirect(new URL("/login", request.url));
         }
       }
-    } catch (error) {
+    } catch {
       // Invalid JSON or format
       return NextResponse.redirect(new URL("/login", request.url));
     }

@@ -2,10 +2,9 @@
 
 import dbConnect from "@/lib/db";
 import Restaurant from "@/models/Restaurant";
+import PlatformSettings from "@/models/PlatformSettings";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
-import fs from "fs/promises";
-import path from "path";
 
 import { v2 as cloudinary } from "cloudinary";
 
@@ -127,10 +126,16 @@ export async function createRestaurantAction(restaurantData) {
     counter++;
   }
   
+  let settings = await PlatformSettings.findOne({ id: "global_settings" });
+  if (!settings) {
+    settings = await PlatformSettings.create({ id: "global_settings" });
+  }
+
   const newRestaurant = new Restaurant({
     id: "r" + Date.now(),
     name: restaurantData.name,
     slug: slug,
+    username: slug,
     logo: restaurantData.logo || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&q=80",
     banner: restaurantData.banner || "https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=1000",
     adminPassword: restaurantData.adminPassword || "password123",
@@ -143,7 +148,7 @@ export async function createRestaurantAction(restaurantData) {
     costForOne: 200,
     subscription: {
       plan: 'trial',
-      validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+      validUntil: new Date(Date.now() + (settings.trialDurationDays || 30) * 24 * 60 * 60 * 1000)
     }
   });
   
@@ -155,17 +160,27 @@ export async function createRestaurantAction(restaurantData) {
 
 export async function loginAction(username, password) {
   console.log(`Login attempt for: ${username}`);
-  const MASTER_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
   let role = null;
   let slug = null;
 
-  if (username === "superadmin" && password === MASTER_PASSWORD) {
+  await dbConnect();
+  let settings = await PlatformSettings.findOne({ id: "global_settings" });
+  if (!settings) {
+    settings = await PlatformSettings.create({ id: "global_settings" });
+  }
+
+  const SUPERADMIN_USERNAME = settings.superadminUsername || "superadmin";
+  const SUPERADMIN_PASSWORD = settings.superadminPassword || "admin123";
+
+  if (username === SUPERADMIN_USERNAME && password === SUPERADMIN_PASSWORD) {
     role = "superadmin";
     console.log("Superadmin login successful");
   } else {
     try {
       await dbConnect();
-      const restaurant = await Restaurant.findOne({ slug: username });
+      const restaurant = await Restaurant.findOne({ 
+        $or: [{ username: username }, { slug: username }] 
+      });
       if (restaurant && restaurant.adminPassword === password) {
         role = "admin";
         slug = restaurant.slug;
@@ -252,8 +267,13 @@ export async function updateSubscriptionPlanAction(slug, plan, billingCycle = 'n
   let validUntil = customValidUntil ? new Date(customValidUntil) : null;
   
   if (!customValidUntil) {
+    let settings = await PlatformSettings.findOne({ id: "global_settings" });
+    if (!settings) {
+      settings = await PlatformSettings.create({ id: "global_settings" });
+    }
+
     if (plan === 'trial') {
-      validUntil = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+      validUntil = new Date(Date.now() + (settings.trialDurationDays || 30) * 24 * 60 * 60 * 1000);
     } else if (plan === 'paid') {
       const durationDays = billingCycle === 'monthly' ? 30 : 365;
       validUntil = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000);
@@ -293,4 +313,72 @@ export async function deleteRestaurantAction(slug) {
   } else {
     return { error: "Restaurant not found or could not be deleted" };
   }
+}
+
+export async function getPlatformSettingsAction() {
+  await dbConnect();
+  let settings = await PlatformSettings.findOne({ id: "global_settings" });
+  if (!settings) {
+    settings = await PlatformSettings.create({ id: "global_settings" });
+  }
+  return { success: true, settings: JSON.parse(JSON.stringify(settings)) };
+}
+
+export async function updatePlatformSettingsAction(updatedSettings) {
+  const { cookies } = await import("next/headers");
+  const cookieStore = await cookies();
+  const sessionData = cookieStore.get("admin_session")?.value;
+  
+  if (!sessionData) return { error: "Unauthorized" };
+  const session = JSON.parse(sessionData);
+  if (session.role !== "superadmin") return { error: "Forbidden: Only superadmin can change global settings" };
+
+  await dbConnect();
+  const settings = await PlatformSettings.findOneAndUpdate(
+    { id: "global_settings" },
+    { $set: updatedSettings },
+    { new: true, upsert: true }
+  );
+
+  revalidatePath("/admin");
+  return { success: true, settings: JSON.parse(JSON.stringify(settings)) };
+}
+
+export async function updateRestaurantCredentialsAction(slug, newUsername, newPassword) {
+  const { cookies } = await import("next/headers");
+  const cookieStore = await cookies();
+  const sessionData = cookieStore.get("admin_session")?.value;
+  
+  if (!sessionData) return { error: "Unauthorized" };
+  const session = JSON.parse(sessionData);
+  
+  if (session.role !== "superadmin" && session.slug !== slug) {
+    return { error: "Forbidden: You do not have permission to modify these credentials" };
+  }
+
+  await dbConnect();
+  
+  // Check if new username is already taken by another restaurant
+  if (newUsername) {
+    const existing = await Restaurant.findOne({ 
+      $or: [{ username: newUsername }, { slug: newUsername }],
+      slug: { $ne: slug } 
+    });
+    if (existing) {
+      return { error: "Username is already taken" };
+    }
+  }
+
+  const restaurant = await Restaurant.findOne({ slug });
+  if (!restaurant) return { error: "Restaurant not found" };
+
+  if (newUsername) restaurant.username = newUsername;
+  if (newPassword) restaurant.adminPassword = newPassword;
+
+  await restaurant.save();
+  
+  revalidatePath(`/${slug}`);
+  revalidatePath(`/admin/${slug}`);
+  revalidatePath(`/admin`);
+  return { success: true };
 }

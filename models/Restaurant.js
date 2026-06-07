@@ -23,6 +23,7 @@ const RestaurantSchema = new mongoose.Schema({
   id: { type: String, required: true },
   name: { type: String, required: true },
   slug: { type: String, required: true, unique: true },
+  username: { type: String, sparse: true, unique: true },
   logo: { type: String },
   banner: { type: String },
   address: { type: String },

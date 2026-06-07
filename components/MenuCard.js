@@ -1,17 +1,5 @@
-import { cn } from "@/lib/utils";
 import { Star, Plus, Minus, Clock, Flame, Info } from "lucide-react";
 import Image from "next/image";
-import {
-  Card,
-  CardContent,
-  Typography,
-  Button,
-  Box,
-  Chip,
-  IconButton,
-  Stack,
-  Tooltip
-} from "@mui/material";
 import { useState } from "react";
 
 export default function MenuCard({ item, quantity = 0, onAdd, onUpdateQuantity, hidePopular = false }) {
@@ -19,28 +7,12 @@ export default function MenuCard({ item, quantity = 0, onAdd, onUpdateQuantity, 
   const isSpicy = item.description?.toLowerCase().includes('spicy') || item.description?.toLowerCase().includes('chili');
 
   return (
-    <Card
-      elevation={0}
-      suppressHydrationWarning={true}
-      sx={{
-        borderRadius: '20px',
-        border: '1px solid',
-        mb: '10px',
-        borderColor: 'rgba(0,0,0,0.08)',
-        bgcolor: 'white',
-        display: 'flex',
-        flexDirection: 'row',
-        p: 0, 
-        gap: 0, 
-        overflow: 'hidden',
-        transition: 'all 0.2s ease',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
-        '&:hover': { boxShadow: '0 8px 30px rgba(0,0,0,0.08)' },
-        ...(!item.isAvailable && { opacity: 0.6, filter: 'grayscale(1)' })
-      }}
+    <div 
+      suppressHydrationWarning
+      className={`bg-white rounded-[20px] border border-gray-100 mb-2.5 flex flex-row p-0 gap-0 overflow-hidden transition-all duration-200 shadow-[0_4px_20px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] ${!item.isAvailable ? 'opacity-60 grayscale' : ''}`}
     >
       {/* Image Section (Left) - Flush with borders */}
-      <Box suppressHydrationWarning={true} sx={{ position: 'relative', width: { xs: 110, md: 150 }, minHeight: '100%', flexShrink: 0 }}>
+      <div className="relative w-[110px] md:w-[150px] min-h-[120px] flex-shrink-0" suppressHydrationWarning>
         <Image
           src={imgSrc}
           alt={item.name}
@@ -53,141 +25,92 @@ export default function MenuCard({ item, quantity = 0, onAdd, onUpdateQuantity, 
 
         {/* Popular Tag (Overlay) */}
         {item.isPopular && !hidePopular && (
-          <Box sx={{
-            position: 'absolute',
-            top: 8,
-            left: 8,
-            bgcolor: 'rgba(255,255,255,0.95)',
-            color: '#f97316',
-            px: 1,
-            py: 0.3,
-            borderRadius: '6px',
-            fontSize: '0.6rem',
-            fontWeight: 900,
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 0.5,
-            zIndex: 1
-          }}>
+          <div className="absolute top-2 left-2 bg-white/95 text-green-500 px-1.5 py-0.5 rounded-md text-[0.6rem] font-black shadow-sm flex items-center gap-0.5 z-10">
             <Star size={10} fill="currentColor" /> POPULAR
-          </Box>
+          </div>
         )}
-      </Box>
+      </div>
 
       {/* Content Section (Right) */}
-      <Box suppressHydrationWarning={true} sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', p: 2 }}>
-        <Box>
-          <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 0.5 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Typography variant="h6" sx={{ fontWeight: 800, fontSize: { xs: '1rem', md: '1.2rem' }, color: '#1a202c', lineHeight: 1.2 }}>
+      <div className="flex-1 flex flex-col justify-between p-3 md:p-4" suppressHydrationWarning>
+        <div>
+          <div className="flex items-start justify-between mb-1">
+            <div className="flex items-center gap-1.5">
+              <h3 className="font-extrabold text-base md:text-lg text-gray-900 leading-tight">
                 {item.name}
-              </Typography>
-              {isSpicy && <Flame size={14} color="#ef4444" fill="#ef4444" />}
-            </Box>
+              </h3>
+              {isSpicy && <Flame size={14} color="#ef4444" fill="#ef4444" className="flex-shrink-0" />}
+            </div>
 
             {/* Veg/Non-veg Indicator */}
-            <Box sx={{
-              width: 16, height: 16,
-              border: '1px solid',
-              borderColor: item.isVeg ? '#22c55e' : '#ef4444',
-              borderRadius: '3px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-              mt: 0.3,
-              ml: 1
-            }}>
-              <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: item.isVeg ? '#22c55e' : '#ef4444' }} />
-            </Box>
-          </Box>
+            <div className={`w-4 h-4 border rounded-[3px] flex items-center justify-center flex-shrink-0 mt-0.5 ml-2 ${item.isVeg ? 'border-green-500' : 'border-red-500'}`}>
+              <div className={`w-2 h-2 rounded-full ${item.isVeg ? 'bg-green-500' : 'bg-red-500'}`} />
+            </div>
+          </div>
 
-          <Typography variant="body2" sx={{
-            color: 'text.secondary',
-            fontSize: { xs: '0.75rem', md: '0.875rem' },
-            lineHeight: 1.4,
-            display: '-webkit-box',
-            WebkitBoxOrient: 'vertical',
-            WebkitLineClamp: 2,
-            overflow: 'hidden',
-            mb: 1
-          }}>
+          <p className="text-gray-500 text-xs md:text-sm leading-snug line-clamp-2 mb-2">
             {item.description}
-          </Typography>
+          </p>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, opacity: 0.7 }}>
-             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          <div className="flex items-center gap-3 opacity-70 text-gray-500">
+             <div className="flex items-center gap-1">
                 <Clock size={12} />
-                <Typography variant="caption" sx={{ fontWeight: 700 }}>15-20m</Typography>
-             </Box>
-             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <span className="text-[10px] md:text-xs font-bold">15-20m</span>
+             </div>
+             <div className="flex items-center gap-1">
                 <Info size={12} />
-                <Typography variant="caption" sx={{ fontWeight: 700 }}>Details</Typography>
-             </Box>
-          </Box>
-        </Box>
+                <span className="text-[10px] md:text-xs font-bold">Details</span>
+             </div>
+          </div>
+        </div>
 
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 'auto', pt: 1 }}>
-          <Typography sx={{ fontWeight: 900, color: '#1a202c', fontSize: { xs: '1rem', md: '1.15rem' } }}>
+        <div className="flex items-center justify-between mt-auto pt-2">
+          <span className="font-black text-gray-900 text-base md:text-lg">
             ₹{item.price}
-          </Typography>
+          </span>
 
-          <Box>
+          <div>
             {item.isAvailable ? (
               quantity > 0 ? (
-                <Box sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1.5,
-                  bgcolor: '#f8fafc',
-                  borderRadius: '12px',
-                  p: 0.5,
-                  border: '1px solid',
-                  borderColor: 'rgba(0,0,0,0.05)'
-                }}>
-                  <IconButton
-                    size="small"
-                    sx={{ bgcolor: 'white', color: '#22c55e', p: 0.5, '&:hover': { bgcolor: '#f0fdf4' } }}
+                <div className="flex items-center gap-2 bg-gray-50 border border-gray-100 rounded-xl p-0.5">
+                  <button
+                    aria-label={`Decrease quantity of ${item.name}`}
+                    className="w-7 h-7 flex items-center justify-center bg-white text-green-500 rounded-lg shadow-sm hover:bg-green-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 transition-colors"
                     onClick={() => onUpdateQuantity(item.id, quantity - 1)}
                   >
                     <Minus size={14} strokeWidth={4} />
-                  </IconButton>
-                  <Typography sx={{ fontWeight: 900, color: '#1a202c', fontSize: '0.9rem', minWidth: 12, textAlign: 'center' }}>
+                  </button>
+                  <span 
+                    aria-live="polite" 
+                    className="font-black text-gray-900 text-sm min-w-[16px] text-center"
+                  >
                     {quantity}
-                  </Typography>
-                  <IconButton
-                    size="small"
-                    sx={{ bgcolor: '#22c55e', color: 'white', p: 0.5, '&:hover': { bgcolor: '#16a34a' } }}
+                  </span>
+                  <button
+                    aria-label={`Increase quantity of ${item.name}`}
+                    className="w-7 h-7 flex items-center justify-center bg-green-500 text-white rounded-lg shadow-sm hover:bg-green-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 transition-colors"
                     onClick={() => onUpdateQuantity(item.id, quantity + 1)}
                   >
                     <Plus size={14} strokeWidth={4} />
-                  </IconButton>
-                </Box>
+                  </button>
+                </div>
               ) : (
-                <IconButton
+                <button
                   onClick={() => onAdd(item)}
-                  sx={{
-                    bgcolor: '#22c55e',
-                    color: 'white',
-                    borderRadius: '10px',
-                    width: 38,
-                    height: 38,
-                    '&:hover': { bgcolor: '#16a34a' },
-                    boxShadow: '0 4px 10px rgba(34, 197, 94, 0.2)'
-                  }}
+                  aria-label={`Add ${item.name} to cart`}
+                  className="w-9 h-9 flex items-center justify-center bg-green-500 text-white rounded-[10px] hover:bg-green-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-1 transition-colors shadow-[0_4px_10px_rgba(249,115,22,0.2)]"
                 >
                   <Plus size={22} strokeWidth={3} />
-                </IconButton>
+                </button>
               )
             ) : (
-              <Typography variant="caption" sx={{ fontWeight: 900, color: 'text.disabled', letterSpacing: '0.05em' }}>
+              <span className="text-[10px] font-black text-gray-400 tracking-widest uppercase">
                 SOLD OUT
-              </Typography>
+              </span>
             )}
-          </Box>
-        </Box>
-      </Box>
-    </Card>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

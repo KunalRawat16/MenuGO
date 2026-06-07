@@ -1,6 +1,6 @@
 'use client';
 
-import { Box, Container, Skeleton, Stack, Grid } from '@mui/material';
+import { Box, Container, Skeleton, Grid } from '@mui/material';
 
 export default function AdminLoading() {
   return (

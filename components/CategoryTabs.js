@@ -1,69 +1,42 @@
 'use client';
 
-import { Tabs, Tab, Box, Container } from "@mui/material";
-
 export default function CategoryTabs({ categories, activeCategory, setActiveCategory }) {
   const allCategories = ["All", ...categories];
 
-  const handleChange = (event, newValue) => {
-    setActiveCategory(newValue);
-  };
-
-  const BRAND_COLOR = "#22c55e"; // Emerald Green
-
   return (
-    <Box
-      sx={{
-        bgcolor: 'background.paper',
-        borderBottom: '1px solid',
-        borderColor: 'rgba(0,0,0,0.06)',
-      }}
-      suppressHydrationWarning
-    >
-      <Container maxWidth="md" suppressHydrationWarning>
-        <Tabs
-          value={activeCategory}
-          onChange={handleChange}
-          variant="scrollable"
-          scrollButtons={false}
-          sx={{
-            '& .MuiTabs-indicator': {
-              backgroundColor: BRAND_COLOR, // Brand Emerald Green
-              height: 3,
-              borderRadius: '3px 3px 0 0'
-            },
-            '& .MuiTabs-flexContainer': {
-              gap: 4
-            }
-          }}
+    <div className="bg-white border-b border-gray-100 w-full" suppressHydrationWarning>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8" suppressHydrationWarning>
+        <div 
+          role="tablist"
+          aria-label="Menu categories"
+          className="flex overflow-x-auto hide-scrollbar space-x-6 md:space-x-8" 
           suppressHydrationWarning
         >
-          {allCategories.map((category) => (
-            <Tab
-              key={category}
-              value={category}
-              label={category}
-              sx={{
-                textTransform: 'none',
-                fontWeight: 900,
-                fontSize: { xs: '1rem', md: '1.2rem' },
-                color: 'text.secondary',
-                px: 2,
-                minWidth: 'auto',
-                transition: 'all 0.2s ease',
-                '&.Mui-selected': {
-                  color: 'text.primary'
-                },
-                '&:hover': {
-                  color: 'text.primary',
-                  opacity: 0.8
-                }
-              }}
-              suppressHydrationWarning
-            />
-          ))}
-        </Tabs>
-      </Container>
-    </Box>
+          {allCategories.map((category) => {
+            const tabId = `tab-${category.replace(/\s+/g, '-').toLowerCase()}`;
+            return (
+              <button
+                key={category}
+                id={tabId}
+                role="tab"
+                aria-selected={activeCategory === category}
+                onClick={() => setActiveCategory(category)}
+                className={`whitespace-nowrap py-4 px-1 text-sm md:text-base font-extrabold tracking-tight transition-all relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 rounded-lg ${
+                  activeCategory === category 
+                    ? "text-gray-900" 
+                    : "text-gray-400 hover:text-gray-900 hover:opacity-80"
+                }`}
+                suppressHydrationWarning
+              >
+                {category}
+                {activeCategory === category && (
+                  <span className="absolute bottom-0 left-0 right-0 h-1 bg-green-500 rounded-t-md" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
   );
 }

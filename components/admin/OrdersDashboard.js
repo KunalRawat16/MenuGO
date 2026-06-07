@@ -1,36 +1,15 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { 
-  Box, 
-  Typography, 
-  Paper, 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableContainer, 
-  TableHead, 
-  TableRow, 
-  Chip, 
-  IconButton, 
-  Button,
-  Collapse,
-  List,
-  ListItem,
-  ListItemText,
-  Divider,
-  CircularProgress
-} from "@mui/material";
-import { ChevronDown, ChevronUp, RefreshCw, CheckCircle, Clock, XCircle, Play } from "lucide-react";
+import React, { useState, useEffect, useCallback } from "react";
+import { ChevronDown, ChevronUp, RefreshCw, CheckCircle, Clock, XCircle, Play, Loader2 } from "lucide-react";
 
-export default function OrdersDashboard({ restaurantId, slug }) {
+export default function OrdersDashboard({ restaurantId }) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expandedOrder, setExpandedOrder] = useState(null);
 
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
-      // The API now defaults to live orders if no status is specified
       const res = await fetch(`/api/orders?restaurantId=${restaurantId}`);
       const data = await res.json();
       if (data.success) {
@@ -41,13 +20,13 @@ export default function OrdersDashboard({ restaurantId, slug }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [restaurantId]);
 
   useEffect(() => {
     fetchOrders();
-    const interval = setInterval(fetchOrders, 15000); // Increased to 15 seconds to reduce server load
+    const interval = setInterval(fetchOrders, 15000); // 15 seconds
     return () => clearInterval(interval);
-  }, [restaurantId]);
+  }, [restaurantId, fetchOrders]);
 
   const updateStatus = async (orderId, newStatus) => {
     try {
@@ -64,286 +43,270 @@ export default function OrdersDashboard({ restaurantId, slug }) {
     }
   };
 
-  const deleteOrder = async (orderId) => {
-    if (!confirm("Are you sure this order is completed and paid? It will be removed from the dashboard.")) return;
+  const cancelOrder = async (orderId) => {
+    if (!confirm("Are you sure you want to cancel this order? It will be moved to History.")) return;
     try {
       const res = await fetch(`/api/orders/${orderId}`, {
-        method: "DELETE"
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "Cancelled" })
       });
       if (res.ok) {
         fetchOrders();
       }
     } catch (error) {
-      console.error("Error deleting order:", error);
+      console.error("Error cancelling order:", error);
     }
   };
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'Pending': return 'warning';
-      case 'Preparing': return 'primary';
-      case 'Served': return 'success';
-      case 'Completed': return 'success';
-      case 'Cancelled': return 'error';
-      default: return 'default';
+      case 'Pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'Preparing': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'Served': return 'bg-green-100 text-green-800 border-green-200';
+      case 'Completed': return 'bg-green-100 text-green-800 border-green-200';
+      case 'Cancelled': return 'bg-red-100 text-red-800 border-red-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
   const getStatusIcon = (status) => {
     switch (status) {
-      case 'Pending': return <Clock size={16} />;
-      case 'Preparing': return <Play size={16} />;
-      case 'Served': return <CheckCircle size={16} />;
-      case 'Completed': return <CheckCircle size={16} />;
-      case 'Cancelled': return <XCircle size={16} />;
+      case 'Pending': return <Clock size={14} className="mr-1 inline" />;
+      case 'Preparing': return <Play size={14} className="mr-1 inline" />;
+      case 'Served': return <CheckCircle size={14} className="mr-1 inline" />;
+      case 'Completed': return <CheckCircle size={14} className="mr-1 inline" />;
+      case 'Cancelled': return <XCircle size={14} className="mr-1 inline" />;
       default: return null;
     }
   };
 
   if (loading && orders.length === 0) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-        <CircularProgress />
-      </Box>
+      <div className="flex justify-center items-center py-16">
+        <Loader2 className="animate-spin text-green-500" size={32} />
+      </div>
     );
   }
 
   return (
-    <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-        <Typography variant="h4" sx={{ fontWeight: 800 }}>Live Orders</Typography>
-        <Button 
-          startIcon={<RefreshCw size={18} />} 
+    <div className="space-y-6">
+      <div className="flex justify-between items-center bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+        <h2 className="text-2xl font-extrabold text-gray-900 tracking-tight">Live Orders</h2>
+        <button 
           onClick={fetchOrders}
-          variant="outlined"
-          sx={{ borderRadius: 2 }}
+          className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold rounded-xl transition-colors shadow-sm text-sm"
         >
-          Refresh
-        </Button>
-      </Box>
+          <RefreshCw size={16} /> Refresh
+        </button>
+      </div>
 
-      {/* Desktop View - Hidden on mobile */}
-      <Box sx={{ display: { xs: 'none', md: 'block' } }}>
-        <TableContainer component={Paper} sx={{ borderRadius: '24px', overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
-          <Table>
-            <TableHead sx={{ bgcolor: 'background.default' }}>
-              <TableRow>
-                <TableCell />
-                <TableCell sx={{ fontWeight: 700 }}>Order ID</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Customer</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Table</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Items</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Total</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
+      {/* Desktop View */}
+      <div className="hidden md:block bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-gray-50 text-gray-500 font-bold uppercase text-xs">
+              <tr>
+                <th className="px-6 py-4"></th>
+                <th className="px-6 py-4">Order ID</th>
+                <th className="px-6 py-4">Customer</th>
+                <th className="px-6 py-4">Table</th>
+                <th className="px-6 py-4">Items</th>
+                <th className="px-6 py-4">Total</th>
+                <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
               {orders.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={8} align="center" sx={{ py: 8 }}>
-                    <Typography color="text.secondary">No orders yet.</Typography>
-                  </TableCell>
-                </TableRow>
+                <tr>
+                  <td colSpan="8" className="px-6 py-16 text-center text-gray-500 font-medium">
+                    No active orders at the moment.
+                  </td>
+                </tr>
               ) : (
                 orders.map((order) => (
                   <React.Fragment key={order._id}>
-                    <TableRow hover sx={{ '& > *': { borderBottom: 'unset' } }}>
-                      <TableCell>
-                        <IconButton size="small" onClick={() => setExpandedOrder(expandedOrder === order._id ? null : order._id)}>
+                    <tr className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4">
+                        <button 
+                          onClick={() => setExpandedOrder(expandedOrder === order._id ? null : order._id)}
+                          className="p-1 text-gray-400 hover:text-gray-700 hover:bg-gray-200 rounded-lg transition-colors"
+                        >
                           {expandedOrder === order._id ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                        </IconButton>
-                      </TableCell>
-                      <TableCell sx={{ fontFamily: 'monospace', fontWeight: 600 }}>#{order._id.slice(-6).toUpperCase()}</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>{order.customerName}</TableCell>
-                      <TableCell>
-                        <Chip label={`Table ${order.tableNumber}`} size="small" variant="outlined" sx={{ fontWeight: 700 }} />
-                      </TableCell>
-                      <TableCell>{order.items.reduce((sum, item) => sum + item.quantity, 0)} items</TableCell>
-                      <TableCell sx={{ fontWeight: 800 }}>₹{order.totalPrice}</TableCell>
-                      <TableCell>
-                        <Chip 
-                          icon={getStatusIcon(order.status)}
-                          label={order.status} 
-                          color={getStatusColor(order.status)} 
-                          size="small"
-                          sx={{ fontWeight: 700, px: 1 }}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Box sx={{ display: 'flex', gap: 1 }}>
+                        </button>
+                      </td>
+                      <td className="px-6 py-4 font-mono font-bold text-gray-600">
+                        #{order._id.slice(-6).toUpperCase()}
+                      </td>
+                      <td className="px-6 py-4 font-bold text-gray-900">{order.customerName}</td>
+                      <td className="px-6 py-4">
+                        <span className="inline-block px-3 py-1 bg-gray-100 text-gray-800 border border-gray-200 rounded-full text-xs font-bold whitespace-nowrap">
+                          Table {order.tableNumber}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 font-medium text-gray-600">
+                        {(order.items || []).reduce((sum, item) => sum + (item.quantity || 1), 0)} items
+                      </td>
+                      <td className="px-6 py-4 font-black text-gray-900">₹{order.totalPrice}</td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold border ${getStatusColor(order.status)} whitespace-nowrap`}>
+                          {getStatusIcon(order.status)}
+                          {order.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex justify-end gap-2">
                           {order.status === 'Pending' && (
-                            <Button 
-                              variant="contained" 
-                              size="small" 
+                            <button 
                               onClick={() => updateStatus(order._id, 'Preparing')}
-                              sx={{ borderRadius: 2 }}
+                              className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition-colors shadow-sm"
                             >
                               Accept
-                            </Button>
+                            </button>
                           )}
                           {order.status === 'Preparing' && (
-                            <Button 
-                              variant="contained" 
-                              size="small" 
-                              color="success"
+                            <button 
                               onClick={() => updateStatus(order._id, 'Served')}
-                              sx={{ borderRadius: 2 }}
+                              className="px-4 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded-lg transition-colors shadow-sm"
                             >
                               Ready
-                            </Button>
+                            </button>
                           )}
                           {order.status === 'Served' && (
-                            <Button 
-                              variant="contained" 
-                              size="small" 
-                              color="success"
+                            <button 
                               onClick={() => updateStatus(order._id, 'Completed')}
-                              sx={{ borderRadius: 2 }}
+                              className="px-4 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded-lg transition-colors shadow-sm"
                             >
                               Done (Paid)
-                            </Button>
+                            </button>
                           )}
                           {order.status !== 'Served' && order.status !== 'Cancelled' && (
-                            <Button 
-                              variant="outlined" 
-                              size="small" 
-                              color="error"
-                              onClick={() => deleteOrder(order._id)}
-                              sx={{ borderRadius: 2 }}
+                            <button 
+                              onClick={() => cancelOrder(order._id)}
+                              className="px-4 py-1.5 bg-white border border-red-200 text-red-600 hover:bg-red-50 text-xs font-bold rounded-lg transition-colors shadow-sm"
                             >
                               Cancel
-                            </Button>
+                            </button>
                           )}
-                        </Box>
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={8}>
-                        <Collapse in={expandedOrder === order._id} timeout="auto" unmountOnExit>
-                          <Box sx={{ margin: 2 }}>
-                            <Typography variant="h6" gutterBottom component="div" sx={{ fontWeight: 700 }}>
-                              Order Details
-                            </Typography>
-                            <List disablePadding>
-                              {order.items.map((item) => (
-                                <ListItem key={item.id} sx={{ py: 1, px: 0 }}>
-                                  <ListItemText 
-                                    primary={`${item.name} x ${item.quantity}`} 
-                                    secondary={item.category}
-                                    slotProps={{ primary: { fontWeight: 600 } }}
-                                  />
-                                  <Typography sx={{ fontWeight: 700 }}>₹{item.price * item.quantity}</Typography>
-                                </ListItem>
+                        </div>
+                      </td>
+                    </tr>
+                    {expandedOrder === order._id && (
+                      <tr className="bg-green-50/30 border-t-0">
+                        <td colSpan="8" className="px-8 py-6">
+                          <div className="bg-white p-6 rounded-2xl border border-green-100 shadow-[0_8px_30px_rgba(249,115,22,0.06)] w-full">
+                            <h4 className="font-black text-gray-900 mb-5 pb-3 border-b border-gray-100 flex items-center gap-2">
+                              <span className="w-2 h-5 bg-green-500 rounded-full"></span> Order Summary
+                            </h4>
+                            <div className="space-y-4 mb-6">
+                              {(order.items || []).map((item) => (
+                                <div key={item.id} className="flex justify-between items-center text-sm p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                  <div>
+                                    <p className="font-extrabold text-gray-800 text-base">{item.name} <span className="text-green-500 bg-green-50 px-2 py-0.5 rounded-md font-bold text-xs ml-2">x {item.quantity}</span></p>
+                                    <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mt-1">{item.category}</p>
+                                  </div>
+                                  <div className="font-black text-gray-900 text-base">₹{item.price * item.quantity}</div>
+                                </div>
                               ))}
-                              <Divider sx={{ my: 1 }} />
-                              <ListItem sx={{ px: 0 }}>
-                                <ListItemText primary="Grand Total" slotProps={{ primary: { fontWeight: 800 } }} />
-                                <Typography variant="h6" sx={{ fontWeight: 800, color: 'primary.main' }}>₹{order.totalPrice}</Typography>
-                              </ListItem>
-                            </List>
-                          </Box>
-                        </Collapse>
-                      </TableCell>
-                    </TableRow>
+                            </div>
+                            <div className="pt-4 border-t-2 border-dashed border-gray-200 flex justify-between items-center">
+                              <span className="font-black text-gray-400 uppercase tracking-widest text-sm">Grand Total</span>
+                              <span className="text-2xl font-black text-green-600 bg-green-50 px-4 py-1.5 rounded-xl border border-green-100">₹{order.totalPrice}</span>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
                   </React.Fragment>
                 ))
               )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Box>
+            </tbody>
+          </table>
+        </div>
+      </div>
 
-      {/* Mobile View - Shown on mobile only */}
-      <Box sx={{ display: { xs: 'flex', md: 'none' }, flexDirection: 'column', gap: 2 }}>
+      {/* Mobile View */}
+      <div className="md:hidden space-y-4">
         {orders.length === 0 ? (
-          <Box sx={{ py: 8, textAlign: 'center', bgcolor: 'background.paper', borderRadius: '24px', border: '1px solid', borderColor: 'divider' }}>
-            <Typography color="text.secondary">No orders yet.</Typography>
-          </Box>
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-10 text-center">
+            <p className="text-gray-500 font-medium">No active orders at the moment.</p>
+          </div>
         ) : (
           orders.map((order) => (
-            <Paper key={order._id} sx={{ p: 2, borderRadius: 4, border: 1, borderColor: 'divider' }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 2 }}>
-                <Box>
-                  <Typography variant="subtitle2" sx={{ fontFamily: 'monospace', color: 'text.secondary' }}>
-                    #{order._id.slice(-6).toUpperCase()}
-                  </Typography>
-                  <Typography variant="h6" sx={{ fontWeight: 700 }}>{order.customerName}</Typography>
-                  <Chip label={`Table ${order.tableNumber}`} size="small" variant="outlined" sx={{ mt: 0.5, fontWeight: 700 }} />
-                </Box>
-                <Chip 
-                  label={order.status} 
-                  color={getStatusColor(order.status)} 
-                  size="small"
-                  sx={{ fontWeight: 700 }}
-                />
-              </Box>
+            <div key={order._id} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200">
+              <div className="flex justify-between items-start mb-4">
+                <div>
+                  <div className="font-mono text-xs font-bold text-gray-500 mb-1">#{order._id.slice(-6).toUpperCase()}</div>
+                  <h3 className="font-extrabold text-lg text-gray-900">{order.customerName}</h3>
+                  <div className="mt-1.5 inline-block px-2.5 py-1 bg-gray-100 text-gray-800 border border-gray-200 rounded-md text-xs font-bold">
+                    Table {order.tableNumber}
+                  </div>
+                </div>
+                <div className={`inline-flex items-center px-2 py-1 rounded text-xs font-bold border ${getStatusColor(order.status)}`}>
+                  {order.status}
+                </div>
+              </div>
 
-              <Box sx={{ bgcolor: 'grey.50', p: 2, borderRadius: 2, mb: 2 }}>
-                {order.items.map((item) => (
-                  <Box key={item.id} sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                    <Typography variant="body2" sx={{ fontWeight: 600 }}>{item.name} x {item.quantity}</Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 700 }}>₹{item.price * item.quantity}</Typography>
-                  </Box>
-                ))}
-                <Divider sx={{ my: 1 }} />
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>Total</Typography>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 800, color: 'primary.main' }}>₹{order.totalPrice}</Typography>
-                </Box>
-              </Box>
+              <div className="bg-white rounded-2xl p-5 mb-5 border border-green-100 shadow-[0_4px_20px_rgba(249,115,22,0.04)]">
+                <h4 className="font-black text-gray-900 mb-4 flex items-center gap-2 text-sm uppercase tracking-wider">
+                  <span className="w-1.5 h-4 bg-green-500 rounded-full"></span> Summary
+                </h4>
+                <div className="space-y-3 mb-4">
+                  {(order.items || []).map((item) => (
+                    <div key={item.id} className="flex justify-between items-center bg-gray-50 p-3 rounded-xl border border-gray-100">
+                      <div>
+                        <span className="font-extrabold text-gray-800 block">{item.name}</span>
+                        <span className="text-green-500 bg-green-50 px-1.5 py-0.5 rounded text-[10px] font-bold mt-1 inline-block">Qty: {item.quantity}</span>
+                      </div>
+                      <span className="font-black text-gray-900">₹{item.price * item.quantity}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="pt-4 border-t-2 border-dashed border-gray-200 flex justify-between items-center">
+                  <span className="font-black text-gray-400 uppercase tracking-widest text-xs">Total</span>
+                  <span className="font-black text-green-600 text-xl bg-green-50 px-3 py-1 rounded-lg border border-green-100">₹{order.totalPrice}</span>
+                </div>
+              </div>
 
-              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+              <div className="flex flex-wrap gap-2">
                 {order.status === 'Pending' && (
-                  <Button 
-                    fullWidth
-                    variant="contained" 
+                  <button 
                     onClick={() => updateStatus(order._id, 'Preparing')}
-                    sx={{ borderRadius: 2, py: 1 }}
+                    className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl transition-colors shadow-sm text-center"
                   >
                     Accept Order
-                  </Button>
+                  </button>
                 )}
                 {order.status === 'Preparing' && (
-                  <Button 
-                    fullWidth
-                    variant="contained" 
-                    color="success"
+                  <button 
                     onClick={() => updateStatus(order._id, 'Served')}
-                    sx={{ borderRadius: 2, py: 1 }}
+                    className="flex-1 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-bold rounded-xl transition-colors shadow-sm text-center"
                   >
                     Ready / Served
-                  </Button>
+                  </button>
                 )}
                 {order.status === 'Served' && (
-                  <Button 
-                    fullWidth
-                    variant="contained" 
-                    color="success"
+                  <button 
                     onClick={() => updateStatus(order._id, 'Completed')}
-                    sx={{ borderRadius: 2, py: 1 }}
+                    className="flex-1 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-bold rounded-xl transition-colors shadow-sm text-center"
                   >
                     Done (Paid & Clear)
-                  </Button>
+                  </button>
                 )}
                 {order.status !== 'Served' && order.status !== 'Cancelled' && (
-                  <Button 
-                    fullWidth
-                    variant="outlined" 
-                    color="error"
-                    onClick={() => deleteOrder(order._id)}
-                    sx={{ borderRadius: 2, py: 1 }}
+                  <button 
+                    onClick={() => cancelOrder(order._id)}
+                    className="flex-none px-4 py-2.5 bg-white border border-red-200 text-red-600 hover:bg-red-50 text-sm font-bold rounded-xl transition-colors shadow-sm text-center"
                   >
                     Cancel
-                  </Button>
+                  </button>
                 )}
-              </Box>
-            </Paper>
+              </div>
+            </div>
           ))
         )}
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 }
-
-

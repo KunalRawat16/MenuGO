@@ -8,21 +8,46 @@ import {
   X,
   Trophy,
   ArrowUpNarrowWide,
-  ArrowDownWideNarrow
+  ArrowDownWideNarrow,
+  SlidersHorizontal
 } from "lucide-react";
 import Image from "next/image";
-import {
-  Box,
-  Typography,
-  Container,
-  TextField,
-  InputAdornment,
-  IconButton,
-  Drawer,
-  Stack,
-  Button
-} from "@mui/material";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
+const FilterTag = ({ label, icon: Icon, active, onClick, isVegTag = false, isNonVegTag = false }) => {
+  let activeBorderColor = "border-green-500";
+  let activeBgColor = "bg-green-50";
+  let activeTextColor = "text-green-500";
+  
+  if (isVegTag) {
+    activeBorderColor = "border-green-400";
+    activeBgColor = "bg-green-50";
+    activeTextColor = "text-green-600";
+  } else if (isNonVegTag) {
+    activeBorderColor = "border-red-400";
+    activeBgColor = "bg-red-50";
+    activeTextColor = "text-red-600";
+  }
+
+  return (
+    <button
+      type="button"
+      aria-pressed={active}
+      onClick={onClick}
+      className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-[14px] border cursor-pointer transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-1 ${
+        active 
+          ? `${activeBorderColor} ${activeBgColor} shadow-[0_4px_12px_rgba(249,115,22,0.15)]` 
+          : 'border-gray-100 bg-white shadow-[0_2px_4px_rgba(0,0,0,0.02)] hover:bg-gray-50'
+      }`}
+    >
+      {Icon && <Icon size={16} className={active ? activeTextColor : "text-gray-500"} />}
+      <span className={`text-[0.85rem] font-bold ${active ? activeTextColor : "text-gray-800"}`}>
+        {label}
+      </span>
+      {active && <X size={14} className={activeTextColor} />}
+    </button>
+  );
+};
 
 export default function Header({
   restaurant,
@@ -37,53 +62,16 @@ export default function Header({
 }) {
   const [bannerSrc, setBannerSrc] = useState(restaurant.banner || "https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=2070");
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const BRAND_COLOR = "#22c55e"; // Standard Emerald Green
+  const [mounted, setMounted] = useState(false);
 
-  const toggleDrawer = (open) => (event) => {
-    if (event.type === 'keydown' && (event.key === 'Tab' || event.key === 'Shift')) return;
-    setDrawerOpen(open);
-  };
+  useEffect(() => setMounted(true), []);
 
-  const FilterTag = ({ label, icon: Icon, active, onClick, activeColor = BRAND_COLOR }) => (
-    <Box
-      onClick={onClick}
-      sx={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 1,
-        px: 2,
-        py: 1.2,
-        borderRadius: '14px',
-        border: '1px solid',
-        borderColor: active ? (activeColor === BRAND_COLOR ? '#86efac' : '#fca5a5') : 'rgba(0,0,0,0.08)',
-        bgcolor: active ? (activeColor === BRAND_COLOR ? '#f0fdf4' : '#fef2f2') : 'white',
-        cursor: 'pointer',
-        transition: 'all 0.2s ease',
-        boxShadow: active ? `0 4px 12px ${activeColor}15` : '0 2px 4px rgba(0,0,0,0.02)',
-        '&:hover': { bgcolor: active ? (activeColor === BRAND_COLOR ? '#f0fdf4' : '#fef2f2') : '#f8fafc' }
-      }}
-    >
-      {Icon && <Icon size={16} color={active ? activeColor : "#64748b"} />}
-      <Typography variant="body2" sx={{
-        fontWeight: 700,
-        color: active ? activeColor : "#1e293b",
-        fontSize: '0.85rem'
-      }}>
-        {label}
-      </Typography>
-      {active && <X size={14} color={activeColor} />}
-    </Box>
-  );
+  const toggleDrawer = (open) => () => setDrawerOpen(open);
 
   return (
-    <Box sx={{ position: 'relative', width: '100%', mb: '15px' }} suppressHydrationWarning>
+    <div className="relative w-full mb-4" suppressHydrationWarning>
       {/* Immersive Banner Section */}
-      <Box sx={{
-        position: 'relative',
-        height: { xs: 260, md: 360 },
-        width: '100%',
-        overflow: 'hidden'
-      }}>
+      <div className="relative h-[260px] md:h-[360px] w-full overflow-hidden">
         <Image
           src={bannerSrc}
           alt="Restaurant Banner"
@@ -93,205 +81,156 @@ export default function Header({
           sizes="100vw"
           onError={() => setBannerSrc("https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=2070")}
         />
-        <Box sx={{
-          position: 'absolute',
-          inset: 0,
-          background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 50%, transparent 100%)',
-        }} />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
 
-        <Box sx={{
-          position: 'absolute',
-          bottom: { xs: 20, md: 40 },
-          left: 0,
-          right: 0,
-          p: { xs: 3, md: 4 },
-          color: 'white'
-        }} suppressHydrationWarning>
-          <Container maxWidth="md">
-            <Typography variant="h1" sx={{
-              fontWeight: 500,
-              fontSize: { xs: '2rem', md: '3.75rem' },
-              letterSpacing: '-0.02em',
-              lineHeight: 1.1,
-              mb: 0.5,
-              textShadow: '0 4px 12px rgba(0,0,0,0.3)'
-            }}>
+        <div className="absolute bottom-[20px] md:bottom-[40px] left-0 right-0 px-6 md:px-8 text-white" suppressHydrationWarning>
+          <div className="max-w-4xl mx-auto">
+            <h1 className="font-medium text-[2rem] md:text-[3.75rem] tracking-tight leading-tight mb-1 md:mb-2 drop-shadow-md">
               {restaurant.name}
-            </Typography>
-            <Typography variant="body1" sx={{
-              fontWeight: 200,
-              opacity: 0.85,
-              fontSize: { xs: '0.95rem', md: '1.2rem' },
-              letterSpacing: '0.01em',
-              mb: 2
-            }}>
+            </h1>
+            <p className="font-light opacity-85 text-[0.95rem] md:text-[1.2rem] tracking-wide mb-4">
               {restaurant.address}
-            </Typography>
+            </p>
 
-            <Box sx={{ display: 'flex', gap: 3, alignItems: 'center', opacity: 0.9 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <Star size={16} fill={BRAND_COLOR} color={BRAND_COLOR} />
-                <Typography variant="body2" sx={{ fontWeight: 600 }}>{restaurant.rating || "4.2"}</Typography>
-              </Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <div className="flex gap-6 items-center opacity-90">
+              <div className="flex items-center gap-1.5">
+                <Star size={16} fill="#f97316" className="text-green-500" />
+                <span className="font-bold text-sm md:text-base">{restaurant.rating || "4.2"}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
                 <Clock size={16} />
-                <Typography variant="body2" sx={{ fontWeight: 600 }}>{restaurant.avgTime || "20-30 mins"}</Typography>
-              </Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <span className="font-bold text-sm md:text-base">{restaurant.avgTime || "20-30 mins"}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
                 <IndianRupee size={16} />
-                <Typography variant="body2" sx={{ fontWeight: 600 }}>150 per person</Typography>
-              </Box>
-            </Box>
-          </Container>
-        </Box>
-      </Box>
+                <span className="font-bold text-sm md:text-base">150 per person</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Floating Search & Filter Row */}
-      <Container maxWidth="md" sx={{ mt: -4, position: 'relative', zIndex: 10, px: { xs: 2, md: 0 } }}>
-        <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
-          <TextField
-            fullWidth
-            placeholder="Start typing to search..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                bgcolor: 'white',
-                borderRadius: '12px',
-                height: 54,
-                boxShadow: '0 8px 30px rgba(0,0,0,0.08)',
-                '& fieldset': { borderColor: 'transparent' },
-                '&.Mui-focused fieldset': { borderColor: 'transparent' },
-              }
-            }}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon size={20} color="#94a3b8" />
-                  </InputAdornment>
-                ),
-              }
-            }}
-          />
-          <IconButton
+      <div className="max-w-4xl mx-auto -mt-6 relative z-10 px-4 md:px-0">
+        <div className="flex gap-3 items-center">
+          <div className="relative flex-1">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <SearchIcon size={20} className="text-gray-400" />
+            </div>
+            <input
+              type="search"
+              aria-label="Search dishes"
+              placeholder="Start typing to search..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-white rounded-xl h-[54px] pl-11 pr-4 text-gray-900 font-medium placeholder-gray-400 shadow-[0_8px_30px_rgba(0,0,0,0.08)] focus:outline-none focus:ring-2 focus:ring-green-500 transition-all border border-transparent"
+            />
+          </div>
+          <button
             onClick={toggleDrawer(true)}
-            sx={{
-              bgcolor: 'white', width: 54, height: 54, borderRadius: '12px',
-              boxShadow: '0 8px 30px rgba(0,0,0,0.08)',
-              border: '1px solid rgba(0,0,0,0.05)',
-              color: drawerOpen ? BRAND_COLOR : '#1e293b',
-              '&:hover': { bgcolor: '#f8fafc' }
-            }}
+            aria-label="Open filters and sorting"
+            aria-expanded={drawerOpen}
+            className={`flex-shrink-0 w-[54px] h-[54px] bg-white rounded-xl flex items-center justify-center shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-gray-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 ${drawerOpen ? 'text-green-500' : 'text-gray-800'} hover:bg-gray-50`}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="4" y1="21" x2="4" y2="14" /><line x1="4" y1="10" x2="4" y2="3" />
-              <line x1="12" y1="21" x2="12" y2="12" /><line x1="12" y1="8" x2="12" y2="3" />
-              <line x1="20" y1="21" x2="20" y2="16" /><line x1="20" y1="12" x2="20" y2="3" />
-              <line x1="2" y1="14" x2="6" y2="14" /><line x1="10" y1="12" x2="14" y2="12" /><line x1="18" y1="16" x2="22" y2="16" />
-            </svg>
-          </IconButton>
-        </Box>
+            <SlidersHorizontal size={22} strokeWidth={2.5} />
+          </button>
+        </div>
 
         {/* Simplified Filter Drawer */}
-        <Drawer
-          anchor="bottom"
-          open={drawerOpen}
-          onClose={toggleDrawer(false)}
-          PaperProps={{
-            sx: {
-              borderTopLeftRadius: '28px',
-              borderTopRightRadius: '28px',
-              maxHeight: '90vh',
-              bgcolor: '#f8fafc'
-            }
-          }}
-        >
-          <Box sx={{ p: 4, pb: 6 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-              <Typography variant="h5" sx={{ fontWeight: 900, color: '#0f172a' }}>Filters and sorting</Typography>
-              <IconButton onClick={toggleDrawer(false)} sx={{ bgcolor: 'white', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
-                <X size={20} />
-              </IconButton>
-            </Box>
+        {mounted && (
+          <>
+            <div 
+              aria-hidden="true"
+              className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-50 transition-opacity duration-300 ${drawerOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+              onClick={toggleDrawer(false)}
+            />
+            <div 
+              role="dialog"
+              aria-modal="true"
+              aria-label="Filters and sorting drawer"
+              className={`fixed bottom-0 left-0 right-0 bg-gray-50 rounded-t-[28px] z-50 transform transition-transform duration-300 ease-out max-h-[90vh] overflow-y-auto ${drawerOpen ? 'translate-y-0' : 'translate-y-full'}`}
+            >
+              <div className="p-8 pb-10 max-w-4xl mx-auto">
+                <div className="flex justify-between items-center mb-8">
+                  <h2 className="text-2xl font-black text-gray-900">Filters and sorting</h2>
+                  <button 
+                    onClick={toggleDrawer(false)} 
+                    aria-label="Close filters"
+                    className="p-2 bg-white rounded-full shadow-[0_2px_8px_rgba(0,0,0,0.05)] text-gray-600 hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
 
-            <Stack spacing={4}>
-              {/* Preference Section */}
-              <Box sx={{ bgcolor: 'white', p: 3, borderRadius: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 2, color: '#1e293b' }}>Preference</Typography>
-                <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
-                  <FilterTag
-                    label="Veg Only"
-                    active={vegOnly}
-                    onClick={() => { setVegOnly(!vegOnly); if (!vegOnly) setNonVegOnly(false); }}
-                    icon={() => (
-                      <Box sx={{ width: 14, height: 14, border: '1px solid #22c55e', borderRadius: '2px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#22c55e' }} />
-                      </Box>
-                    )}
-                  />
-                  <FilterTag
-                    label="Non-veg Only"
-                    active={nonVegOnly}
-                    activeColor="#ef4444"
-                    onClick={() => { setNonVegOnly(!nonVegOnly); if (!nonVegOnly) setVegOnly(false); }}
-                    icon={() => (
-                      <Box sx={{ width: 14, height: 14, border: '1px solid #ef4444', borderRadius: '2px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#ef4444' }} />
-                      </Box>
-                    )}
-                  />
-                </Box>
-              </Box>
+                <div className="space-y-6">
+                  {/* Preference Section */}
+                  <div className="bg-white p-6 rounded-[24px] shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
+                    <h3 className="text-sm font-extrabold mb-4 text-gray-800 uppercase tracking-wider">Preference</h3>
+                    <div className="flex gap-3 flex-wrap">
+                      <FilterTag
+                        label="Veg Only"
+                        active={vegOnly}
+                        isVegTag={true}
+                        onClick={() => { setVegOnly(!vegOnly); if (!vegOnly) setNonVegOnly(false); }}
+                        icon={() => (
+                          <div className="w-3.5 h-3.5 border border-green-500 rounded-[2px] flex items-center justify-center">
+                            <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                          </div>
+                        )}
+                      />
+                      <FilterTag
+                        label="Non-veg Only"
+                        active={nonVegOnly}
+                        isNonVegTag={true}
+                        onClick={() => { setNonVegOnly(!nonVegOnly); if (!nonVegOnly) setVegOnly(false); }}
+                        icon={() => (
+                          <div className="w-3.5 h-3.5 border border-red-500 rounded-[2px] flex items-center justify-center">
+                            <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                          </div>
+                        )}
+                      />
+                    </div>
+                  </div>
 
-              {/* Sorting Options */}
-              <Box sx={{ bgcolor: 'white', p: 3, borderRadius: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 2, color: '#1e293b' }}>Sorting by</Typography>
-                <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
-                  <FilterTag
-                    label="Bestseller"
-                    icon={Trophy}
-                    active={sortBy === "popular"}
-                    onClick={() => setSortBy(sortBy === "popular" ? "default" : "popular")}
-                  />
-                  <FilterTag
-                    label="Price: Low to High"
-                    icon={ArrowUpNarrowWide}
-                    active={sortBy === "price_low"}
-                    onClick={() => setSortBy(sortBy === "price_low" ? "default" : "price_low")}
-                  />
-                  <FilterTag
-                    label="Price: High to Low"
-                    icon={ArrowDownWideNarrow}
-                    active={sortBy === "price_high"}
-                    onClick={() => setSortBy(sortBy === "price_high" ? "default" : "price_high")}
-                  />
-                </Box>
-              </Box>
-            </Stack>
+                  {/* Sorting Options */}
+                  <div className="bg-white p-6 rounded-[24px] shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
+                    <h3 className="text-sm font-extrabold mb-4 text-gray-800 uppercase tracking-wider">Sorting by</h3>
+                    <div className="flex gap-3 flex-wrap">
+                      <FilterTag
+                        label="Bestseller"
+                        icon={Trophy}
+                        active={sortBy === "popular"}
+                        onClick={() => setSortBy(sortBy === "popular" ? "default" : "popular")}
+                      />
+                      <FilterTag
+                        label="Price: Low to High"
+                        icon={ArrowUpNarrowWide}
+                        active={sortBy === "price_low"}
+                        onClick={() => setSortBy(sortBy === "price_low" ? "default" : "price_low")}
+                      />
+                      <FilterTag
+                        label="Price: High to Low"
+                        icon={ArrowDownWideNarrow}
+                        active={sortBy === "price_high"}
+                        onClick={() => setSortBy(sortBy === "price_high" ? "default" : "price_high")}
+                      />
+                    </div>
+                  </div>
+                </div>
 
-            <Box sx={{ mt: 5 }}>
-              <Button
-                fullWidth
-                variant="contained"
-                onClick={toggleDrawer(false)}
-                sx={{
-                  bgcolor: BRAND_COLOR,
-                  color: 'white',
-                  borderRadius: '16px',
-                  py: 2,
-                  fontWeight: 900,
-                  fontSize: '1rem',
-                  textTransform: 'none',
-                  '&:hover': { bgcolor: '#16a34a' }
-                }}
-              >
-                Apply Filters
-              </Button>
-            </Box>
-          </Box>
-        </Drawer>
-      </Container>
-    </Box>
+                <div className="mt-8">
+                  <button
+                    onClick={toggleDrawer(false)}
+                    className="w-full bg-green-500 hover:bg-green-600 text-white font-black py-4 rounded-[16px] text-lg transition-colors shadow-[0_8px_20px_-4px_rgba(249,115,22,0.4)]"
+                  >
+                    Apply Filters
+                  </button>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
   );
 }

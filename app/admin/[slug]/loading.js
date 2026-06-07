@@ -1,6 +1,6 @@
 'use client';
 
-import { Box, Container, Skeleton, Stack, Grid, Paper } from '@mui/material';
+import { Box, Container, Skeleton, Stack, Paper } from '@mui/material';
 
 export default function RestaurantAdminLoading() {
   return (

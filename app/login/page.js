@@ -45,7 +45,7 @@ export default function LoginPage() {
         setError(res.error || 'Invalid username or password');
         setIsLoading(false);
       }
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred. Please try again.');
       setIsLoading(false);
     }

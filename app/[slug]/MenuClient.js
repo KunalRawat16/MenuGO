@@ -10,29 +10,19 @@ const CartDrawer = dynamic(() => import("@/components/CartDrawer"), {
   ssr: false,
   loading: () => null
 });
+
 import { 
   ShoppingBag, 
-  ChevronRight, 
   Utensils, 
   Coffee, 
   Pizza, 
-  IceCream, 
   Soup, 
   Salad, 
   Beef, 
   Cake,
-  GlassWater
+  GlassWater,
+  CheckCircle2
 } from "lucide-react";
-import {
-  Box,
-  Typography,
-  Container,
-  Fab,
-  Badge,
-  Snackbar,
-  Alert,
-  Paper
-} from "@mui/material";
 
 export default function MenuClient({ restaurant }) {
   const [mounted, setMounted] = useState(false);
@@ -54,7 +44,7 @@ export default function MenuClient({ restaurant }) {
     setMounted(true);
     const savedCart = localStorage.getItem(`cart_${restaurant.slug}`);
     if (savedCart) {
-      try { setCart(JSON.parse(savedCart)); } catch (e) { }
+      try { setCart(JSON.parse(savedCart)); } catch { }
     }
     const savedOrderId = localStorage.getItem(`activeOrder_${restaurant.slug}`);
     if (savedOrderId) {
@@ -130,6 +120,7 @@ export default function MenuClient({ restaurant }) {
         setCart([]);
         setIsCartOpen(false);
         setOrderSuccess(true);
+        setTimeout(() => setOrderSuccess(false), 6000);
         setActiveOrder(data.order);
         localStorage.setItem(`activeOrder_${restaurant.slug}`, data.order._id);
       } else {
@@ -180,19 +171,19 @@ export default function MenuClient({ restaurant }) {
   // Icon Helper for Categories
   const getCategoryIcon = (cat) => {
     const c = cat.toLowerCase();
-    if (c.includes('appetizer') || c.includes('starter')) return <Soup size={20} color="#22c55e" />;
-    if (c.includes('main')) return <Utensils size={20} color="#22c55e" />;
-    if (c.includes('pizza') || c.includes('bread')) return <Pizza size={20} color="#22c55e" />;
-    if (c.includes('salad')) return <Salad size={20} color="#22c55e" />;
-    if (c.includes('meat') || c.includes('non')) return <Beef size={20} color="#22c55e" />;
-    if (c.includes('dessert') || c.includes('sweet')) return <Cake size={20} color="#22c55e" />;
-    if (c.includes('beverage') || c.includes('drink')) return <GlassWater size={20} color="#22c55e" />;
-    if (c.includes('coffee')) return <Coffee size={20} color="#22c55e" />;
-    return <Pizza size={20} color="#22c55e" />;
+    if (c.includes('appetizer') || c.includes('starter')) return <Soup size={20} className="text-green-500" />;
+    if (c.includes('main')) return <Utensils size={20} className="text-green-500" />;
+    if (c.includes('pizza') || c.includes('bread')) return <Pizza size={20} className="text-green-500" />;
+    if (c.includes('salad')) return <Salad size={20} className="text-green-500" />;
+    if (c.includes('meat') || c.includes('non')) return <Beef size={20} className="text-green-500" />;
+    if (c.includes('dessert') || c.includes('sweet')) return <Cake size={20} className="text-green-500" />;
+    if (c.includes('beverage') || c.includes('drink')) return <GlassWater size={20} className="text-green-500" />;
+    if (c.includes('coffee')) return <Coffee size={20} className="text-green-500" />;
+    return <Pizza size={20} className="text-green-500" />;
   };
 
   return (
-    <Box sx={{ pb: activeOrder ? 24 : 16, bgcolor: '#ffffff' }} suppressHydrationWarning>
+    <div className={`bg-white min-h-screen ${activeOrder ? 'pb-60' : 'pb-40'}`} suppressHydrationWarning>
       <Header 
         restaurant={restaurant} 
         searchQuery={searchQuery} 
@@ -205,196 +196,93 @@ export default function MenuClient({ restaurant }) {
         setSortBy={setSortBy}
       />
 
-      <Box sx={{
-        position: 'sticky',
-        top: 0,
-        zIndex: 50,
-        bgcolor: 'rgba(255, 255, 255, 0.95)',
-        backdropFilter: 'blur(10px)',
-        borderBottom: '1px solid',
-        borderColor: 'rgba(0,0,0,0.06)',
-      }} suppressHydrationWarning>
+      <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-md" suppressHydrationWarning>
         <CategoryTabs
           categories={restaurant.categories}
           activeCategory={activeCategory}
           setActiveCategory={setActiveCategory}
         />
-      </Box>
+      </div>
 
       {/* Premium Order Status Bar (Floating) */}
       {mounted && activeOrder && (
-        <Box sx={{
-          position: 'fixed',
-          bottom: cartCount > 0 ? 110 : 30,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: '94%',
-          maxWidth: 440,
-          zIndex: 1000,
-          animation: 'slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1)'
-        }}>
-          <Paper
-            elevation={0}
-            sx={{
-              p: 2.5,
-              borderRadius: '28px',
-              bgcolor: 'rgba(255, 255, 255, 0.9)',
-              backdropFilter: 'blur(15px)',
-              border: '1px solid rgba(255, 255, 255, 0.5)',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.15)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 2.5,
-              position: 'relative',
-              overflow: 'hidden'
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2.5 }}>
-              <Box sx={{
-                width: 58,
-                height: 58,
-                borderRadius: '20px',
-                background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-                boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.05)',
-                border: '1px solid rgba(0,0,0,0.05)'
-              }}>
-                <Typography variant="h4" sx={{
-                  animation: activeOrder.status === 'Preparing' ? 'cookingShake 2s infinite ease-in-out' : 'none'
-                }}>
+        <div className={`fixed left-1/2 -translate-x-1/2 w-[94%] max-w-md z-[1000] transition-all duration-500 ease-out ${cartCount > 0 ? 'bottom-[110px]' : 'bottom-[30px]'}`}>
+          <div className="bg-white/90 backdrop-blur-xl border border-white/50 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)] rounded-[28px] p-5 flex flex-col gap-5 overflow-hidden relative">
+            <div className="flex items-center gap-5 relative z-10">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center flex-shrink-0 shadow-inner border border-gray-100">
+                <span className={`text-2xl ${activeOrder.status === 'Preparing' ? 'animate-bounce' : ''}`}>
                   {activeOrder.status === 'Pending' && "⏳"}
                   {activeOrder.status === 'Preparing' && "🍳"}
                   {activeOrder.status === 'Served' && "🍲"}
                   {activeOrder.status === 'Completed' && "✨"}
-                </Typography>
-              </Box>
+                </span>
+              </div>
 
-              <Box sx={{ flex: 1 }}>
-                <Typography variant="caption" sx={{
-                  fontWeight: 900,
-                  textTransform: 'uppercase',
-                  color: '#22c55e',
-                  bgcolor: '#f0fdf4',
-                  px: 1.5,
-                  py: 0.4,
-                  borderRadius: '8px',
-                  fontSize: '0.65rem',
-                  letterSpacing: '0.08em',
-                  display: 'inline-block',
-                  mb: 0.8
-                }}>
+              <div className="flex-1">
+                <span className="inline-block bg-green-50 text-green-600 font-black uppercase text-[0.65rem] tracking-widest px-2 py-1 rounded-lg mb-1.5">
                   Order Tracking
-                </Typography>
+                </span>
 
-                <Typography variant="h6" sx={{ fontWeight: 900, lineHeight: 1.1, fontSize: '1.15rem', color: '#1a202c' }}>
+                <h3 className="font-black text-gray-900 leading-tight text-[1.15rem]">
                   {activeOrder.status === 'Pending' && "Chef just spotted your order! 👨‍🍳"}
                   {activeOrder.status === 'Preparing' && "Chef is cooking up a storm! 🔥"}
                   {activeOrder.status === 'Served' && "Bon Appétit! It's served 🥂"}
                   {activeOrder.status === 'Completed' && "Flavor mission complete! ✨"}
-                </Typography>
+                </h3>
 
-                <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.secondary', mt: 0.5, fontSize: '0.85rem' }}>
+                <p className="font-bold text-gray-500 text-[0.85rem] mt-1">
                   {activeOrder.status === 'Pending' && "The magic is about to start."}
                   {activeOrder.status === 'Preparing' && "Your meal is reaching perfection."}
                   {activeOrder.status === 'Served' && "Time to dive into the flavors!"}
                   {activeOrder.status === 'Completed' && "Payment confirmed. See you again!"}
-                </Typography>
-              </Box>
+                </p>
+              </div>
 
-              <Box sx={{
-                px: 1.5, py: 0.8, bgcolor: 'rgba(34, 197, 94, 0.1)', borderRadius: '12px', color: '#16a34a',
-                fontSize: '0.7rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.02em'
-              }}>
+              <div className="px-2.5 py-1.5 bg-green-50 text-green-600 rounded-xl text-[0.7rem] font-black uppercase tracking-widest self-start">
                 Live
-              </Box>
-            </Box>
+              </div>
+            </div>
 
-            <Box sx={{ px: 0.5 }}>
-              <Box sx={{
-                width: '100%',
-                height: 8,
-                bgcolor: '#f1f5f9',
-                borderRadius: 4,
-                overflow: 'hidden',
-                position: 'relative',
-                border: '1px solid rgba(0,0,0,0.03)'
-              }}>
-                <Box sx={{
-                  height: '100%',
-                  bgcolor: '#22c55e',
-                  borderRadius: 4,
-                  transition: 'width 1.2s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                  width:
-                    activeOrder.status === 'Pending' ? '20%' :
-                      activeOrder.status === 'Preparing' ? '65%' :
-                        activeOrder.status === 'Served' ? '100%' : '0%',
-                  boxShadow: '0 0 15px rgba(34, 197, 94, 0.5)'
-                }} />
-              </Box>
-            </Box>
-
-            <style jsx global>{`
-              @keyframes slideUp {
-                from { transform: translate(-50%, 100%); opacity: 0; }
-                to { transform: translate(-50%, 0); opacity: 1; }
-              }
-              @keyframes cookingShake {
-                0%, 100% { transform: rotate(0deg); }
-                25% { transform: rotate(-10deg); }
-                75% { transform: rotate(10deg); }
-              }
-            `}</style>
-          </Paper>
-        </Box>
+            <div className="px-1 relative z-10">
+              <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden relative border border-gray-50">
+                <div 
+                  className="h-full bg-green-500 rounded-full transition-all duration-[1.2s] ease-[cubic-bezier(0.34,1.56,0.64,1)] shadow-[0_0_15px_rgba(34,197,94,0.5)]"
+                  style={{ 
+                    width: activeOrder.status === 'Pending' ? '20%' :
+                           activeOrder.status === 'Preparing' ? '65%' :
+                           (activeOrder.status === 'Served' || activeOrder.status === 'Completed') ? '100%' : '0%'
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
-      <Container maxWidth="md" sx={{ mt: 4 }} suppressHydrationWarning>
+      <div className="max-w-4xl mx-auto px-4 mt-8" suppressHydrationWarning>
         {/* Brand Story Section with refined spacing */}
-        <Box sx={{ mb: 6, textAlign: 'center', px: 2 }}>
-          <Typography variant="body1" sx={{ 
-            color: '#64748b', 
-            fontWeight: 500, 
-            lineHeight: 1.8,
-            fontSize: '1rem',
-            fontStyle: 'italic',
-            maxWidth: '600px',
-            mx: 'auto'
-          }}>
-            "Our Chefs traveled the globe to bring the best flavours for you. Make sure you taste a bit from every course."
-          </Typography>
-        </Box>
+        <div className="mb-10 text-center px-4">
+          <p className="text-gray-500 font-medium leading-relaxed italic max-w-2xl mx-auto text-[1rem]">
+            &quot;Our Chefs traveled the globe to bring the best flavours for you. Make sure you taste a bit from every course.&quot;
+          </p>
+        </div>
 
         {/* Menu Items grouped by Category */}
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0 }} suppressHydrationWarning>
+        <div className="flex flex-col" suppressHydrationWarning>
           {categories.map((category) => {
             const itemsInCategory = sortedAndFilteredItems.filter(item => item.category === category);
             if (itemsInCategory.length === 0) return null;
 
             return (
-              <Box key={category} id={category} sx={{ scrollMarginTop: '100px' }}>
-                <Box sx={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: 1, 
-                  mb: 1,
-                  mt: 3,
-                }}>
+              <div key={category} id={category} className="scroll-mt-[100px] mb-8">
+                <div className="flex items-center gap-2.5 mb-4 mt-6">
                   {getCategoryIcon(category)}
-                  <Typography variant="h5" sx={{ 
-                    fontWeight: 900, 
-                    fontSize: { xs: '1.2rem', md: '1.5rem' },
-                    color: '#0f172a',
-                    letterSpacing: '-0.02em',
-                    textTransform: 'uppercase'
-                  }}>
+                  <h2 className="font-black text-gray-900 text-[1.2rem] md:text-[1.5rem] tracking-tight uppercase">
                     {category}
-                  </Typography>
-                </Box>
+                  </h2>
+                </div>
 
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                <div className="flex flex-col">
                   {itemsInCategory.map((item) => (
                     <MenuCard
                       key={item.id}
@@ -404,39 +292,27 @@ export default function MenuClient({ restaurant }) {
                       onUpdateQuantity={updateQuantity}
                     />
                   ))}
-                </Box>
-              </Box>
+                </div>
+              </div>
             );
           })}
-        </Box>
-      </Container>
+        </div>
+      </div>
 
       {/* Floating Action Elements (Cart & Status) */}
-      {mounted && cartCount > 0 && (
-        <Fab
-          variant="extended"
+      {mounted && cartCount > 0 && !isCartOpen && (
+        <button
           onClick={() => setIsCartOpen(true)}
-          sx={{
-            position: 'fixed',
-            bottom: 30,
-            right: 30,
-            bgcolor: '#22c55e',
-            color: 'white',
-            px: 3,
-            '&:hover': { bgcolor: '#16a34a' },
-            boxShadow: '0 12px 24px rgba(34, 197, 94, 0.3)',
-            zIndex: 1000,
-            textTransform: 'none',
-            fontWeight: 900,
-            fontSize: '1rem',
-            gap: 1.5
-          }}
+          className="fixed bottom-[30px] right-[30px] bg-green-500 text-white px-6 py-4 rounded-full flex items-center gap-3 shadow-[0_12px_24px_rgba(249,115,22,0.3)] hover:bg-green-600 transition-colors z-[1000] hover:scale-105 active:scale-95"
         >
-          <Badge badgeContent={cartCount} color="error" sx={{ '& .MuiBadge-badge': { fontWeight: 900 } }}>
-            <ShoppingBag size={22} />
-          </Badge>
-          View Cart
-        </Fab>
+          <div className="relative">
+            <ShoppingBag size={24} />
+            <span className="absolute -top-2 -right-2 bg-white text-green-600 text-[0.7rem] font-black w-5 h-5 rounded-full flex items-center justify-center shadow-sm">
+              {cartCount}
+            </span>
+          </div>
+          <span className="font-black text-[1rem]">View Cart</span>
+        </button>
       )}
 
       {mounted && (
@@ -451,16 +327,15 @@ export default function MenuClient({ restaurant }) {
         />
       )}
 
-      <Snackbar 
-        open={orderSuccess} 
-        autoHideDuration={6000} 
-        onClose={() => setOrderSuccess(false)}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      {/* Custom Tailwind Toast for Order Success */}
+      <div 
+        className={`fixed top-6 left-1/2 -translate-x-1/2 z-[1500] transition-all duration-500 transform ${orderSuccess ? 'translate-y-0 opacity-100' : '-translate-y-12 opacity-0 pointer-events-none'}`}
       >
-        <Alert severity="success" sx={{ borderRadius: '16px', fontWeight: 700 }}>
+        <div className="bg-green-500 text-white px-6 py-3.5 rounded-2xl shadow-xl flex items-center gap-3 font-bold text-sm">
+          <CheckCircle2 size={20} />
           Order placed successfully! Tracking is active.
-        </Alert>
-      </Snackbar>
-    </Box>
+        </div>
+      </div>
+    </div>
   );
 }

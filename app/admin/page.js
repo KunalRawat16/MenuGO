@@ -29,5 +29,7 @@ export default async function SuperAdminPage() {
     subscription: r.subscription || { plan: 'free' }
   }));
 
-  return <SuperAdminClient initialRestaurants={restaurants} />;
+  const safeRestaurants = JSON.parse(JSON.stringify(restaurants));
+
+  return <SuperAdminClient initialRestaurants={safeRestaurants} />;
 }

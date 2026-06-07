@@ -1,26 +1,42 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Plus, Edit2, Trash2, QrCode, X, Check, Eye, Settings, CreditCard, LayoutList, Info, Menu, ShoppingBag, MapPin, Star, Timer, IndianRupee, Store } from "lucide-react";
+import { Plus, Edit2, Trash2, QrCode, X, Check, Eye, LayoutList, Info, ShoppingBag, MapPin, Star, Timer, IndianRupee, Store, Headset } from "lucide-react";
 import { QRCodeCanvas } from "qrcode.react";
-import { saveMenuItemAction, deleteMenuItemAction, updateRestaurantInfoAction, uploadImageAction, logoutAction, updateRestaurantCategoriesAction } from "@/app/actions";
+import { saveMenuItemAction, deleteMenuItemAction, updateRestaurantInfoAction, uploadImageAction, logoutAction, updateRestaurantCategoriesAction, getPlatformSettingsAction, updateRestaurantCredentialsAction } from "@/app/actions";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import OrdersDashboard from "@/components/admin/OrdersDashboard";
+import dynamic from "next/dynamic";
+
+const OrdersDashboard = dynamic(() => import("@/components/admin/OrdersDashboard"), {
+  ssr: false,
+  loading: () => <div className="h-64 flex items-center justify-center text-gray-400 font-bold">Loading active orders...</div>
+});
+
+const HistoryDashboard = dynamic(() => import("@/components/admin/HistoryDashboard"), {
+  ssr: false,
+  loading: () => <div className="h-64 flex items-center justify-center text-gray-400 font-bold">Loading history & analytics...</div>
+});
 
 export default function AdminClient({ restaurant }) {
   const router = useRouter();
   const [items, setItems] = useState(restaurant.menuItems);
   const [activeTab, setActiveTab] = useState("orders"); // "orders", "menu" or "info"
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [isUpgrading, setIsUpgrading] = useState(false);
 
+  const [freeItemLimit, setFreeItemLimit] = useState(10);
   const subscription = restaurant.subscription || { plan: 'free' };
   const isRestricted = subscription.plan === 'free';
-  const FREE_ITEM_LIMIT = 10;
-  const canAddItem = !isRestricted || items.length < FREE_ITEM_LIMIT;
+  const canAddItem = !isRestricted || items.length < freeItemLimit;
+
+  useEffect(() => {
+    getPlatformSettingsAction().then(res => {
+      if (res.success && res.settings) {
+        setFreeItemLimit(res.settings.freePlanItemLimit || 10);
+      }
+    });
+  }, []);
   const [editingItem, setEditingItem] = useState(null);
   const [restaurantInfo, setRestaurantInfo] = useState({
     name: restaurant.name,
@@ -33,6 +49,11 @@ export default function AdminClient({ restaurant }) {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
+  const [credentials, setCredentials] = useState({
+    username: restaurant.username || restaurant.slug,
+    password: restaurant.adminPassword || ""
+  });
+  const [isSavingCredentials, setIsSavingCredentials] = useState(false);
   const [qrUrl, setQrUrl] = useState("");
   const [selectedImageFile, setSelectedImageFile] = useState(null);
   const [selectedLogoFile, setSelectedLogoFile] = useState(null);
@@ -119,6 +140,26 @@ export default function AdminClient({ restaurant }) {
       alert("Error saving item");
     }
     setIsLoading(false);
+  };
+
+  const handleToggleAvailability = async (item) => {
+    try {
+      const updatedItem = { ...item, isAvailable: !item.isAvailable };
+      // Optimistic update for snappy UI
+      setItems(prevItems => prevItems.map(i => i.id === item.id ? updatedItem : i));
+      
+      const res = await saveMenuItemAction(restaurant.slug, updatedItem);
+      if (!res.success) {
+        // Revert on failure
+        setItems(prevItems => prevItems.map(i => i.id === item.id ? item : i));
+        alert("Failed to update availability");
+      }
+    } catch (e) {
+      console.error(e);
+      // Revert on failure
+      setItems(prevItems => prevItems.map(i => i.id === item.id ? item : i));
+      alert("Something went wrong");
+    }
   };
 
   const handleDeleteItem = async (id) => {
@@ -215,23 +256,25 @@ export default function AdminClient({ restaurant }) {
     router.push("/login");
   };
 
+  const handleSaveCredentials = async (e) => {
+    e.preventDefault();
+    setIsSavingCredentials(true);
+    const res = await updateRestaurantCredentialsAction(restaurant.slug, credentials.username, credentials.password);
+    if (res.success) {
+      alert("Credentials updated successfully!");
+    } else {
+      alert("Error: " + res.error);
+    }
+    setIsSavingCredentials(false);
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 font-sans selection:bg-orange-500/30 pb-20" suppressHydrationWarning>
+    <div className="min-h-screen bg-gray-50 text-gray-900 font-sans selection:bg-green-500/30 pb-20" suppressHydrationWarning>
       {/* Top Nav */}
       <nav className="bg-white border-b border-gray-200 sticky top-0 z-40">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 relative rounded-xl border border-gray-200 overflow-hidden bg-white">
-              {restaurant.logo ? (
-                <Image src={restaurant.logo} alt={restaurant.name} fill className="object-cover" />
-              ) : (
-                <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                  <Menu size={16} className="text-gray-400" />
-                </div>
-              )}
-            </div>
-            <h1 className="font-bold text-lg hidden sm:block">{restaurant.name}</h1>
+            <h1 className="font-bold text-xl text-gray-900">{restaurant.name}</h1>
           </div>
           <div className="flex items-center gap-3">
             <Link href={`/${restaurant.slug}`} target="_blank" className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-xl text-sm font-semibold transition-colors">
@@ -253,17 +296,18 @@ export default function AdminClient({ restaurant }) {
               <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded text-xs font-bold uppercase tracking-wider">{subscription.plan} Plan</span>
             </div>
             <p className="text-sm font-medium text-indigo-900">
-              {isRestricted ? `Your current plan has a limit of ${FREE_ITEM_LIMIT} items.` : (
+              {isRestricted ? `Your current plan has a limit of ${freeItemLimit} items.` : (
                 mounted ? `Premium features active until: ${new Date(subscription.validUntil).toLocaleDateString()}` : "Loading subscription details..."
               )}
             </p>
           </div>
           {subscription.plan !== 'paid' && (
             <div className="flex flex-col items-end text-right">
-              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Membership Management</span>
-              <p className="text-xs font-semibold text-indigo-600 bg-white border border-indigo-100 px-3 py-1.5 rounded-lg shadow-sm">
-                Contact Platform Admin to upgrade
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Upgrade Options</span>
+              <p className="text-xs font-semibold text-indigo-600 bg-white border border-indigo-100 px-3 py-1.5 rounded-lg shadow-sm cursor-pointer hover:bg-indigo-50" onClick={() => setActiveTab("support")}>
+                Contact Admin to Upgrade
               </p>
+              <p className="text-[10px] text-gray-500 mt-1.5 font-medium">₹99/mo or ₹999/yr</p>
             </div>
           )}
         </div>
@@ -283,7 +327,7 @@ export default function AdminClient({ restaurant }) {
             </button>
             <button
               onClick={() => handleOpenModal()}
-              className="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-orange-500 hover:bg-orange-600 rounded-xl text-sm font-bold text-white transition-all shadow-lg shadow-orange-200"
+              className="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-green-500 hover:bg-green-600 rounded-xl text-sm font-bold text-white transition-all shadow-lg shadow-green-200"
             >
               <Plus size={18} /> Add Item
             </button>
@@ -299,27 +343,84 @@ export default function AdminClient({ restaurant }) {
         <div className="flex gap-2 mb-6 border-b border-gray-200 overflow-x-auto hide-scrollbar">
           <button
             onClick={() => setActiveTab("orders")}
-            className={`flex items-center gap-2 px-5 py-3 border-b-2 font-bold text-sm whitespace-nowrap transition-colors ${activeTab === "orders" ? "border-orange-500 text-orange-600" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"}`}
+            className={`flex items-center gap-2 px-5 py-3 border-b-2 font-bold text-sm whitespace-nowrap transition-colors ${activeTab === "orders" ? "border-green-500 text-green-600" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"}`}
           >
             <ShoppingBag size={18} /> Live Orders
           </button>
           <button
             onClick={() => setActiveTab("menu")}
-            className={`flex items-center gap-2 px-5 py-3 border-b-2 font-bold text-sm whitespace-nowrap transition-colors ${activeTab === "menu" ? "border-orange-500 text-orange-600" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"}`}
+            className={`flex items-center gap-2 px-5 py-3 border-b-2 font-bold text-sm whitespace-nowrap transition-colors ${activeTab === "menu" ? "border-green-500 text-green-600" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"}`}
           >
             <LayoutList size={18} /> Menu Items
           </button>
           <button
+            onClick={() => setActiveTab("history")}
+            className={`flex items-center gap-2 px-5 py-3 border-b-2 font-bold text-sm whitespace-nowrap transition-colors ${activeTab === "history" ? "border-green-500 text-green-600" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"}`}
+          >
+            <Star size={18} /> History & Analytics
+          </button>
+          <button
             onClick={() => setActiveTab("info")}
-            className={`flex items-center gap-2 px-5 py-3 border-b-2 font-bold text-sm whitespace-nowrap transition-colors ${activeTab === "info" ? "border-orange-500 text-orange-600" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"}`}
+            className={`flex items-center gap-2 px-5 py-3 border-b-2 font-bold text-sm whitespace-nowrap transition-colors ${activeTab === "info" ? "border-green-500 text-green-600" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"}`}
           >
             <Info size={18} /> Restaurant Info
+          </button>
+          <button
+            onClick={() => setActiveTab("support")}
+            className={`flex items-center gap-2 px-5 py-3 border-b-2 font-bold text-sm whitespace-nowrap transition-colors ${activeTab === "support" ? "border-green-500 text-green-600" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"}`}
+          >
+            <Headset size={18} /> Support
           </button>
         </div>
 
         {/* Tab Content */}
         {activeTab === "orders" && (
           <OrdersDashboard restaurantId={restaurant._id} slug={restaurant.slug} />
+        )}
+
+        {activeTab === "history" && (
+          <HistoryDashboard restaurantId={restaurant._id} />
+        )}
+
+        {activeTab === "support" && (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden max-w-2xl mx-auto mt-8">
+            <div className="p-8 border-b border-gray-200 bg-gradient-to-r from-green-50 to-white text-center">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Headset size={32} className="text-green-500" />
+              </div>
+              <h3 className="text-2xl font-extrabold text-gray-900">Platform Support</h3>
+              <p className="text-sm text-gray-500 font-medium mt-2">Need help or want to upgrade your plan? Contact the platform admin.</p>
+            </div>
+            
+            <div className="p-8">
+              <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100 shadow-inner">
+                <h4 className="font-bold text-lg text-gray-800 mb-6 flex items-center gap-2">
+                  <span className="w-2 h-6 bg-green-500 rounded-full"></span> Admin Details
+                </h4>
+                
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100 shadow-sm">
+                    <span className="text-sm font-semibold text-gray-500">Developer / Owner</span>
+                    <span className="font-bold text-gray-900">Kunal Rawat</span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100 shadow-sm">
+                    <span className="text-sm font-semibold text-gray-500">Email Address</span>
+                    <a href="mailto:kumar%20kunal8482@gmail.com" className="font-bold text-blue-600 hover:underline">kumar kunal8482@gmail.com</a>
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100 shadow-sm">
+                    <span className="text-sm font-semibold text-gray-500">Mobile Number</span>
+                    <a href="tel:+918299729308" className="font-bold text-green-600 hover:underline">+91 82997 29308</a>
+                  </div>
+                </div>
+                
+                <div className="mt-8 text-center text-sm text-gray-400 font-medium">
+                  Please reach out during standard business hours for quick assistance.
+                </div>
+              </div>
+            </div>
+          </div>
         )}
 
         {activeTab === "menu" && (
@@ -339,7 +440,7 @@ export default function AdminClient({ restaurant }) {
                   {/* Item Info */}
                   <div className="md:col-span-5 flex items-start md:items-center gap-4">
                     <div className="relative w-16 h-16 md:w-12 md:h-12 flex-shrink-0 bg-gray-100 rounded-xl border border-gray-200 overflow-hidden">
-                      <Image src={item.image} alt="" fill sizes="(max-width: 768px) 64px, 48px" className="object-cover" />
+                      <Image src={item.image || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&q=80"} alt="" fill sizes="(max-width: 768px) 64px, 48px" className="object-cover" />
                     </div>
                     <div className="flex-1">
                       <div className="font-bold text-gray-900 flex items-center gap-2">
@@ -364,15 +465,22 @@ export default function AdminClient({ restaurant }) {
 
                   <div className="md:col-span-2 flex justify-between items-center md:block pt-2 md:pt-0">
                     <span className="md:hidden text-sm text-gray-500 font-medium">Availability:</span>
-                    {item.isAvailable ? (
-                      <span className="inline-flex items-center gap-1 text-xs font-bold text-green-700 bg-green-100 border border-green-200 px-2.5 py-1 rounded-full">
-                        <Check size={12} strokeWidth={3} /> Available
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 text-xs font-bold text-red-700 bg-red-100 border border-red-200 px-2.5 py-1 rounded-full">
-                        <X size={12} strokeWidth={3} /> Out of Stock
-                      </span>
-                    )}
+                    <button
+                      onClick={() => handleToggleAvailability(item)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
+                        item.isAvailable ? 'bg-green-500' : 'bg-gray-300'
+                      }`}
+                    >
+                      <span className="sr-only">Toggle availability</span>
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          item.isAvailable ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                    <span className={`ml-2 text-xs font-bold md:block md:mt-1 md:ml-0 ${item.isAvailable ? 'text-green-600' : 'text-gray-500'}`}>
+                      {item.isAvailable ? 'Available' : 'Unavailable'}
+                    </span>
                   </div>
 
                   {/* Actions */}
@@ -413,27 +521,27 @@ export default function AdminClient({ restaurant }) {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <label className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-2">
-                        <Store size={16} className="text-orange-500" /> Restaurant Name
+                        <Store size={16} className="text-green-500" /> Restaurant Name
                       </label>
                       <input
                         required
                         type="text"
                         value={restaurantInfo.name}
                         onChange={e => setRestaurantInfo({ ...restaurantInfo, name: e.target.value })}
-                        className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all shadow-sm bg-white hover:border-gray-400"
+                        className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all shadow-sm bg-white hover:border-gray-400"
                       />
                     </div>
 
                     <div>
                       <label className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-2">
-                        <MapPin size={16} className="text-orange-500" /> Location / Address
+                        <MapPin size={16} className="text-green-500" /> Location / Address
                       </label>
-                      <textarea
+                      <input
                         required
-                        rows={1}
+                        type="text"
                         value={restaurantInfo.address}
                         onChange={e => setRestaurantInfo({ ...restaurantInfo, address: e.target.value })}
-                        className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all shadow-sm bg-white hover:border-gray-400 resize-none"
+                        className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all shadow-sm bg-white hover:border-gray-400"
                         placeholder="e.g. 123 Street Name, City"
                       />
                     </div>
@@ -452,7 +560,7 @@ export default function AdminClient({ restaurant }) {
                         max="5"
                         value={restaurantInfo.rating}
                         onChange={e => setRestaurantInfo({ ...restaurantInfo, rating: e.target.value })}
-                        className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all shadow-sm bg-white hover:border-gray-400"
+                        className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-900 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all shadow-sm bg-white hover:border-gray-400"
                         placeholder="e.g. 4.5"
                       />
                     </div>
@@ -465,7 +573,7 @@ export default function AdminClient({ restaurant }) {
                         type="text"
                         value={restaurantInfo.avgTime}
                         onChange={e => setRestaurantInfo({ ...restaurantInfo, avgTime: e.target.value })}
-                        className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all shadow-sm bg-white hover:border-gray-400"
+                        className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-900 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all shadow-sm bg-white hover:border-gray-400"
                         placeholder="e.g. 20-30 mins"
                       />
                     </div>
@@ -478,7 +586,7 @@ export default function AdminClient({ restaurant }) {
                         type="number"
                         value={restaurantInfo.costForOne}
                         onChange={e => setRestaurantInfo({ ...restaurantInfo, costForOne: e.target.value })}
-                        className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all shadow-sm bg-white hover:border-gray-400"
+                        className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-900 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all shadow-sm bg-white hover:border-gray-400"
                         placeholder="e.g. 250"
                       />
                     </div>
@@ -488,14 +596,51 @@ export default function AdminClient({ restaurant }) {
                 {/* Branding Section */}
                 <div className="p-6 bg-gray-50/80 rounded-3xl border border-gray-200 space-y-6">
                   <div className="flex items-center gap-3 border-b border-gray-200 pb-4">
-                    <span className="w-2 h-8 bg-orange-500 rounded-full"></span>
+                    <span className="w-2 h-8 bg-green-500 rounded-full"></span>
                     <div>
                       <h4 className="font-extrabold text-gray-900">Branding & Visuals</h4>
-                      <p className="text-xs text-gray-500 font-medium">Customize your restaurant's digital appearance.</p>
+                      <p className="text-xs text-gray-500 font-medium">Customize your restaurant&apos;s digital appearance.</p>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {/* Logo Section */}
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-3 flex justify-between">
+                        Restaurant Logo
+                      </label>
+                      <div className="space-y-3">
+                        <input
+                          type="text"
+                          value={restaurantInfo.logo}
+                          onChange={e => setRestaurantInfo({ ...restaurantInfo, logo: e.target.value })}
+                          className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-green-500 outline-none bg-white shadow-sm transition-all hover:border-gray-400"
+                          placeholder="Image URL..."
+                        />
+                        <div className="relative group">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={e => {
+                              if (e.target.files && e.target.files[0]) {
+                                setSelectedLogoFile(e.target.files[0]);
+                                setRestaurantInfo({ ...restaurantInfo, logo: "" });
+                              }
+                            }}
+                            className="hidden"
+                            id="logo-upload"
+                          />
+                          <label
+                            htmlFor="logo-upload"
+                            className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-gray-300 rounded-xl text-sm font-bold text-gray-500 cursor-pointer hover:border-green-400 hover:text-green-600 hover:bg-green-50/30 transition-all bg-white"
+                          >
+                            Upload New Logo
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Banner Section */}
                     <div>
                       <label className="block text-sm font-bold text-gray-700 mb-3 flex justify-between">
                         Banner Image {isRestricted && <span className="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">Premium</span>}
@@ -505,7 +650,7 @@ export default function AdminClient({ restaurant }) {
                           type="text"
                           value={restaurantInfo.banner}
                           onChange={e => setRestaurantInfo({ ...restaurantInfo, banner: e.target.value })}
-                          className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-orange-500 outline-none bg-white shadow-sm transition-all hover:border-gray-400"
+                          className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-green-500 outline-none bg-white shadow-sm transition-all hover:border-gray-400"
                           disabled={isRestricted}
                           placeholder="Image URL..."
                         />
@@ -525,7 +670,7 @@ export default function AdminClient({ restaurant }) {
                           />
                           <label
                             htmlFor="banner-upload"
-                            className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-gray-300 rounded-xl text-sm font-bold text-gray-500 cursor-pointer hover:border-orange-400 hover:text-orange-600 hover:bg-orange-50/30 transition-all bg-white"
+                            className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-gray-300 rounded-xl text-sm font-bold text-gray-500 cursor-pointer hover:border-green-400 hover:text-green-600 hover:bg-green-50/30 transition-all bg-white"
                           >
                             Upload New Banner
                           </label>
@@ -545,6 +690,56 @@ export default function AdminClient({ restaurant }) {
                   </button>
                 </div>
               </form>
+
+              {/* Security Section */}
+              <div className="p-8 border-t border-gray-200">
+                <div className="flex items-center gap-3 mb-6">
+                  <span className="w-2 h-8 bg-red-500 rounded-full"></span>
+                  <div>
+                    <h3 className="text-xl font-extrabold text-gray-900">Security Credentials</h3>
+                    <p className="text-sm text-gray-500 font-medium mt-0.5">Manage your login username and password. Do not share these.</p>
+                  </div>
+                </div>
+
+                <form onSubmit={handleSaveCredentials} className="max-w-4xl mx-auto p-6 bg-red-50/50 rounded-3xl border border-red-100 space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-3">
+                        Login Username
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={credentials.username}
+                        onChange={e => setCredentials({ ...credentials, username: e.target.value })}
+                        className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-900 focus:ring-2 focus:ring-red-500 outline-none bg-white shadow-sm transition-all hover:border-gray-400"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-3">
+                        Login Password
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={credentials.password}
+                        onChange={e => setCredentials({ ...credentials, password: e.target.value })}
+                        className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-900 focus:ring-2 focus:ring-red-500 outline-none bg-white shadow-sm transition-all hover:border-gray-400"
+                      />
+                    </div>
+                  </div>
+                  <div className="pt-6 flex flex-col sm:flex-row justify-end">
+                    <button
+                      type="submit"
+                      disabled={isSavingCredentials}
+                      className="w-full sm:w-auto px-12 py-4 text-sm font-black text-white bg-red-600 hover:bg-red-700 rounded-2xl transition-all shadow-xl shadow-red-200 active:scale-95 disabled:opacity-50"
+                    >
+                      {isSavingCredentials ? "Saving..." : "Update Credentials"}
+                    </button>
+                  </div>
+                </form>
+              </div>
+
             </div>
 
             {/* Category Management Section */}
@@ -565,11 +760,11 @@ export default function AdminClient({ restaurant }) {
                     onChange={e => setNewCategory(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && handleAddCategory()}
                     placeholder="e.g. Signature Starters"
-                    className="w-full sm:flex-1 border border-gray-300 rounded-xl px-5 py-4 text-sm text-gray-900 focus:ring-2 focus:ring-orange-500 outline-none transition-all shadow-sm bg-white hover:border-gray-400"
+                    className="w-full sm:flex-1 border border-gray-300 rounded-xl px-5 py-4 text-sm text-gray-900 focus:ring-2 focus:ring-green-500 outline-none transition-all shadow-sm bg-white hover:border-gray-400"
                   />
                   <button
                     onClick={handleAddCategory}
-                    className="w-full sm:w-auto px-10 py-4 bg-orange-500 hover:bg-orange-600 text-white font-black rounded-xl transition-all shadow-xl shadow-orange-100 active:scale-95 flex items-center justify-center gap-2"
+                    className="w-full sm:w-auto px-10 py-4 bg-green-500 hover:bg-green-600 text-white font-black rounded-xl transition-all shadow-xl shadow-green-100 active:scale-95 flex items-center justify-center gap-2"
                   >
                     <Plus size={20} /> Add Category
                   </button>
@@ -579,7 +774,7 @@ export default function AdminClient({ restaurant }) {
                   {categories.map((cat, index) => (
                     <div
                       key={index}
-                      className="flex items-center gap-3 px-5 py-2.5 bg-white border border-gray-200 rounded-2xl shadow-sm group hover:border-orange-200 transition-all hover:shadow-lg hover:-translate-y-0.5"
+                      className="flex items-center gap-3 px-5 py-2.5 bg-white border border-gray-200 rounded-2xl shadow-sm group hover:border-green-200 transition-all hover:shadow-lg hover:-translate-y-0.5"
                     >
                       <span className="text-sm font-black text-gray-800 tracking-tight">{cat}</span>
                       <button
@@ -615,7 +810,7 @@ export default function AdminClient({ restaurant }) {
       {activeTab === "menu" && (
         <button
           onClick={() => handleOpenModal()}
-          className="md:hidden fixed bottom-6 right-6 w-14 h-14 bg-orange-500 text-white rounded-full shadow-xl flex items-center justify-center hover:bg-orange-600 transition-transform hover:scale-105 active:scale-95 z-40"
+          className="md:hidden fixed bottom-6 right-6 w-14 h-14 bg-green-500 text-white rounded-full shadow-xl flex items-center justify-center hover:bg-green-600 transition-transform hover:scale-105 active:scale-95 z-40"
         >
           <Plus size={24} />
         </button>
@@ -642,7 +837,7 @@ export default function AdminClient({ restaurant }) {
                   type="text"
                   value={editingItem.name}
                   onChange={e => setEditingItem({ ...editingItem, name: e.target.value })}
-                  className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-shadow"
+                  className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-shadow"
                   placeholder="e.g. Butter Chicken"
                 />
               </div>
@@ -655,7 +850,7 @@ export default function AdminClient({ restaurant }) {
                     type="number"
                     value={editingItem.price}
                     onChange={e => setEditingItem({ ...editingItem, price: e.target.value })}
-                    className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-shadow"
+                    className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-900 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-shadow"
                     placeholder="e.g. 250"
                   />
                 </div>
@@ -664,7 +859,7 @@ export default function AdminClient({ restaurant }) {
                   <select
                     value={editingItem.category}
                     onChange={e => setEditingItem({ ...editingItem, category: e.target.value })}
-                    className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-shadow bg-white"
+                    className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-900 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-shadow bg-white"
                   >
                     {categories.map(c => (
                       <option key={c} value={c}>{c}</option>
@@ -680,7 +875,7 @@ export default function AdminClient({ restaurant }) {
                     type="url"
                     value={editingItem.image}
                     onChange={e => setEditingItem({ ...editingItem, image: e.target.value })}
-                    className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-shadow"
+                    className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-shadow"
                     placeholder="https://..."
                   />
                   <input
@@ -702,7 +897,7 @@ export default function AdminClient({ restaurant }) {
                 <textarea
                   value={editingItem.description}
                   onChange={e => setEditingItem({ ...editingItem, description: e.target.value })}
-                  className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none resize-none h-24 transition-shadow"
+                  className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-900 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none resize-none h-24 transition-shadow"
                   placeholder="Short description of the item..."
                 />
               </div>
@@ -755,7 +950,7 @@ export default function AdminClient({ restaurant }) {
                 <button type="button" onClick={handleCloseModal} className="px-5 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-100 rounded-xl transition-colors">
                   Cancel
                 </button>
-                <button type="submit" disabled={isLoading} className="px-5 py-2.5 text-sm font-bold text-white bg-orange-500 hover:bg-orange-600 rounded-xl transition-all shadow-md disabled:opacity-50 min-w-[120px]">
+                <button type="submit" disabled={isLoading} className="px-5 py-2.5 text-sm font-bold text-white bg-green-500 hover:bg-green-600 rounded-xl transition-all shadow-md disabled:opacity-50 min-w-[120px]">
                   {isLoading ? "Saving..." : "Save Item"}
                 </button>
               </div>
