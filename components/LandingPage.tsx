@@ -714,27 +714,29 @@ export default function LandingPage({ restaurant }: LandingPageProps) {
                     ))}
                   </div>
 
-                  {/* Floating Cart Button (Mock Mobile) */}
-                  {totalCartCount > 0 && (
-                    <div className="absolute bottom-4 left-3 right-3 bg-white p-3 rounded-2xl border border-gray-100 shadow-lg shadow-black/10 flex items-center justify-between z-20 animate-fade-in-up">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center text-green-500">
-                          <ShoppingBag size={18} />
-                        </div>
-                        <div>
-                          <p className="font-black text-xs text-gray-900">{totalCartCount} Items Added</p>
-                          <p className="text-[10px] text-gray-400 font-bold">Table 04</p>
-                        </div>
-                      </div>
-                      <button 
-                        onClick={() => alert("This is a demo.")}
-                        className="bg-green-500 hover:bg-green-600 text-white font-black text-xs px-4 py-2 rounded-xl flex items-center gap-1"
-                      >
-                        Place Order <ArrowRight size={12} />
-                      </button>
-                    </div>
-                  )}
+                  
                 </div>
+
+                {/* Floating Cart Button (Mock Mobile - Sticky Overlay at the bottom of the Android frame) */}
+                {totalCartCount > 0 && (
+                  <div className="absolute bottom-4 left-3 right-3 bg-white p-3 rounded-2xl border border-gray-100 shadow-[0_10px_30px_rgba(0,0,0,0.12)] flex items-center justify-between z-50 animate-fade-in-up">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center text-green-500">
+                        <ShoppingBag size={18} />
+                      </div>
+                      <div>
+                        <p className="font-black text-xs text-gray-900">{totalCartCount} Items Added</p>
+                        <p className="text-[10px] text-gray-400 font-bold">Table 04</p>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => alert("This is a demo.")}
+                      className="bg-green-500 hover:bg-green-600 text-white font-black text-xs px-4 py-2 rounded-xl flex items-center gap-1 active:scale-95 transition-transform"
+                    >
+                      Place Order <ArrowRight size={12} />
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
