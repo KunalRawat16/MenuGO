@@ -122,6 +122,33 @@ export default function LandingPage({ restaurant }: LandingPageProps) {
   // Theme State
   const [isDarkMode, setIsDarkMode] = useState<boolean>(true);
 
+  // Drag-to-scroll touch-like simulation state for desktop
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+  const [startY, setStartY] = useState<number>(0);
+  const [scrollTop, setScrollTop] = useState<number>(0);
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    if (target.closest('button') || target.closest('input') || target.closest('a')) {
+      return;
+    }
+    setIsDragging(true);
+    setStartY(e.pageY - e.currentTarget.offsetTop);
+    setScrollTop(e.currentTarget.scrollTop);
+  };
+
+  const handleMouseLeaveOrUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isDragging) return;
+    e.preventDefault();
+    const y = e.pageY - e.currentTarget.offsetTop;
+    const walkY = (y - startY) * 1.6; // multiplier for drag speed
+    e.currentTarget.scrollTop = scrollTop - walkY;
+  };
+
   // Extract unique categories
   const categories = useMemo(() => {
     const cats = new Set(menuItems.map(item => item.category));
@@ -474,8 +501,16 @@ export default function LandingPage({ restaurant }: LandingPageProps) {
                   </div>
                 </div>
 
-                {/* Mobile Viewport Area (Scrollable below status bar) */}
-                <div className="flex-1 flex flex-col overflow-y-auto overflow-x-hidden bg-white pb-20 relative text-slate-900 font-sans select-none scrollbar-none">
+                {/* Mobile Viewport Area (Scrollable below status bar with touch-like grab scroll) */}
+                <div 
+                  onMouseDown={handleMouseDown}
+                  onMouseLeave={handleMouseLeaveOrUp}
+                  onMouseUp={handleMouseLeaveOrUp}
+                  onMouseMove={handleMouseMove}
+                  className={`flex-1 flex flex-col overflow-y-auto overflow-x-hidden bg-white pb-20 relative text-slate-900 font-sans select-none scrollbar-none ${
+                    isDragging ? "cursor-grabbing" : "cursor-grab"
+                  }`}
+                >
                   
                   {/* Immersive Banner Section matching Header.js */}
                   <div className="relative h-44 w-full bg-slate-800 flex-shrink-0">
