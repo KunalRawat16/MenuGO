@@ -30,8 +30,11 @@ import {
   Cake,
   GlassWater,
   IndianRupee,
-  Search as SearchIcon
+  Search as SearchIcon,
+  SlidersHorizontal,
+  X
 } from "lucide-react";
+import MenuGoIcon from "./MenuGoIcon";
 
 interface MenuItem {
   id: string;
@@ -117,6 +120,8 @@ export default function LandingPage({ restaurant }: LandingPageProps) {
   const [vegOnly, setVegOnly] = useState<boolean>(false);
   const [nonVegOnly, setNonVegOnly] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [sortBy, setSortBy] = useState<string>("default");
+  const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState<boolean>(false);
   const [cart, setCart] = useState<Record<string, number>>({});
   
   // Theme State
@@ -203,9 +208,18 @@ export default function LandingPage({ restaurant }: LandingPageProps) {
         }
         return true;
       });
-      return { category: cat, items };
+
+      // Sort items based on selected sort criteria
+      const sortedItems = [...items].sort((a, b) => {
+        if (sortBy === "price_low") return a.price - b.price;
+        if (sortBy === "price_high") return b.price - a.price;
+        if (sortBy === "popular") return (b.isPopular ? 1 : 0) - (a.isPopular ? 1 : 0);
+        return 0;
+      });
+
+      return { category: cat, items: sortedItems };
     }).filter(group => group.items.length > 0);
-  }, [menuItems, selectedCategory, vegOnly, nonVegOnly, searchQuery]);
+  }, [menuItems, selectedCategory, vegOnly, nonVegOnly, searchQuery, sortBy]);
 
   return (
     <div className={`transition-colors duration-300 font-sans min-h-screen selection:bg-green-500 selection:text-white ${
@@ -225,13 +239,18 @@ export default function LandingPage({ restaurant }: LandingPageProps) {
       }`}>
         <div className="flex items-center gap-2">
           <div className="w-10 h-10 bg-gradient-to-tr from-green-500 to-emerald-400 rounded-xl flex items-center justify-center shadow-lg shadow-green-500/20">
-            <Utensils size={22} className="text-white animate-pulse" />
+            <MenuGoIcon size={22} className="text-white animate-pulse" />
           </div>
-          <span className={`font-extrabold text-2xl tracking-tight ${
-            isDarkMode ? "bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent" : "text-slate-900"
-          }`}>
-            Menu<span className="text-green-500">Go</span>
-          </span>
+          <div className="flex flex-col">
+            <span className={`font-extrabold text-2xl leading-none tracking-tight ${
+              isDarkMode ? "bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent" : "text-slate-900"
+            }`}>
+              Menu<span className="text-green-500">Go</span>
+            </span>
+            <span className="text-[9px] font-black text-green-500 tracking-[0.18em] uppercase leading-none mt-1 select-none">
+              green
+            </span>
+          </div>
         </div>
 
         <nav className={`hidden md:flex items-center gap-8 text-sm font-semibold transition-colors duration-300 ${
@@ -265,7 +284,7 @@ export default function LandingPage({ restaurant }: LandingPageProps) {
             Sign In
           </Link>
           <Link 
-            href="/onboarding" 
+            href="/register" 
             className="bg-green-500 hover:bg-green-600 active:scale-95 text-white px-5 py-2.5 rounded-xl text-sm font-black transition-all shadow-lg shadow-green-500/25 flex items-center gap-1.5"
           >
             Get Started <ArrowRight size={16} />
@@ -298,10 +317,10 @@ export default function LandingPage({ restaurant }: LandingPageProps) {
 
           <div className="flex flex-col sm:flex-row gap-4 pt-2">
             <Link 
-              href="/onboarding" 
+              href="/register" 
               className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-black text-lg px-8 py-4 rounded-2xl shadow-xl shadow-green-500/20 text-center transition-all active:scale-98 flex items-center justify-center gap-2 group"
             >
-              Onboard Your Restaurant <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+              Register Your Restaurant <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
             </Link>
             <a 
               href="#demo" 
@@ -559,17 +578,27 @@ export default function LandingPage({ restaurant }: LandingPageProps) {
 
                   {/* Floating Search Bar & Preference filters matching Header.js */}
                   <div className="bg-white px-3 -mt-3 relative z-10 flex-shrink-0">
-                    <div className="relative flex items-center">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <SearchIcon size={14} className="text-gray-400" />
+                    <div className="flex gap-2 items-center">
+                      <div className="relative flex-1">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <SearchIcon size={14} className="text-gray-400" />
+                        </div>
+                        <input
+                          type="search"
+                          placeholder="Start typing to search..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="w-full bg-white rounded-xl h-9 pl-9 pr-3 text-xs text-gray-900 font-medium placeholder-gray-400 shadow-[0_4px_12px_rgba(0,0,0,0.06)] focus:outline-none border border-gray-100"
+                        />
                       </div>
-                      <input
-                        type="search"
-                        placeholder="Start typing to search..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full bg-white rounded-xl h-9 pl-9 pr-3 text-xs text-gray-900 font-medium placeholder-gray-400 shadow-[0_4px_12px_rgba(0,0,0,0.06)] focus:outline-none border border-gray-100"
-                      />
+                      <button
+                        onClick={() => setIsFilterDrawerOpen(true)}
+                        className={`flex-shrink-0 w-9 h-9 bg-white rounded-xl flex items-center justify-center shadow-[0_4px_12px_rgba(0,0,0,0.06)] border border-gray-100 transition-colors ${
+                          isFilterDrawerOpen || sortBy !== "default" ? 'text-green-500' : 'text-gray-800'
+                        }`}
+                      >
+                        <SlidersHorizontal size={14} strokeWidth={2.5} />
+                      </button>
                     </div>
 
                     {/* Veg / Non-Veg Toggle Pills */}
@@ -782,6 +811,103 @@ export default function LandingPage({ restaurant }: LandingPageProps) {
                     </button>
                   </div>
                 )}
+                {/* Mock Filter & Sort Drawer Overlay inside Phone Body */}
+                {isFilterDrawerOpen && (
+                  <>
+                    {/* Backdrop */}
+                    <div 
+                      onClick={() => setIsFilterDrawerOpen(false)}
+                      className="absolute inset-0 bg-black/60 backdrop-blur-xs z-50 transition-opacity"
+                    />
+                    {/* Drawer */}
+                    <div className="absolute bottom-0 left-0 right-0 bg-gray-50 rounded-t-[20px] z-50 p-5 shadow-2xl transition-all duration-300 max-h-[80%] overflow-y-auto">
+                      <div className="flex justify-between items-center mb-4">
+                        <h6 className="text-sm font-black text-gray-900">Filters & sorting</h6>
+                        <button 
+                          onClick={() => setIsFilterDrawerOpen(false)}
+                          className="p-1 bg-white rounded-full shadow text-gray-500 hover:text-gray-900 focus:outline-none"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                      
+                      <div className="space-y-4">
+                        {/* Preference */}
+                        <div className="bg-white p-3.5 rounded-2xl shadow-xs border border-gray-100/50">
+                          <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider block mb-2">Preference</span>
+                          <div className="flex gap-2 flex-wrap">
+                            <button
+                              onClick={() => {
+                                setVegOnly(!vegOnly);
+                                if (!vegOnly) setNonVegOnly(false);
+                              }}
+                              className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border text-[9px] font-bold transition-all ${
+                                vegOnly 
+                                  ? "border-green-400 bg-green-50 text-green-600 shadow-[0_2px_8px_rgba(34,197,94,0.1)]" 
+                                  : "border-gray-100 bg-white text-gray-700 hover:bg-gray-50"
+                              }`}
+                            >
+                              <div className="w-2.5 h-2.5 border border-green-500 rounded-[2px] flex items-center justify-center flex-shrink-0">
+                                <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                              </div>
+                              Veg Only
+                            </button>
+                            
+                            <button
+                              onClick={() => {
+                                setNonVegOnly(!nonVegOnly);
+                                if (!nonVegOnly) setVegOnly(false);
+                              }}
+                              className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border text-[9px] font-bold transition-all ${
+                                nonVegOnly 
+                                  ? "border-red-400 bg-red-50 text-red-600 shadow-[0_2px_8px_rgba(239,68,68,0.1)]" 
+                                  : "border-gray-100 bg-white text-gray-700 hover:bg-gray-50"
+                              }`}
+                            >
+                              <div className="w-2.5 h-2.5 border border-red-500 rounded-[2px] flex items-center justify-center flex-shrink-0">
+                                <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                              </div>
+                              Non-veg Only
+                            </button>
+                          </div>
+                        </div>
+                        
+                        {/* Sorting */}
+                        <div className="bg-white p-3.5 rounded-2xl shadow-xs border border-gray-100/50">
+                          <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider block mb-2">Sorting by</span>
+                          <div className="flex flex-col gap-1.5">
+                            {[
+                              { id: 'default', label: 'Default' },
+                              { id: 'popular', label: 'Bestseller' },
+                              { id: 'price_low', label: 'Price: Low to High' },
+                              { id: 'price_high', label: 'Price: High to Low' }
+                            ].map((opt) => (
+                              <button
+                                key={opt.id}
+                                onClick={() => setSortBy(opt.id)}
+                                className={`flex items-center justify-between px-3 py-2 rounded-xl text-[10px] font-bold text-left border transition-all ${
+                                  sortBy === opt.id 
+                                    ? "border-green-400 bg-green-50 text-green-600" 
+                                    : "border-gray-50 bg-white text-gray-700 hover:bg-gray-50"
+                                }`}
+                              >
+                                <span>{opt.label}</span>
+                                {sortBy === opt.id && <Check size={12} className="text-green-500" />}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <button
+                        onClick={() => setIsFilterDrawerOpen(false)}
+                        className="w-full bg-green-500 hover:bg-green-600 text-white font-black py-2.5 rounded-xl text-xs mt-4 transition-colors shadow-sm"
+                      >
+                        Apply Filters
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -884,7 +1010,7 @@ export default function LandingPage({ restaurant }: LandingPageProps) {
             
             <div className="pt-8">
               <Link 
-                href="/onboarding"
+                href="/register"
                 className={`block text-center w-full border font-bold py-3.5 rounded-xl text-sm transition-all duration-300 ${
                   isDarkMode 
                     ? "bg-white/5 hover:bg-white/10 border-white/10 text-white" 
@@ -946,7 +1072,7 @@ export default function LandingPage({ restaurant }: LandingPageProps) {
             
             <div className="pt-8">
               <Link 
-                href="/onboarding"
+                href="/register"
                 className="block text-center w-full bg-green-500 hover:bg-green-600 active:scale-98 text-white font-black py-3.5 rounded-xl text-sm transition-all shadow-lg shadow-green-500/20"
               >
                 Go Growth (Monthly)
@@ -1001,7 +1127,7 @@ export default function LandingPage({ restaurant }: LandingPageProps) {
               
               <div className="pt-8">
                 <Link 
-                  href="/onboarding"
+                  href="/register"
                   className={`block text-center w-full border font-bold py-3.5 rounded-xl text-sm transition-all duration-300 ${
                     isDarkMode 
                       ? "bg-white/5 hover:bg-white/10 border-white/10 text-white" 
@@ -1021,10 +1147,13 @@ export default function LandingPage({ restaurant }: LandingPageProps) {
         isDarkMode ? "border-white/5" : "border-slate-200/80"
       }`}>
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 bg-green-500 rounded-md flex items-center justify-center text-white text-[10px] font-black">
-            MG
+          <div className="w-7 h-7 bg-gradient-to-tr from-green-500 to-emerald-400 rounded-lg flex items-center justify-center text-white shadow-md shadow-green-500/10">
+            <MenuGoIcon size={16} />
           </div>
-          <span className={`font-extrabold text-sm transition-colors duration-300 ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>Menu<span className="text-green-500">Go</span></span>
+          <div className="flex flex-col text-left">
+            <span className={`font-extrabold text-sm leading-none transition-colors duration-300 ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>Menu<span className="text-green-500">Go</span></span>
+            <span className="text-[7.5px] font-black text-green-500 tracking-[0.18em] uppercase leading-none mt-0.5 select-none">green</span>
+          </div>
         </div>
         <p>© 2026 MenuGO Technologies. All rights reserved.</p>
         <div className="flex gap-4">

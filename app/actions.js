@@ -382,3 +382,69 @@ export async function updateRestaurantCredentialsAction(slug, newUsername, newPa
   revalidatePath(`/admin`);
   return { success: true };
 }
+
+export async function registerRestaurantAction(restaurantData) {
+  try {
+    await dbConnect();
+    
+    const { name, slug, password, address } = restaurantData;
+    
+    // Validate slug
+    if (!slug || !/^[a-z0-9-]+$/.test(slug)) {
+      return { error: "Username/Slug must contain only lowercase letters, numbers, and hyphens." };
+    }
+    
+    // Check if slug/username already exists
+    const existing = await Restaurant.findOne({ 
+      $or: [{ slug }, { username: slug }] 
+    });
+    if (existing) {
+      return { error: "This username/slug is already taken. Please choose another." };
+    }
+    
+    let settings = await PlatformSettings.findOne({ id: "global_settings" });
+    if (!settings) {
+      settings = await PlatformSettings.create({ id: "global_settings" });
+    }
+
+    const newRestaurant = new Restaurant({
+      id: "r" + Date.now(),
+      name: name,
+      slug: slug,
+      username: slug, // Username is always slug
+      logo: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&q=80",
+      banner: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=1000",
+      adminPassword: password, // Password chosen by restaurant owner
+      address: address || "Victoria Park, Meerut",
+      categories: ["Appetizers & Soups", "Salads", "Main Courses", "Sides", "Desserts", "Beverages"],
+      menuItems: [],
+      rating: 4.5,
+      ratingCount: 1,
+      avgTime: "20-30 mins",
+      costForOne: 250,
+      subscription: {
+        plan: 'trial',
+        validUntil: new Date(Date.now() + (settings.trialDurationDays || 30) * 24 * 60 * 60 * 1000)
+      }
+    });
+    
+    await newRestaurant.save();
+    revalidatePath("/admin");
+    
+    // Automatically log the user in after registration
+    const cookieStore = await cookies();
+    const sessionData = JSON.stringify({ role: "admin", slug: slug });
+    cookieStore.set("admin_session", sessionData, {
+      httpOnly: true,
+      secure: false,
+      maxAge: 60 * 60 * 24, 
+      path: "/",
+      sameSite: 'lax'
+    });
+    
+    return { success: true, slug: slug };
+  } catch (error) {
+    console.error("Registration error:", error);
+    return { error: error.message || "Failed to register restaurant." };
+  }
+}

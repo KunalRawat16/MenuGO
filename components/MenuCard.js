@@ -25,7 +25,7 @@ export default function MenuCard({ item, quantity = 0, onAdd, onUpdateQuantity, 
 
         {/* Popular Tag (Overlay) */}
         {item.isPopular && !hidePopular && (
-          <div className="absolute top-2 left-2 bg-white/95 text-green-500 px-1.5 py-0.5 rounded-md text-[0.6rem] font-black shadow-sm flex items-center gap-0.5 z-10">
+          <div className="absolute top-2 left-2 bg-white/95 text-green-500 px-1.5 py-0.5 rounded-md text-[0.6rem] font-black shadow-sm flex items-center gap-0.5 z-[2]">
             <Star size={10} fill="currentColor" /> POPULAR
           </div>
         )}

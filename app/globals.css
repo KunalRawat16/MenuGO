@@ -31,3 +31,20 @@ body {
   -webkit-overflow-scrolling: touch; /* Momentum scrolling on iOS */
   overscroll-behavior: contain;
 }
+
+/* Hide scrollbar — used by category tabs and admin tab bars */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Skeleton shimmer sweep animation */
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+

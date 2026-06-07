@@ -196,7 +196,7 @@ export default function MenuClient({ restaurant }) {
         setSortBy={setSortBy}
       />
 
-      <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-md" suppressHydrationWarning>
+      <div className="sticky top-0 z-[30] bg-white/95 backdrop-blur-md" suppressHydrationWarning>
         <CategoryTabs
           categories={restaurant.categories}
           activeCategory={activeCategory}
@@ -206,7 +206,7 @@ export default function MenuClient({ restaurant }) {
 
       {/* Premium Order Status Bar (Floating) */}
       {mounted && activeOrder && (
-        <div className={`fixed left-1/2 -translate-x-1/2 w-[94%] max-w-md z-[1000] transition-all duration-500 ease-out ${cartCount > 0 ? 'bottom-[110px]' : 'bottom-[30px]'}`}>
+        <div className={`fixed left-1/2 -translate-x-1/2 w-[94%] max-w-md z-[90] transition-all duration-500 ease-out ${cartCount > 0 ? 'bottom-[110px]' : 'bottom-[30px]'}`}>
           <div className="bg-white/90 backdrop-blur-xl border border-white/50 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)] rounded-[28px] p-5 flex flex-col gap-5 overflow-hidden relative">
             <div className="flex items-center gap-5 relative z-10">
               <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center flex-shrink-0 shadow-inner border border-gray-100">
@@ -303,7 +303,7 @@ export default function MenuClient({ restaurant }) {
       {mounted && cartCount > 0 && !isCartOpen && (
         <button
           onClick={() => setIsCartOpen(true)}
-          className="fixed bottom-[30px] right-[30px] bg-green-500 text-white px-6 py-4 rounded-full flex items-center gap-3 shadow-[0_12px_24px_rgba(249,115,22,0.3)] hover:bg-green-600 transition-colors z-[1000] hover:scale-105 active:scale-95"
+          className="fixed bottom-[30px] right-[30px] bg-green-500 text-white px-6 py-4 rounded-full flex items-center gap-3 shadow-[0_12px_24px_rgba(249,115,22,0.3)] hover:bg-green-600 transition-colors z-[90] hover:scale-105 active:scale-95"
         >
           <div className="relative">
             <ShoppingBag size={24} />

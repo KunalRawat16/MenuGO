@@ -705,19 +705,19 @@ export default function AdminClient({ restaurant }) {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div>
                       <label className="block text-sm font-bold text-gray-700 mb-3">
-                        Login Username
+                        Login Username (Restaurant Slug)
                       </label>
                       <input
                         type="text"
-                        required
-                        value={credentials.username}
-                        onChange={e => setCredentials({ ...credentials, username: e.target.value })}
-                        className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-900 focus:ring-2 focus:ring-red-500 outline-none bg-white shadow-sm transition-all hover:border-gray-400"
+                        disabled
+                        value={restaurant.slug}
+                        className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-400 bg-gray-100 cursor-not-allowed outline-none shadow-sm transition-all font-mono"
                       />
+                      <p className="text-xs text-red-500 mt-2 font-semibold">Your login username is permanently locked to your restaurant slug and cannot be changed.</p>
                     </div>
                     <div>
                       <label className="block text-sm font-bold text-gray-700 mb-3">
-                        Login Password
+                        Choose Login Password
                       </label>
                       <input
                         type="text"
@@ -726,6 +726,7 @@ export default function AdminClient({ restaurant }) {
                         onChange={e => setCredentials({ ...credentials, password: e.target.value })}
                         className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-900 focus:ring-2 focus:ring-red-500 outline-none bg-white shadow-sm transition-all hover:border-gray-400"
                       />
+                      <p className="text-xs text-gray-500 mt-2 font-medium">Create a custom password to log in to your dashboard.</p>
                     </div>
                   </div>
                   <div className="pt-6 flex flex-col sm:flex-row justify-end">
@@ -734,7 +735,7 @@ export default function AdminClient({ restaurant }) {
                       disabled={isSavingCredentials}
                       className="w-full sm:w-auto px-12 py-4 text-sm font-black text-white bg-red-600 hover:bg-red-700 rounded-2xl transition-all shadow-xl shadow-red-200 active:scale-95 disabled:opacity-50"
                     >
-                      {isSavingCredentials ? "Saving..." : "Update Credentials"}
+                      {isSavingCredentials ? "Saving..." : "Update Password"}
                     </button>
                   </div>
                 </form>

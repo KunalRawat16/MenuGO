@@ -3,11 +3,11 @@
 import { X, Minus, Plus, ShoppingCart, Trash2 } from "lucide-react";
 import { useState, useEffect } from "react";
 
-export default function CartDrawer({ 
-  open, 
-  onClose, 
-  cart, 
-  onUpdateQuantity, 
+export default function CartDrawer({
+  open,
+  onClose,
+  cart,
+  onUpdateQuantity,
   onRemove,
   onPlaceOrder,
   restaurantName
@@ -53,23 +53,23 @@ export default function CartDrawer({
   return (
     <>
       {/* Backdrop */}
-      <div 
+      <div
         aria-hidden="true"
-        className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-50 transition-opacity duration-300 ${open ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+        className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-[1000] transition-opacity duration-300 ${open ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
         onClick={onClose}
       />
 
       {/* Drawer */}
-      <div 
+      <div
         role="dialog"
         aria-modal="true"
         aria-label={`Shopping Cart for ${restaurantName}`}
-        className={`fixed inset-y-0 right-0 w-full sm:w-[400px] bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out flex flex-col ${open ? 'translate-x-0' : 'translate-x-full'} sm:rounded-l-2xl`}
+        className={`fixed inset-y-0 right-0 w-full sm:w-[400px] bg-white shadow-2xl z-[1010] transform transition-transform duration-300 ease-in-out flex flex-col ${open ? 'translate-x-0' : 'translate-x-full'} sm:rounded-l-2xl`}
       >
         <div className="p-6 h-full flex flex-col">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-extrabold text-gray-900">Your Cart</h2>
-            <button 
+            <button
               onClick={onClose}
               aria-label="Close cart"
               className="p-2 bg-gray-50 text-gray-500 hover:text-gray-900 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500"
@@ -95,10 +95,10 @@ export default function CartDrawer({
                       </div>
                       <span className="font-black text-gray-900 text-lg">₹{item.price * item.quantity}</span>
                     </div>
-                    
+
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2 bg-gray-50 border border-gray-100 rounded-xl p-1">
-                        <button 
+                        <button
                           onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
                           aria-label={`Decrease quantity of ${item.name}`}
                           className="w-8 h-8 flex items-center justify-center bg-white text-green-500 rounded-lg shadow-sm hover:bg-green-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 transition-colors"
@@ -108,7 +108,7 @@ export default function CartDrawer({
                         <span aria-live="polite" className="min-w-[24px] text-center font-black text-gray-900">
                           {item.quantity}
                         </span>
-                        <button 
+                        <button
                           onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
                           aria-label={`Increase quantity of ${item.name}`}
                           className="w-8 h-8 flex items-center justify-center bg-green-500 text-white rounded-lg shadow-sm hover:bg-green-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 transition-colors"
@@ -116,8 +116,8 @@ export default function CartDrawer({
                           <Plus size={16} strokeWidth={3} />
                         </button>
                       </div>
-                      
-                      <button 
+
+                      <button
                         onClick={() => onRemove(item.id)}
                         aria-label={`Remove ${item.name} from cart`}
                         className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
@@ -138,9 +138,9 @@ export default function CartDrawer({
                 <div className="space-y-4 mb-6">
                   <div>
                     <label htmlFor="customer-name" className="block text-sm font-bold text-gray-700 mb-1.5">Your Name <span className="text-red-500">*</span></label>
-                    <input 
+                    <input
                       id="customer-name"
-                      type="text" 
+                      type="text"
                       value={customerName}
                       onChange={(e) => {
                         setCustomerName(e.target.value);
@@ -149,17 +149,16 @@ export default function CartDrawer({
                       placeholder="e.g. Kunal Rawat"
                       maxLength={50}
                       aria-describedby={errors.name ? "customer-name-error" : undefined}
-                      className={`w-full border rounded-xl px-4 py-3 text-sm text-gray-900 focus:ring-2 focus:outline-none transition-shadow focus-visible:ring-2 ${
-                        errors.name ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:ring-green-500 focus:border-green-500'
-                      }`}
+                      className={`w-full border rounded-xl px-4 py-3 text-sm text-gray-900 focus:ring-2 focus:outline-none transition-shadow focus-visible:ring-2 ${errors.name ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:ring-green-500 focus:border-green-500'
+                        }`}
                     />
                     {errors.name && <p id="customer-name-error" className="text-red-500 text-xs font-bold mt-1.5">{errors.name}</p>}
                   </div>
                   <div>
                     <label htmlFor="table-number" className="block text-sm font-bold text-gray-700 mb-1.5">Table Number <span className="text-red-500">*</span></label>
-                    <input 
+                    <input
                       id="table-number"
-                      type="number" 
+                      type="number"
                       min="1"
                       value={tableNumber}
                       onChange={(e) => {
@@ -168,15 +167,14 @@ export default function CartDrawer({
                       }}
                       placeholder="e.g. 5"
                       aria-describedby={errors.table ? "table-number-error" : undefined}
-                      className={`w-full border rounded-xl px-4 py-3 text-sm text-gray-900 focus:ring-2 focus:outline-none transition-shadow focus-visible:ring-2 ${
-                        errors.table ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:ring-green-500 focus:border-green-500'
-                      }`}
+                      className={`w-full border rounded-xl px-4 py-3 text-sm text-gray-900 focus:ring-2 focus:outline-none transition-shadow focus-visible:ring-2 ${errors.table ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:ring-green-500 focus:border-green-500'
+                        }`}
                     />
                     {errors.table && <p id="table-number-error" className="text-red-500 text-xs font-bold mt-1.5">{errors.table}</p>}
                   </div>
                 </div>
 
-                <button 
+                <button
                   disabled={isSubmitting}
                   onClick={handleSubmit}
                   className="w-full bg-green-500 hover:bg-green-600 text-white font-black py-4 rounded-xl shadow-[0_8px_16px_-4px_rgba(249,115,22,0.4)] transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2"

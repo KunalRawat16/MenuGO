@@ -48,12 +48,12 @@ export default function OnboardingPage() {
     if (currentSlide < slides.length - 1) {
       setCurrentSlide(currentSlide + 1);
     } else {
-      router.push("/login");
+      router.push("/register");
     }
   };
 
   const handleSkip = () => {
-    router.push("/login");
+    router.push("/register");
   };
 
   // Swipe logic for real "Slider" feel

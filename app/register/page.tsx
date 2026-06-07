@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Lock, User, ArrowLeft } from 'lucide-react';
+import { Lock, User, Utensils, ArrowLeft, MapPin, Sparkles } from 'lucide-react';
 import MenuGoIcon from '@/components/MenuGoIcon';
-import { loginAction } from '@/app/actions';
+import { registerRestaurantAction } from '@/app/actions';
 import { 
   Box, 
   Container, 
@@ -19,34 +19,64 @@ import {
 } from '@mui/material';
 import Link from 'next/link';
 
-export default function LoginPage() {
-  const [username, setUsername] = useState('');
+export default function RegisterPage() {
+  const [name, setName] = useState('');
+  const [slug, setSlug] = useState('');
   const [password, setPassword] = useState('');
+  const [address, setAddress] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isSlugEdited, setIsSlugEdited] = useState(false);
   const router = useRouter();
 
   const BRAND_COLOR = '#22c55e';
 
-  const handleLogin = async (e) => {
+  // Auto-generate slug from name unless user manually changes it
+  useEffect(() => {
+    if (!isSlugEdited && name) {
+      const generatedSlug = name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)+/g, '');
+      setSlug(generatedSlug);
+    }
+  }, [name, isSlugEdited]);
+
+  const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setIsSlugEdited(true);
+    const value = e.target.value
+      .toLowerCase()
+      .replace(/[^a-z0-9-]/g, ''); // enforce valid slug characters on type
+    setSlug(value);
+  };
+
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
 
+    if (!slug) {
+      setError('Please choose a valid restaurant username/slug.');
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      const res = await loginAction(username, password);
+      const res = await registerRestaurantAction({
+        name,
+        slug,
+        password,
+        address
+      });
 
       if (res.success) {
-        if (res.role === 'superadmin') {
-          router.push('/admin');
-        } else {
-          router.push(`/admin/${res.slug}`);
-        }
+        // Redirect to their brand new admin dashboard
+        router.push(`/admin/${res.slug}`);
       } else {
-        setError(res.error || 'Invalid username or password');
+        setError(res.error || 'Failed to register your restaurant. Please try again.');
         setIsLoading(false);
       }
-    } catch {
+    } catch (err) {
       setError('An unexpected error occurred. Please try again.');
       setIsLoading(false);
     }
@@ -63,9 +93,9 @@ export default function LoginPage() {
       p: 3,
       fontFamily: 'var(--font-geist-sans), Arial, sans-serif'
     }}>
-      <Container maxWidth="xs">
+      <Container maxWidth="sm">
         {/* Minimalist Logo Section */}
-        <Box sx={{ textAlign: 'center', mb: 6 }}>
+        <Box sx={{ textAlign: 'center', mb: 4 }}>
           <Link href="/" style={{ textDecoration: 'none' }}>
             <Box sx={{ 
               display: 'flex', 
@@ -115,7 +145,7 @@ export default function LoginPage() {
             </Box>
           </Link>
           <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 600, letterSpacing: '0.01em' }}>
-            RESTAURANT ADMIN CONSOLE
+            GET STARTED IN MINUTES
           </Typography>
         </Box>
 
@@ -144,13 +174,13 @@ export default function LoginPage() {
               pointerEvents: 'none'
             }} />
 
-            <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <Box sx={{ mb: 1 }}>
                 <Typography variant="h5" sx={{ fontWeight: 800, color: '#1e293b', mb: 1 }}>
-                  Welcome back
+                  Register your Restaurant 🚀
                 </Typography>
                 <Typography variant="body2" sx={{ color: '#94a3b8', fontWeight: 500 }}>
-                  Enter your credentials to manage your menu
+                  Create your menu and launch your QR code ordering in seconds.
                 </Typography>
               </Box>
 
@@ -170,22 +200,18 @@ export default function LoginPage() {
                 </Alert>
               )}
 
+              {/* Restaurant Name */}
               <TextField
-                placeholder="Username (Restaurant Slug)"
+                placeholder="Restaurant Name (e.g. The Yellow Chilli)"
                 fullWidth
                 required
-                value={username}
-                onChange={e => setUsername(e.target.value)}
-                autoComplete="username"
-                helperText="Your username is always your unique restaurant slug (e.g. yellow-chilli-meerut)"
-                FormHelperTextProps={{
-                  sx: { color: '#64748b', fontWeight: 500, mt: 0.5 }
-                }}
+                value={name}
+                onChange={e => setName(e.target.value)}
                 slotProps={{
                   input: {
                     startAdornment: (
                       <InputAdornment position="start">
-                        <User size={18} color="#94a3b8" />
+                        <Utensils size={18} color="#94a3b8" />
                       </InputAdornment>
                     ),
                     sx: { 
@@ -202,13 +228,44 @@ export default function LoginPage() {
               />
 
               <TextField
-                placeholder="Password"
+                placeholder="Username / Slug (e.g. yellow-chilli-meerut)"
+                fullWidth
+                required
+                value={slug}
+                onChange={handleSlugChange}
+                helperText="This acts as your unique URL (menugo.com/your-slug) and your admin login username."
+                slotProps={{
+                  formHelperText: {
+                    sx: { color: '#64748b', fontWeight: 500, mt: 0.5 }
+                  },
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <User size={18} color="#94a3b8" />
+                      </InputAdornment>
+                    ),
+                    sx: { 
+                      borderRadius: '16px',
+                      bgcolor: '#f8fafc',
+                      '& fieldset': { borderColor: '#e2e8f0' },
+                      '&:hover fieldset': { borderColor: BRAND_COLOR },
+                      '&.Mui-focused fieldset': { borderColor: BRAND_COLOR, borderWidth: '2px' },
+                      fontWeight: 600,
+                      fontSize: '0.95rem',
+                      fontFamily: 'monospace'
+                    }
+                  }
+                }}
+              />
+
+              {/* Choose Password */}
+              <TextField
+                placeholder="Choose Admin Password"
                 type="password"
                 fullWidth
                 required
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                autoComplete="current-password"
                 slotProps={{
                   input: {
                     startAdornment: (
@@ -229,21 +286,32 @@ export default function LoginPage() {
                 }}
               />
 
-              <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <MuiLink 
-                  component={Link} 
-                  href="#" 
-                  sx={{ 
-                    color: BRAND_COLOR, 
-                    fontSize: '0.8rem', 
-                    fontWeight: 700, 
-                    textDecoration: 'none',
-                    '&:hover': { opacity: 0.8 }
-                  }}
-                >
-                  Forgot password?
-                </MuiLink>
-              </Box>
+              {/* Address */}
+              <TextField
+                placeholder="Restaurant Address (e.g. Meerut, UP)"
+                fullWidth
+                required
+                value={address}
+                onChange={e => setAddress(e.target.value)}
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <MapPin size={18} color="#94a3b8" />
+                      </InputAdornment>
+                    ),
+                    sx: { 
+                      borderRadius: '16px',
+                      bgcolor: '#f8fafc',
+                      '& fieldset': { borderColor: '#e2e8f0' },
+                      '&:hover fieldset': { borderColor: BRAND_COLOR },
+                      '&.Mui-focused fieldset': { borderColor: BRAND_COLOR, borderWidth: '2px' },
+                      fontWeight: 600,
+                      fontSize: '0.95rem'
+                    }
+                  }
+                }}
+              />
 
               <Button
                 type="submit"
@@ -270,15 +338,15 @@ export default function LoginPage() {
                   '&.Mui-disabled': { bgcolor: '#94a3b8' }
                 }}
               >
-                {isLoading ? 'Processing...' : 'Sign in to Dashboard'}
+                {isLoading ? 'Creating Restaurant...' : 'Create Account & Setup Menu'}
               </Button>
 
               <Box sx={{ textAlign: 'center', mt: 1, display: 'flex', justifyContent: 'center' }}>
                 <Typography sx={{ color: '#64748b', fontSize: '0.85rem', fontWeight: 600 }}>
-                  New owner?{' '}
+                  Already registered?{' '}
                   <MuiLink 
                     component={Link} 
-                    href="/register" 
+                    href="/login" 
                     sx={{ 
                       color: BRAND_COLOR, 
                       fontWeight: 800, 
@@ -286,7 +354,7 @@ export default function LoginPage() {
                       '&:hover': { opacity: 0.8 }
                     }}
                   >
-                    Register your restaurant
+                    Sign in here
                   </MuiLink>
                 </Typography>
               </Box>

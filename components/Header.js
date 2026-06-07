@@ -111,7 +111,7 @@ export default function Header({
       </div>
 
       {/* Floating Search & Filter Row */}
-      <div className="max-w-4xl mx-auto -mt-6 relative z-10 px-4 md:px-0">
+      <div className="max-w-4xl mx-auto -mt-6 relative z-[5] px-4 md:px-0">
         <div className="flex gap-3 items-center">
           <div className="relative flex-1">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -135,102 +135,103 @@ export default function Header({
             <SlidersHorizontal size={22} strokeWidth={2.5} />
           </button>
         </div>
+      </div>
 
-        {/* Simplified Filter Drawer */}
-        {mounted && (
-          <>
-            <div 
-              aria-hidden="true"
-              className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-50 transition-opacity duration-300 ${drawerOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
-              onClick={toggleDrawer(false)}
-            />
-            <div 
-              role="dialog"
-              aria-modal="true"
-              aria-label="Filters and sorting drawer"
-              className={`fixed bottom-0 left-0 right-0 bg-gray-50 rounded-t-[28px] z-50 transform transition-transform duration-300 ease-out max-h-[90vh] overflow-y-auto ${drawerOpen ? 'translate-y-0' : 'translate-y-full'}`}
-            >
-              <div className="p-8 pb-10 max-w-4xl mx-auto">
-                <div className="flex justify-between items-center mb-8">
-                  <h2 className="text-2xl font-black text-gray-900">Filters and sorting</h2>
-                  <button 
-                    onClick={toggleDrawer(false)} 
-                    aria-label="Close filters"
-                    className="p-2 bg-white rounded-full shadow-[0_2px_8px_rgba(0,0,0,0.05)] text-gray-600 hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500"
-                  >
-                    <X size={20} />
-                  </button>
-                </div>
+      {/* Filter Drawer — rendered OUTSIDE the z-[5] search row so it's not trapped in that stacking context */}
+      {mounted && (
+        <>
+          <div 
+            aria-hidden="true"
+            className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-[1000] transition-opacity duration-300 ${drawerOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+            onClick={toggleDrawer(false)}
+          />
+          <div 
+            role="dialog"
+            aria-modal="true"
+            aria-label="Filters and sorting drawer"
+            className={`fixed bottom-0 left-0 right-0 bg-gray-50 rounded-t-[28px] z-[1010] transform transition-transform duration-300 ease-out max-h-[90vh] overflow-y-auto ${drawerOpen ? 'translate-y-0' : 'translate-y-full'}`}
+          >
+            <div className="p-8 pb-10 max-w-4xl mx-auto">
+              <div className="flex justify-between items-center mb-8">
+                <h2 className="text-2xl font-black text-gray-900">Filters and sorting</h2>
+                <button 
+                  onClick={toggleDrawer(false)} 
+                  aria-label="Close filters"
+                  className="p-2 bg-white rounded-full shadow-[0_2px_8px_rgba(0,0,0,0.05)] text-gray-600 hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500"
+                >
+                  <X size={20} />
+                </button>
+              </div>
 
-                <div className="space-y-6">
-                  {/* Preference Section */}
-                  <div className="bg-white p-6 rounded-[24px] shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
-                    <h3 className="text-sm font-extrabold mb-4 text-gray-800 uppercase tracking-wider">Preference</h3>
-                    <div className="flex gap-3 flex-wrap">
-                      <FilterTag
-                        label="Veg Only"
-                        active={vegOnly}
-                        isVegTag={true}
-                        onClick={() => { setVegOnly(!vegOnly); if (!vegOnly) setNonVegOnly(false); }}
-                        icon={() => (
-                          <div className="w-3.5 h-3.5 border border-green-500 rounded-[2px] flex items-center justify-center">
-                            <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                          </div>
-                        )}
-                      />
-                      <FilterTag
-                        label="Non-veg Only"
-                        active={nonVegOnly}
-                        isNonVegTag={true}
-                        onClick={() => { setNonVegOnly(!nonVegOnly); if (!nonVegOnly) setVegOnly(false); }}
-                        icon={() => (
-                          <div className="w-3.5 h-3.5 border border-red-500 rounded-[2px] flex items-center justify-center">
-                            <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                          </div>
-                        )}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Sorting Options */}
-                  <div className="bg-white p-6 rounded-[24px] shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
-                    <h3 className="text-sm font-extrabold mb-4 text-gray-800 uppercase tracking-wider">Sorting by</h3>
-                    <div className="flex gap-3 flex-wrap">
-                      <FilterTag
-                        label="Bestseller"
-                        icon={Trophy}
-                        active={sortBy === "popular"}
-                        onClick={() => setSortBy(sortBy === "popular" ? "default" : "popular")}
-                      />
-                      <FilterTag
-                        label="Price: Low to High"
-                        icon={ArrowUpNarrowWide}
-                        active={sortBy === "price_low"}
-                        onClick={() => setSortBy(sortBy === "price_low" ? "default" : "price_low")}
-                      />
-                      <FilterTag
-                        label="Price: High to Low"
-                        icon={ArrowDownWideNarrow}
-                        active={sortBy === "price_high"}
-                        onClick={() => setSortBy(sortBy === "price_high" ? "default" : "price_high")}
-                      />
-                    </div>
+              <div className="space-y-6">
+                {/* Preference Section */}
+                <div className="bg-white p-6 rounded-[24px] shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
+                  <h3 className="text-sm font-extrabold mb-4 text-gray-800 uppercase tracking-wider">Preference</h3>
+                  <div className="flex gap-3 flex-wrap">
+                    <FilterTag
+                      label="Veg Only"
+                      active={vegOnly}
+                      isVegTag={true}
+                      onClick={() => { setVegOnly(!vegOnly); if (!vegOnly) setNonVegOnly(false); }}
+                      icon={() => (
+                        <div className="w-3.5 h-3.5 border border-green-500 rounded-[2px] flex items-center justify-center">
+                          <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                        </div>
+                      )}
+                    />
+                    <FilterTag
+                      label="Non-veg Only"
+                      active={nonVegOnly}
+                      isNonVegTag={true}
+                      onClick={() => { setNonVegOnly(!nonVegOnly); if (!nonVegOnly) setVegOnly(false); }}
+                      icon={() => (
+                        <div className="w-3.5 h-3.5 border border-red-500 rounded-[2px] flex items-center justify-center">
+                          <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                        </div>
+                      )}
+                    />
                   </div>
                 </div>
 
-                <div className="mt-8">
-                  <button
-                    onClick={toggleDrawer(false)}
-                    className="w-full bg-green-500 hover:bg-green-600 text-white font-black py-4 rounded-[16px] text-lg transition-colors shadow-[0_8px_20px_-4px_rgba(249,115,22,0.4)]"
-                  >
-                    Apply Filters
-                  </button>
+                {/* Sorting Options */}
+                <div className="bg-white p-6 rounded-[24px] shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
+                  <h3 className="text-sm font-extrabold mb-4 text-gray-800 uppercase tracking-wider">Sorting by</h3>
+                  <div className="flex gap-3 flex-wrap">
+                    <FilterTag
+                      label="Bestseller"
+                      icon={Trophy}
+                      active={sortBy === "popular"}
+                      onClick={() => setSortBy(sortBy === "popular" ? "default" : "popular")}
+                    />
+                    <FilterTag
+                      label="Price: Low to High"
+                      icon={ArrowUpNarrowWide}
+                      active={sortBy === "price_low"}
+                      onClick={() => setSortBy(sortBy === "price_low" ? "default" : "price_low")}
+                    />
+                    <FilterTag
+                      label="Price: High to Low"
+                      icon={ArrowDownWideNarrow}
+                      active={sortBy === "price_high"}
+                      onClick={() => setSortBy(sortBy === "price_high" ? "default" : "price_high")}
+                    />
+                  </div>
                 </div>
               </div>
+
+              <div className="mt-8">
+                <button
+                  onClick={toggleDrawer(false)}
+                  className="w-full bg-green-500 hover:bg-green-600 text-white font-black py-4 rounded-[16px] text-lg transition-colors shadow-[0_8px_20px_-4px_rgba(249,115,22,0.4)]"
+                >
+                  Apply Filters
+                </button>
+              </div>
             </div>
-          </>
-        )}
-      </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
+
