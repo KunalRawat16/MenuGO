@@ -233,6 +233,31 @@ export default function SuperAdminClient({ initialRestaurants }) {
             </button>
           </div>
 
+          {/* Mobile Navigation Tabs */}
+          <div className="md:hidden flex gap-2 overflow-x-auto pb-4 mb-6 scrollbar-none border-b border-white/5" suppressHydrationWarning>
+            <button 
+              onClick={() => setActiveTab("dashboard")}
+              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl font-bold text-xs transition-colors whitespace-nowrap ${activeTab === 'dashboard' ? 'bg-green-500 text-white' : 'bg-white/5 text-gray-400'}`}
+            >
+              <LayoutDashboard size={14} />
+              Overview
+            </button>
+            <button 
+              onClick={() => setActiveTab("restaurants")}
+              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl font-bold text-xs transition-colors whitespace-nowrap ${activeTab === 'restaurants' ? 'bg-green-500 text-white' : 'bg-white/5 text-gray-400'}`}
+            >
+              <Users size={14} />
+              Restaurants
+            </button>
+            <button 
+              onClick={() => setActiveTab("settings")}
+              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl font-bold text-xs transition-colors whitespace-nowrap ${activeTab === 'settings' ? 'bg-green-500 text-white' : 'bg-white/5 text-gray-400'}`}
+            >
+              <Settings size={14} />
+              Settings
+            </button>
+          </div>
+
           {/* Top Bar */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-10">
             <div>
@@ -418,7 +443,7 @@ export default function SuperAdminClient({ initialRestaurants }) {
                           </td>
                           <td className="px-6 py-4 font-medium">{r.itemCount || 0}</td>
                           <td className="px-6 py-4 text-right">
-                            <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="flex items-center justify-end gap-2 md:opacity-0 md:group-hover:opacity-100 opacity-100 transition-opacity">
                               <Link href={`/${r.slug}`} target="_blank" className="p-2 text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
                                 <Eye size={16} />
                               </Link>
