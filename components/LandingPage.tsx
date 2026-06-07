@@ -430,270 +430,311 @@ export default function LandingPage({ restaurant }: LandingPageProps) {
 
           {/* Right Mobile Phone Mockup */}
           <div className="lg:col-span-7 flex justify-center">
-            {/* Phone outer wrapper */}
-            <div className={`relative w-[360px] h-[720px] rounded-[50px] border-[12px] shadow-2xl overflow-hidden flex flex-col z-10 transition-all duration-300 ${
-              isDarkMode ? "border-slate-800 bg-slate-950" : "border-slate-300 bg-white"
-            }`}>
+            {/* Outer high-fidelity phone frame container */}
+            <div className="relative mx-auto select-none">
+              {/* Left Side Buttons (Volume) */}
+              <div className={`absolute left-[-15px] top-[120px] w-[3px] h-[50px] rounded-l transition-colors duration-300 ${
+                isDarkMode ? "bg-slate-800" : "bg-slate-300"
+              }`} />
+              <div className={`absolute left-[-15px] top-[180px] w-[3px] h-[50px] rounded-l transition-colors duration-300 ${
+                isDarkMode ? "bg-slate-800" : "bg-slate-300"
+              }`} />
               
-              {/* Speaker / Camera Notch */}
-              <div className={`absolute top-0 left-1/2 -translate-x-1/2 w-36 h-6 rounded-b-2xl z-30 flex items-center justify-center transition-colors duration-300 ${
-                isDarkMode ? "bg-slate-800" : "bg-slate-200"
+              {/* Right Side Button (Power) */}
+              <div className={`absolute right-[-15px] top-[140px] w-[3px] h-[75px] rounded-r transition-colors duration-300 ${
+                isDarkMode ? "bg-slate-800" : "bg-slate-300"
+              }`} />
+
+              {/* Phone body */}
+              <div className={`relative w-[360px] h-[720px] rounded-[50px] border-[12px] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.35)] overflow-hidden flex flex-col z-10 transition-all duration-300 ${
+                isDarkMode ? "border-slate-800 bg-slate-950" : "border-slate-300 bg-white"
               }`}>
-                <div className={`w-12 h-1 rounded-full mb-1 transition-colors duration-300 ${
-                  isDarkMode ? "bg-slate-900" : "bg-slate-400"
-                }`} />
-              </div>
-
-              {/* Mobile Screen Area */}
-              <div className="flex-1 flex flex-col overflow-y-auto overflow-x-hidden pt-6 bg-white pb-20 relative text-slate-900 font-sans select-none scrollbar-none">
                 
-                {/* 1. Immersive Banner Section matching Header.js */}
-                <div className="relative h-44 w-full bg-slate-800 flex-shrink-0">
-                  <Image 
-                    src={restaurant?.banner || "https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=2070"} 
-                    alt="banner" 
-                    fill 
-                    priority
-                    className="object-cover opacity-85" 
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent" />
+                {/* 1. Android Status Bar (Fixed at top - prevents overlapping Notch) */}
+                <div className="bg-black text-white h-7 px-6 flex items-center justify-between text-[10px] font-bold z-50 select-none relative flex-shrink-0">
+                  {/* Integrated camera speaker Notch */}
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-4 bg-black rounded-b-xl flex items-center justify-center">
+                    <div className="w-6 h-1 bg-slate-900 rounded-full mb-1" />
+                  </div>
                   
-                  {/* Rating / Address overlays matching Header.js */}
-                  <div className="absolute bottom-3 left-4 right-4 text-white">
-                    <h5 className="font-extrabold text-white text-lg leading-tight drop-shadow-md">{restaurantName}</h5>
-                    <p className="text-gray-300 text-[9px] opacity-90 truncate leading-none mt-1">
-                      {restaurant?.address || "Victoria Park, Meerut"}
-                    </p>
-                    
-                    <div className="flex gap-3 items-center mt-2.5 opacity-90 text-[9px] font-bold">
-                      <div className="flex items-center gap-1">
-                        <Star size={10} fill="#f97316" className="text-green-500" />
-                        <span>4.2</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Clock size={10} />
-                        <span>20-30 mins</span>
-                      </div>
-                      <div className="flex items-center gap-0.5">
-                        <IndianRupee size={10} />
-                        <span>150 per person</span>
-                      </div>
+                  <span>11:06</span>
+                  <div className="flex items-center gap-1.5">
+                    <span>5G</span>
+                    <div className="flex items-end gap-0.5 h-2 w-3">
+                      <div className="w-[1.5px] h-[20%] bg-white rounded-2xs" />
+                      <div className="w-[1.5px] h-[40%] bg-white rounded-2xs" />
+                      <div className="w-[1.5px] h-[60%] bg-white rounded-2xs" />
+                      <div className="w-[1.5px] h-[80%] bg-white rounded-2xs" />
+                      <div className="w-[1.5px] h-[100%] bg-white rounded-2xs" />
+                    </div>
+                    <span className="text-[9px]">📶</span>
+                    <div className="border border-white/70 rounded-[3px] p-[1px] flex items-center h-2.5 w-5">
+                      <div className="bg-white h-full w-[85%] rounded-[1px]" />
                     </div>
                   </div>
                 </div>
 
-                {/* 2. Floating Search Bar & Preference filters matching Header.js */}
-                <div className="bg-white px-3 -mt-3 relative z-10 flex-shrink-0">
-                  <div className="relative flex items-center">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <SearchIcon size={14} className="text-gray-400" />
-                    </div>
-                    <input
-                      type="search"
-                      placeholder="Start typing to search..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full bg-white rounded-xl h-9 pl-9 pr-3 text-xs text-gray-900 font-medium placeholder-gray-400 shadow-[0_4px_12px_rgba(0,0,0,0.06)] focus:outline-none border border-gray-100"
+                {/* Mobile Viewport Area (Scrollable below status bar) */}
+                <div className="flex-1 flex flex-col overflow-y-auto overflow-x-hidden bg-white pb-20 relative text-slate-900 font-sans select-none scrollbar-none">
+                  
+                  {/* Immersive Banner Section matching Header.js */}
+                  <div className="relative h-44 w-full bg-slate-800 flex-shrink-0">
+                    <Image 
+                      src={restaurant?.banner || "https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=2070"} 
+                      alt="banner" 
+                      fill 
+                      priority
+                      className="object-cover opacity-85" 
                     />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent" />
+                    
+                    {/* Rating / Address overlays matching Header.js */}
+                    <div className="absolute bottom-3 left-4 right-4 text-white">
+                      <h5 className="font-extrabold text-white text-lg leading-tight drop-shadow-md">{restaurantName}</h5>
+                      <p className="text-gray-300 text-[9px] opacity-90 truncate leading-none mt-1">
+                        {restaurant?.address || "Victoria Park, Meerut"}
+                      </p>
+                      
+                      <div className="flex gap-3 items-center mt-2.5 opacity-90 text-[9px] font-bold">
+                        <div className="flex items-center gap-1">
+                          <Star size={10} fill="#f97316" className="text-green-500" />
+                          <span>4.2</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Clock size={10} />
+                          <span>20-30 mins</span>
+                        </div>
+                        <div className="flex items-center gap-0.5">
+                          <IndianRupee size={10} />
+                          <span>150 per person</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
-                  {/* Veg / Non-Veg Toggle Pills */}
-                  <div className="flex gap-2 mt-2 pb-1.5 border-b border-gray-50">
-                    <button
-                      onClick={() => {
-                        setVegOnly(!vegOnly);
-                        if (!vegOnly) setNonVegOnly(false);
-                      }}
-                      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border text-[9px] font-bold transition-all ${
-                        vegOnly 
-                          ? "border-green-400 bg-green-50 text-green-600 shadow-[0_2px_8px_rgba(34,197,94,0.1)]" 
-                          : "border-gray-100 bg-white text-gray-700 hover:bg-gray-50"
-                      }`}
-                    >
-                      <div className="w-2.5 h-2.5 border border-green-500 rounded-[2px] flex items-center justify-center flex-shrink-0">
-                        <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                  {/* Floating Search Bar & Preference filters matching Header.js */}
+                  <div className="bg-white px-3 -mt-3 relative z-10 flex-shrink-0">
+                    <div className="relative flex items-center">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <SearchIcon size={14} className="text-gray-400" />
                       </div>
-                      Veg Only
-                    </button>
+                      <input
+                        type="search"
+                        placeholder="Start typing to search..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full bg-white rounded-xl h-9 pl-9 pr-3 text-xs text-gray-900 font-medium placeholder-gray-400 shadow-[0_4px_12px_rgba(0,0,0,0.06)] focus:outline-none border border-gray-100"
+                      />
+                    </div>
 
-                    <button
-                      onClick={() => {
-                        setNonVegOnly(!nonVegOnly);
-                        if (!nonVegOnly) setVegOnly(false);
-                      }}
-                      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border text-[9px] font-bold transition-all ${
-                        nonVegOnly 
-                          ? "border-red-400 bg-red-50 text-red-600 shadow-[0_2px_8px_rgba(239,68,68,0.1)]" 
-                          : "border-gray-100 bg-white text-gray-700 hover:bg-gray-50"
-                      }`}
-                    >
-                      <div className="w-2.5 h-2.5 border border-red-500 rounded-[2px] flex items-center justify-center flex-shrink-0">
-                        <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                      </div>
-                      Non-veg Only
-                    </button>
-                  </div>
-                </div>
+                    {/* Veg / Non-Veg Toggle Pills */}
+                    <div className="flex gap-2 mt-2 pb-1.5 border-b border-gray-50">
+                      <button
+                        onClick={() => {
+                          setVegOnly(!vegOnly);
+                          if (!vegOnly) setNonVegOnly(false);
+                        }}
+                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border text-[9px] font-bold transition-all ${
+                          vegOnly 
+                            ? "border-green-400 bg-green-50 text-green-600 shadow-[0_2px_8px_rgba(34,197,94,0.1)]" 
+                            : "border-gray-100 bg-white text-gray-700 hover:bg-gray-50"
+                        }`}
+                      >
+                        <div className="w-2.5 h-2.5 border border-green-500 rounded-[2px] flex items-center justify-center flex-shrink-0">
+                          <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                        </div>
+                        Veg Only
+                      </button>
 
-                {/* 3. Category Horizontal Tabs Switcher */}
-                <div className="bg-white py-2 px-3 flex gap-2 overflow-x-auto scrollbar-none border-b border-gray-50 flex-shrink-0 sticky top-0 z-20">
-                  {categories.map(cat => (
-                    <button
-                      key={cat}
-                      onClick={() => setSelectedCategory(cat)}
-                      className={`px-3 py-1.5 rounded-full text-[10px] font-black transition-all ${
-                        selectedCategory === cat 
-                          ? "bg-green-500 text-white shadow-sm" 
-                          : "bg-gray-50 text-gray-500 hover:bg-gray-100"
-                      }`}
-                    >
-                      {cat}
-                    </button>
-                  ))}
-                </div>
-
-                {/* 4. Menu Items List grouped by Category matching MenuClient.js */}
-                <div className="flex-1 bg-gray-50 p-3 space-y-5">
-                  {/* Brand Story Quote matching MenuClient.js */}
-                  <div className="text-center px-2 py-1">
-                    <p className="text-gray-500 font-medium italic text-[10px] leading-relaxed">
-                      &quot;Our Chefs traveled the globe to bring the best flavours for you. Make sure you taste a bit from every course.&quot;
-                    </p>
+                      <button
+                        onClick={() => {
+                          setNonVegOnly(!nonVegOnly);
+                          if (!nonVegOnly) setVegOnly(false);
+                        }}
+                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border text-[9px] font-bold transition-all ${
+                          nonVegOnly 
+                            ? "border-red-400 bg-red-50 text-red-600 shadow-[0_2px_8px_rgba(239,68,68,0.1)]" 
+                            : "border-gray-100 bg-white text-gray-700 hover:bg-gray-50"
+                        }`}
+                      >
+                        <div className="w-2.5 h-2.5 border border-red-500 rounded-[2px] flex items-center justify-center flex-shrink-0">
+                          <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                        </div>
+                        Non-veg Only
+                      </button>
+                    </div>
                   </div>
 
-                  {groupedCategories.map(group => (
-                    <div key={group.category} className="space-y-2.5">
-                      <div className="flex items-center gap-2 mt-4">
-                        {getCategoryIcon(group.category)}
-                        <h4 className="font-black text-gray-900 text-xs tracking-tight uppercase">
-                          {group.category}
-                        </h4>
-                      </div>
+                  {/* Category Tabs Switcher (Exactly matches CategoryTabs.js) */}
+                  <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-100 flex-shrink-0" suppressHydrationWarning>
+                    <div className="flex overflow-x-auto scrollbar-none space-x-6 px-4" role="tablist">
+                      {categories.map((category) => {
+                        const isActive = selectedCategory === category;
+                        return (
+                          <button
+                            key={category}
+                            role="tab"
+                            aria-selected={isActive}
+                            onClick={() => setSelectedCategory(category)}
+                            className={`whitespace-nowrap py-3 px-1 text-xs font-extrabold tracking-tight transition-all relative focus:outline-none rounded-lg ${
+                              isActive 
+                                ? "text-gray-900" 
+                                : "text-gray-400 hover:text-gray-900"
+                            }`}
+                          >
+                            {category}
+                            {isActive && (
+                              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-green-500 rounded-t-md" />
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
 
-                      <div className="space-y-2.5">
-                        {group.items.map(item => {
-                          const quantity = cart[item.id] || 0;
-                          const isSpicy = item.description?.toLowerCase().includes('spicy') || item.description?.toLowerCase().includes('chili');
+                  {/* Menu Items List grouped by Category matching MenuClient.js */}
+                  <div className="flex-1 bg-gray-50 p-3 space-y-5">
+                    {/* Brand Story Quote matching MenuClient.js */}
+                    <div className="text-center px-2 py-1">
+                      <p className="text-gray-500 font-medium italic text-[10px] leading-relaxed">
+                        &quot;Our Chefs traveled the globe to bring the best flavours for you. Make sure you taste a bit from every course.&quot;
+                      </p>
+                    </div>
 
-                          return (
-                            <div 
-                              key={item.id}
-                              className="bg-white rounded-[20px] border border-gray-100 flex flex-row p-0 gap-0 overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.02)]"
-                            >
-                              {/* Image Section (Left) */}
-                              <div className="relative w-[110px] min-h-[120px] flex-shrink-0">
-                                <Image
-                                  src={item.image || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&q=80"}
-                                  alt={item.name}
-                                  fill
-                                  sizes="110px"
-                                  className="object-cover"
-                                />
+                    {groupedCategories.map(group => (
+                      <div key={group.category} className="space-y-2.5">
+                        <div className="flex items-center gap-2 mt-4">
+                          {getCategoryIcon(group.category)}
+                          <h4 className="font-black text-gray-900 text-xs tracking-tight uppercase">
+                            {group.category}
+                          </h4>
+                        </div>
 
-                                {/* Popular Tag Overlay */}
-                                {item.isPopular && (
-                                  <div className="absolute top-2 left-2 bg-white/95 text-green-500 px-1.5 py-0.5 rounded-md text-[0.6rem] font-black shadow-sm flex items-center gap-0.5 z-10">
-                                    <Star size={10} fill="currentColor" /> POPULAR
-                                  </div>
-                                )}
-                              </div>
+                        <div className="space-y-2.5">
+                          {group.items.map(item => {
+                            const quantity = cart[item.id] || 0;
+                            const isSpicy = item.description?.toLowerCase().includes('spicy') || item.description?.toLowerCase().includes('chili');
 
-                              {/* Content Section (Right) */}
-                              <div className="flex-1 flex flex-col justify-between p-3">
-                                <div>
-                                  <div className="flex items-start justify-between mb-1">
-                                    <div className="flex items-center gap-1.5">
-                                      <h3 className="font-extrabold text-sm text-gray-900 leading-tight">
-                                        {item.name}
-                                      </h3>
-                                      {isSpicy && <Flame size={12} color="#ef4444" fill="#ef4444" className="flex-shrink-0" />}
+                            return (
+                              <div 
+                                key={item.id}
+                                className="bg-white rounded-[20px] border border-gray-100 flex flex-row p-0 gap-0 overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.02)]"
+                              >
+                                {/* Image Section (Left) */}
+                                <div className="relative w-[110px] min-h-[120px] flex-shrink-0">
+                                  <Image
+                                    src={item.image || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&q=80"}
+                                    alt={item.name}
+                                    fill
+                                    sizes="110px"
+                                    className="object-cover"
+                                  />
+
+                                  {/* Popular Tag Overlay */}
+                                  {item.isPopular && (
+                                    <div className="absolute top-2 left-2 bg-white/95 text-green-500 px-1.5 py-0.5 rounded-md text-[0.6rem] font-black shadow-sm flex items-center gap-0.5 z-10">
+                                      <Star size={10} fill="currentColor" /> POPULAR
                                     </div>
-
-                                    {/* Veg/Non-veg Indicator */}
-                                    <div className={`w-4 h-4 border rounded-[3px] flex items-center justify-center flex-shrink-0 mt-0.5 ml-2 ${item.isVeg ? 'border-green-500' : 'border-red-500'}`}>
-                                      <div className={`w-2 h-2 rounded-full ${item.isVeg ? 'bg-green-500' : 'bg-red-500'}`} />
-                                    </div>
-                                  </div>
-
-                                  <p className="text-gray-500 text-[10px] leading-snug line-clamp-2 mb-2">
-                                    {item.description}
-                                  </p>
-
-                                  <div className="flex items-center gap-3 opacity-70 text-gray-500">
-                                     <div className="flex items-center gap-1">
-                                        <Clock size={10} />
-                                        <span className="text-[9px] font-bold">15-20m</span>
-                                     </div>
-                                     <div className="flex items-center gap-1">
-                                        <Info size={10} />
-                                        <span className="text-[9px] font-bold">Details</span>
-                                     </div>
-                                  </div>
+                                  )}
                                 </div>
 
-                                <div className="flex items-center justify-between mt-auto pt-2">
-                                  <span className="font-black text-gray-900 text-sm">
-                                    ₹{item.price}
-                                  </span>
-
+                                {/* Content Section (Right) */}
+                                <div className="flex-1 flex flex-col justify-between p-3">
                                   <div>
-                                    {quantity > 0 ? (
-                                      <div className="flex items-center gap-2 bg-gray-50 border border-gray-100 rounded-xl p-0.5">
-                                        <button
-                                          className="w-7 h-7 flex items-center justify-center bg-white text-green-500 rounded-lg shadow-sm hover:bg-green-55 focus-visible:outline-none transition-colors"
-                                          onClick={() => updateCart(item.id, -1)}
-                                        >
-                                          <Minus size={14} strokeWidth={4} />
-                                        </button>
-                                        <span className="font-black text-gray-900 text-xs min-w-[16px] text-center">
-                                          {quantity}
-                                        </span>
-                                        <button
-                                          className="w-7 h-7 flex items-center justify-center bg-green-500 text-white rounded-lg shadow-sm hover:bg-green-600 focus-visible:outline-none transition-colors"
-                                          onClick={() => updateCart(item.id, 1)}
-                                        >
-                                          <Plus size={14} strokeWidth={4} />
-                                        </button>
+                                    <div className="flex items-start justify-between mb-1">
+                                      <div className="flex items-center gap-1.5">
+                                        <h3 className="font-extrabold text-sm text-gray-900 leading-tight">
+                                          {item.name}
+                                        </h3>
+                                        {isSpicy && <Flame size={12} color="#ef4444" fill="#ef4444" className="flex-shrink-0" />}
                                       </div>
-                                    ) : (
-                                      <button
-                                        onClick={() => updateCart(item.id, 1)}
-                                        className="w-9 h-9 flex items-center justify-center bg-green-500 text-white rounded-[10px] hover:bg-green-600 focus-visible:outline-none transition-colors"
-                                      >
-                                        <Plus size={22} strokeWidth={3} />
-                                      </button>
-                                    )}
+
+                                      {/* Veg/Non-veg Indicator */}
+                                      <div className={`w-4 h-4 border rounded-[3px] flex items-center justify-center flex-shrink-0 mt-0.5 ml-2 ${item.isVeg ? 'border-green-500' : 'border-red-500'}`}>
+                                        <div className={`w-2 h-2 rounded-full ${item.isVeg ? 'bg-green-500' : 'bg-red-500'}`} />
+                                      </div>
+                                    </div>
+
+                                    <p className="text-gray-500 text-[10px] leading-snug line-clamp-2 mb-2">
+                                      {item.description}
+                                    </p>
+
+                                    <div className="flex items-center gap-3 opacity-70 text-gray-500">
+                                       <div className="flex items-center gap-1">
+                                          <Clock size={10} />
+                                          <span className="text-[9px] font-bold">15-20m</span>
+                                       </div>
+                                       <div className="flex items-center gap-1">
+                                          <Info size={10} />
+                                          <span className="text-[9px] font-bold">Details</span>
+                                       </div>
+                                    </div>
+                                  </div>
+
+                                  <div className="flex items-center justify-between mt-auto pt-2">
+                                    <span className="font-black text-gray-900 text-sm">
+                                      ₹{item.price}
+                                    </span>
+
+                                    <div>
+                                      {quantity > 0 ? (
+                                        <div className="flex items-center gap-2 bg-gray-50 border border-gray-100 rounded-xl p-0.5">
+                                          <button
+                                            className="w-7 h-7 flex items-center justify-center bg-white text-green-500 rounded-lg shadow-sm hover:bg-green-55 focus-visible:outline-none transition-colors"
+                                            onClick={() => updateCart(item.id, -1)}
+                                          >
+                                            <Minus size={14} strokeWidth={4} />
+                                          </button>
+                                          <span className="font-black text-gray-900 text-xs min-w-[16px] text-center">
+                                            {quantity}
+                                          </span>
+                                          <button
+                                            className="w-7 h-7 flex items-center justify-center bg-green-500 text-white rounded-lg shadow-sm hover:bg-green-600 focus-visible:outline-none transition-colors"
+                                            onClick={() => updateCart(item.id, 1)}
+                                          >
+                                            <Plus size={14} strokeWidth={4} />
+                                          </button>
+                                        </div>
+                                      ) : (
+                                        <button
+                                          onClick={() => updateCart(item.id, 1)}
+                                          className="w-9 h-9 flex items-center justify-center bg-green-500 text-white rounded-[10px] hover:bg-green-600 focus-visible:outline-none transition-colors"
+                                        >
+                                          <Plus size={22} strokeWidth={3} />
+                                        </button>
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
                               </div>
-                            </div>
-                          );
-                        })}
+                            );
+                          })}
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Floating Cart Button (Mock Mobile) */}
-                {totalCartCount > 0 && (
-                  <div className="absolute bottom-4 left-3 right-3 bg-white p-3 rounded-2xl border border-gray-100 shadow-lg shadow-black/10 flex items-center justify-between z-20 animate-fade-in-up">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center text-green-500">
-                        <ShoppingBag size={18} />
-                      </div>
-                      <div>
-                        <p className="font-black text-xs text-gray-900">{totalCartCount} Items Added</p>
-                        <p className="text-[10px] text-gray-400 font-bold">Table 04</p>
-                      </div>
-                    </div>
-                    <button 
-                      onClick={() => alert("This is a demo.")}
-                      className="bg-green-500 hover:bg-green-600 text-white font-black text-xs px-4 py-2 rounded-xl flex items-center gap-1"
-                    >
-                      Place Order <ArrowRight size={12} />
-                    </button>
+                    ))}
                   </div>
-                )}
+
+                  {/* Floating Cart Button (Mock Mobile) */}
+                  {totalCartCount > 0 && (
+                    <div className="absolute bottom-4 left-3 right-3 bg-white p-3 rounded-2xl border border-gray-100 shadow-lg shadow-black/10 flex items-center justify-between z-20 animate-fade-in-up">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center text-green-500">
+                          <ShoppingBag size={18} />
+                        </div>
+                        <div>
+                          <p className="font-black text-xs text-gray-900">{totalCartCount} Items Added</p>
+                          <p className="text-[10px] text-gray-400 font-bold">Table 04</p>
+                        </div>
+                      </div>
+                      <button 
+                        onClick={() => alert("This is a demo.")}
+                        className="bg-green-500 hover:bg-green-600 text-white font-black text-xs px-4 py-2 rounded-xl flex items-center gap-1"
+                      >
+                        Place Order <ArrowRight size={12} />
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
