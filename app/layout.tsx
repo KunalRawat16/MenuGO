@@ -30,6 +30,37 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                // Instantly remove extension-injected attributes to prevent React hydration mismatch errors
+                const observer = new MutationObserver(function(mutations) {
+                  for (let i = 0; i < mutations.length; i++) {
+                    const addedNodes = mutations[i].addedNodes;
+                    for (let j = 0; j < addedNodes.length; j++) {
+                      const node = addedNodes[j];
+                      if (node.nodeType === 1) {
+                        if (node.hasAttribute('bis_skin_checked')) {
+                          node.removeAttribute('bis_skin_checked');
+                        }
+                        const children = node.getElementsByTagName('*');
+                        for (let k = 0; k < children.length; k++) {
+                          if (children[k].hasAttribute('bis_skin_checked')) {
+                            children[k].removeAttribute('bis_skin_checked');
+                          }
+                        }
+                      }
+                    }
+                  }
+                });
+                observer.observe(document.documentElement, { childList: true, subtree: true });
+              })();
+            `
+          }}
+        />
+      </head>
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
         <ThemeRegistry>{children}</ThemeRegistry>
       </body>
