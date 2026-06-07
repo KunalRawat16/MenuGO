@@ -222,32 +222,32 @@ export default function LandingPage({ restaurant }: LandingPageProps) {
   }, [menuItems, selectedCategory, vegOnly, nonVegOnly, searchQuery, sortBy]);
 
   return (
-    <div className={`transition-colors duration-300 font-sans min-h-screen selection:bg-green-500 selection:text-white ${
+    <div className={`landing-page relative transition-colors duration-300 font-sans min-h-screen w-full max-w-[100vw] selection:bg-green-500 selection:text-white overflow-x-hidden ${
       isDarkMode ? "bg-slate-950 text-white" : "bg-slate-50 text-slate-900"
     }`}>
       {/* Background decoration */}
-      <div className={`absolute top-0 left-1/4 w-96 h-96 rounded-full blur-[120px] pointer-events-none z-0 transition-opacity duration-300 ${
+      <div className={`absolute top-0 left-1/4 w-48 sm:w-72 lg:w-96 h-48 sm:h-72 lg:h-96 rounded-full blur-[120px] pointer-events-none z-0 transition-opacity duration-300 ${
         isDarkMode ? "bg-green-500/10 opacity-100" : "bg-green-500/5 opacity-50"
       }`} />
-      <div className={`absolute top-1/3 right-1/4 w-96 h-96 rounded-full blur-[120px] pointer-events-none z-0 transition-opacity duration-300 ${
+      <div className={`absolute top-1/3 right-1/4 w-48 sm:w-72 lg:w-96 h-48 sm:h-72 lg:h-96 rounded-full blur-[120px] pointer-events-none z-0 transition-opacity duration-300 ${
         isDarkMode ? "bg-emerald-500/10 opacity-100" : "bg-emerald-500/5 opacity-50"
       }`} />
 
       {/* Navigation */}
-      <header className={`relative z-50 max-w-7xl mx-auto px-6 py-6 flex items-center justify-between border-b transition-all duration-300 sticky top-0 backdrop-blur-md ${
+      <header className={`relative z-50 max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6 flex items-center justify-between border-b transition-all duration-300 sticky top-0 backdrop-blur-md ${
         isDarkMode ? "border-white/5 bg-slate-950/70" : "border-slate-200/80 bg-white/70"
       }`}>
         <div className="flex items-center gap-2">
-          <div className="w-10 h-10 bg-gradient-to-tr from-green-500 to-emerald-400 rounded-xl flex items-center justify-center shadow-lg shadow-green-500/20">
-            <MenuGoIcon size={22} className="text-white animate-pulse" />
+          <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gradient-to-tr from-green-500 to-emerald-400 rounded-xl flex items-center justify-center shadow-lg shadow-green-500/20">
+            <MenuGoIcon size={20} className="text-white animate-pulse" />
           </div>
           <div className="flex flex-col">
-            <span className={`font-extrabold text-2xl leading-none tracking-tight ${
+            <span className={`font-extrabold text-xl sm:text-2xl leading-none tracking-tight ${
               isDarkMode ? "bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent" : "text-slate-900"
             }`}>
               Menu<span className="text-green-500">Go</span>
             </span>
-            <span className="text-[9px] font-black text-green-500 tracking-[0.18em] uppercase leading-none mt-1 select-none">
+            <span className="text-[8px] sm:text-[9px] font-black text-green-500 tracking-[0.18em] uppercase leading-none mt-1 select-none">
               green
             </span>
           </div>
@@ -261,23 +261,23 @@ export default function LandingPage({ restaurant }: LandingPageProps) {
           <a href="#pricing" className={`transition-colors ${isDarkMode ? "hover:text-white" : "hover:text-slate-900"}`}>Pricing</a>
         </nav>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4">
           {/* Light/Dark Toggle Button */}
           <button 
             onClick={() => setIsDarkMode(!isDarkMode)} 
             aria-label="Toggle dark/light mode"
-            className={`p-2.5 rounded-xl border transition-all duration-300 flex items-center justify-center ${
+            className={`p-2 sm:p-2.5 rounded-xl border transition-all duration-300 flex items-center justify-center ${
               isDarkMode 
                 ? "bg-white/5 border-white/10 text-green-400 hover:bg-white/10" 
                 : "bg-slate-100 border-slate-200 text-green-600 hover:bg-slate-200 shadow-sm"
             }`}
           >
-            {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
+            {isDarkMode ? <Sun size={16} /> : <Moon size={16} />}
           </button>
 
           <Link 
             href="/login" 
-            className={`text-sm font-bold transition-colors ${
+            className={`text-xs sm:text-sm font-bold transition-colors ${
               isDarkMode ? "text-slate-300 hover:text-white" : "text-slate-600 hover:text-slate-900"
             }`}
           >
@@ -285,23 +285,23 @@ export default function LandingPage({ restaurant }: LandingPageProps) {
           </Link>
           <Link 
             href="/register" 
-            className="bg-green-500 hover:bg-green-600 active:scale-95 text-white px-5 py-2.5 rounded-xl text-sm font-black transition-all shadow-lg shadow-green-500/25 flex items-center gap-1.5"
+            className="bg-green-500 hover:bg-green-600 active:scale-95 text-white px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all shadow-lg shadow-green-500/25 flex items-center gap-1 sm:gap-1.5"
           >
-            Get Started <ArrowRight size={16} />
+            Get Started <ArrowRight size={14} className="hidden xs:block" />
           </Link>
         </div>
       </header>
 
       {/* Hero Section */}
-      <section className="relative z-10 max-w-7xl mx-auto px-6 pt-16 pb-24 grid md:grid-cols-12 gap-12 items-center">
-        <div className="md:col-span-7 space-y-8 text-left">
-          <div className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border text-xs font-black tracking-wider uppercase transition-colors duration-300 ${
+      <section className="relative z-10 max-w-7xl mx-auto px-4 min-[576px]:px-6 md:px-8 lg:px-6 pt-10 sm:pt-14 md:pt-16 pb-14 sm:pb-20 md:pb-24 grid md:grid-cols-12 gap-8 md:gap-12 items-center">
+        <div className="md:col-span-7 space-y-6 sm:space-y-8 text-left">
+          <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[10px] sm:text-xs font-black tracking-wider uppercase transition-colors duration-300 ${
             isDarkMode ? "bg-white/5 border-white/10 text-green-400" : "bg-green-500/10 border-green-500/20 text-green-600"
           }`}>
-            <Sparkles size={14} /> The Next-Gen Digital Dining Experience
+            <Sparkles size={12} /> The Next-Gen Digital Dining Experience
           </div>
           
-          <h1 className={`text-5xl lg:text-7xl font-black tracking-tight leading-[1.05] transition-colors duration-300 ${
+          <h1 className={`text-3xl sm:text-5xl lg:text-7xl font-black tracking-tight leading-[1.1] sm:leading-[1.05] transition-colors duration-300 ${
             isDarkMode 
               ? "bg-gradient-to-br from-white via-slate-100 to-slate-400 bg-clip-text text-transparent" 
               : "text-slate-900"
@@ -309,46 +309,46 @@ export default function LandingPage({ restaurant }: LandingPageProps) {
             Convert Tables Into <span className="bg-gradient-to-r from-green-500 to-emerald-400 bg-clip-text text-transparent">Instant Sales.</span>
           </h1>
 
-          <p className={`text-lg md:text-xl leading-relaxed max-w-2xl font-medium transition-colors duration-300 ${
+          <p className={`text-sm sm:text-base md:text-lg lg:text-xl leading-relaxed max-w-2xl font-medium transition-colors duration-300 ${
             isDarkMode ? "text-slate-400" : "text-slate-600"
           }`}>
             MenuGO brings frictionless tableside ordering to your guests. No app downloads, no registrations. A simple QR scan loads a premium interactive menu instantly.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 pt-2">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-2">
             <Link 
               href="/register" 
-              className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-black text-lg px-8 py-4 rounded-2xl shadow-xl shadow-green-500/20 text-center transition-all active:scale-98 flex items-center justify-center gap-2 group"
+              className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-black text-base sm:text-lg px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl sm:rounded-2xl shadow-xl shadow-green-500/20 text-center transition-all active:scale-98 flex items-center justify-center gap-2 group"
             >
-              Register Your Restaurant <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+              Register Your Restaurant <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
             </Link>
             <a 
               href="#demo" 
-              className={`font-extrabold text-lg px-8 py-4 rounded-2xl text-center transition-all active:scale-98 flex items-center justify-center gap-2 border ${
+              className={`font-extrabold text-base sm:text-lg px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl sm:rounded-2xl text-center transition-all active:scale-98 flex items-center justify-center gap-2 border ${
                 isDarkMode 
                   ? "bg-white/5 hover:bg-white/10 border-white/10 text-white" 
                   : "bg-white hover:bg-slate-100 border-slate-200 text-slate-800 shadow-sm"
               }`}
             >
-              <Smartphone size={20} /> View Live Demo
+              <Smartphone size={18} /> View Live Demo
             </a>
           </div>
 
           {/* Social Proof */}
-          <div className={`pt-8 border-t grid grid-cols-3 gap-6 max-w-lg transition-colors duration-300 ${
+          <div className={`pt-6 sm:pt-8 border-t grid grid-cols-3 gap-4 sm:gap-6 max-w-lg transition-colors duration-300 ${
             isDarkMode ? "border-white/5" : "border-slate-200"
           }`}>
             <div>
-              <p className={`text-3xl font-black transition-colors duration-300 ${isDarkMode ? "text-white" : "text-slate-900"}`}>100%</p>
-              <p className="text-slate-500 text-xs font-bold uppercase tracking-wider mt-1">Self-Managed</p>
+              <p className={`text-xl sm:text-2xl md:text-3xl font-black transition-colors duration-300 ${isDarkMode ? "text-white" : "text-slate-900"}`}>100%</p>
+              <p className="text-slate-500 text-[9px] sm:text-xs font-bold uppercase tracking-wider mt-1">Self-Managed</p>
             </div>
             <div>
-              <p className={`text-3xl font-black transition-colors duration-300 ${isDarkMode ? "text-white" : "text-slate-900"}`}>₹99/mo</p>
-              <p className="text-slate-500 text-xs font-bold uppercase tracking-wider mt-1">Starting Price</p>
+              <p className={`text-xl sm:text-2xl md:text-3xl font-black transition-colors duration-300 ${isDarkMode ? "text-white" : "text-slate-900"}`}>₹99/mo</p>
+              <p className="text-slate-500 text-[9px] sm:text-xs font-bold uppercase tracking-wider mt-1">Starting Price</p>
             </div>
             <div>
-              <p className={`text-3xl font-black transition-colors duration-300 ${isDarkMode ? "text-white" : "text-slate-900"}`}>&lt; 5m</p>
-              <p className="text-slate-500 text-xs font-bold uppercase tracking-wider mt-1">Setup Time</p>
+              <p className={`text-xl sm:text-2xl md:text-3xl font-black transition-colors duration-300 ${isDarkMode ? "text-white" : "text-slate-900"}`}>&lt; 5m</p>
+              <p className="text-slate-500 text-[9px] sm:text-xs font-bold uppercase tracking-wider mt-1">Setup Time</p>
             </div>
           </div>
         </div>
@@ -356,7 +356,7 @@ export default function LandingPage({ restaurant }: LandingPageProps) {
         {/* Hero Banner Mockup / Image */}
         <div className="md:col-span-5 relative flex justify-center">
           <div className="absolute inset-0 bg-gradient-to-tr from-green-500/20 to-emerald-500/20 rounded-full filter blur-[80px] pointer-events-none opacity-60" />
-          <div className={`relative border rounded-3xl p-6 shadow-2xl max-w-sm w-full transition-all duration-300 ${
+          <div className={`relative border rounded-3xl p-4 sm:p-6 shadow-2xl max-w-sm w-full transition-all duration-300 ${
             isDarkMode 
               ? "bg-slate-900/60 border-white/10" 
               : "bg-white border-slate-200/80"
@@ -409,108 +409,108 @@ export default function LandingPage({ restaurant }: LandingPageProps) {
       </section>
 
       {/* Interactive Mobile Menu Preview Section */}
-      <section id="demo" className={`relative z-10 max-w-7xl mx-auto px-6 py-20 border-t transition-colors duration-300 ${
+      <section id="demo" className={`relative z-10 max-w-7xl mx-auto px-4 min-[576px]:px-6 md:px-8 lg:px-6 py-12 sm:py-16 md:py-20 border-t transition-colors duration-300 ${
         isDarkMode ? "border-white/5" : "border-slate-200/80 bg-white"
       }`}>
-        <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
-          <h2 className={`text-4xl md:text-5xl font-black tracking-tight transition-colors duration-300 ${isDarkMode ? "text-white" : "text-slate-900"}`}>
+        <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16 space-y-4">
+          <h2 className={`text-2xl sm:text-4xl md:text-5xl font-black tracking-tight transition-colors duration-300 ${isDarkMode ? "text-white" : "text-slate-900"}`}>
             See the Customer Experience in <span className="bg-gradient-to-r from-green-500 to-emerald-400 bg-clip-text text-transparent">Real-Time.</span>
           </h2>
-          <p className={`text-lg font-medium transition-colors duration-300 ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>
+          <p className={`text-sm sm:text-base md:text-lg font-medium transition-colors duration-300 ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>
             This is exactly what your customers see when they scan your QR code. Below is the digital menu of our mock client <strong className={`transition-colors duration-300 ${isDarkMode ? "text-white" : "text-slate-900"}`}>{restaurantName}</strong>. Try searching, filtering, and adding items to the cart.
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-12 gap-12 items-center">
+        <div className="grid lg:grid-cols-12 gap-8 lg:gap-12 items-center">
           {/* Left instructions */}
-          <div className="lg:col-span-5 space-y-8 text-left">
-            <div className="space-y-6">
-              <div className="flex gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-green-500/10 border border-green-500/20 flex-shrink-0 flex items-center justify-center text-green-500">
-                  <ScanLine size={24} />
+          <div className="lg:col-span-5 space-y-6 sm:space-y-8 text-left">
+            <div className="space-y-4 sm:space-y-6">
+              <div className="flex gap-3 sm:gap-4">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-green-500/10 border border-green-500/20 flex-shrink-0 flex items-center justify-center text-green-500">
+                  <ScanLine size={20} className="sm:w-6 sm:h-6" />
                 </div>
                 <div>
-                  <h3 className={`text-xl font-bold transition-colors duration-300 ${isDarkMode ? "text-white" : "text-slate-900"}`}>Frictionless Browsing</h3>
-                  <p className={`text-sm mt-1 transition-colors duration-300 ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>Customers simply scan the table QR code and the menu loads instantly on their native browser. No installation needed.</p>
+                  <h3 className={`text-lg sm:text-xl font-bold transition-colors duration-300 ${isDarkMode ? "text-white" : "text-slate-900"}`}>Frictionless Browsing</h3>
+                  <p className={`text-xs sm:text-sm mt-1 transition-colors duration-300 ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>Customers simply scan the table QR code and the menu loads instantly on their native browser. No installation needed.</p>
                 </div>
               </div>
 
-              <div className="flex gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-green-500/10 border border-green-500/20 flex-shrink-0 flex items-center justify-center text-green-500">
-                  <Utensils size={24} />
+              <div className="flex gap-3 sm:gap-4">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-green-500/10 border border-green-500/20 flex-shrink-0 flex items-center justify-center text-green-500">
+                  <Utensils size={20} className="sm:w-6 sm:h-6" />
                 </div>
                 <div>
-                  <h3 className={`text-xl font-bold transition-colors duration-300 ${isDarkMode ? "text-white" : "text-slate-900"}`}>Rich Visual Layouts</h3>
-                  <p className={`text-sm mt-1 transition-colors duration-300 ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>High-quality dish images, automatic vegetarian indicators, spicy ratings, and descriptions entice guests to order more.</p>
+                  <h3 className={`text-lg sm:text-xl font-bold transition-colors duration-300 ${isDarkMode ? "text-white" : "text-slate-900"}`}>Rich Visual Layouts</h3>
+                  <p className={`text-xs sm:text-sm mt-1 transition-colors duration-300 ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>High-quality dish images, automatic vegetarian indicators, spicy ratings, and descriptions entice guests to order more.</p>
                 </div>
               </div>
 
-              <div className="flex gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-green-500/10 border border-green-500/20 flex-shrink-0 flex items-center justify-center text-green-500">
-                  <ShoppingBag size={24} />
+              <div className="flex gap-3 sm:gap-4">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-green-500/10 border border-green-500/20 flex-shrink-0 flex items-center justify-center text-green-500">
+                  <ShoppingBag size={20} className="sm:w-6 sm:h-6" />
                 </div>
                 <div>
-                  <h3 className={`text-xl font-bold transition-colors duration-300 ${isDarkMode ? "text-white" : "text-slate-900"}`}>One-Tap Cart & Orders</h3>
-                  <p className={`text-sm mt-1 transition-colors duration-300 ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>Guests select their dishes, specify quantities, and place orders directly to the kitchen with table routing.</p>
+                  <h3 className={`text-lg sm:text-xl font-bold transition-colors duration-300 ${isDarkMode ? "text-white" : "text-slate-900"}`}>One-Tap Cart & Orders</h3>
+                  <p className={`text-xs sm:text-sm mt-1 transition-colors duration-300 ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>Guests select their dishes, specify quantities, and place orders directly to the kitchen with table routing.</p>
                 </div>
               </div>
             </div>
 
-            <div className={`p-6 rounded-3xl border transition-colors duration-300 ${
+            <div className={`p-4 sm:p-6 rounded-2xl sm:rounded-3xl border transition-colors duration-300 ${
               isDarkMode ? "bg-slate-900/40 border-white/5" : "bg-slate-100 border-slate-200"
             } space-y-4`}>
-              <h4 className={`font-extrabold text-lg flex items-center gap-2 transition-colors duration-300 ${isDarkMode ? "text-white" : "text-slate-900"}`}>
-                <Sparkles className="text-green-500" size={18} /> Mock Menu loaded:
+              <h4 className={`font-extrabold text-base sm:text-lg flex items-center gap-2 transition-colors duration-300 ${isDarkMode ? "text-white" : "text-slate-900"}`}>
+                <Sparkles className="text-green-500" size={16} /> Mock Menu loaded:
               </h4>
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-slate-800 rounded-xl flex items-center justify-center text-green-500 font-black text-lg shadow-inner">
+                <div className="w-9 h-9 sm:w-10 sm:h-10 bg-slate-800 rounded-xl flex items-center justify-center text-green-500 font-black text-base sm:text-lg shadow-inner">
                   YC
                 </div>
                 <div>
-                  <p className={`font-black text-sm transition-colors duration-300 ${isDarkMode ? "text-white" : "text-slate-900"}`}>{restaurantName}</p>
-                  <p className="text-slate-500 text-xs font-semibold">Meerut, Uttar Pradesh</p>
+                  <p className={`font-black text-xs sm:text-sm transition-colors duration-300 ${isDarkMode ? "text-white" : "text-slate-900"}`}>{restaurantName}</p>
+                  <p className="text-slate-500 text-[10px] sm:text-xs font-semibold">Meerut, Uttar Pradesh</p>
                 </div>
               </div>
               
-              <div className="pt-2">
+              <div className="pt-1">
                 <Link 
                   href={`/${restaurant?.slug || 'yellow-chilli-meerut'}`} 
                   target="_blank"
-                  className="inline-flex items-center gap-1.5 bg-green-500 hover:bg-green-600 text-white font-black text-xs px-4 py-2.5 rounded-xl transition-all shadow-md hover:shadow-lg shadow-green-500/15"
+                  className="inline-flex items-center gap-1.5 bg-green-500 hover:bg-green-600 text-white font-black text-[11px] sm:text-xs px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-lg sm:rounded-xl transition-all shadow-md hover:shadow-lg shadow-green-500/15"
                 >
-                  Open Live Customer Menu <ArrowRight size={14} className="rotate-[-45deg]" />
+                  Open Live Customer Menu <ArrowRight size={12} className="rotate-[-45deg]" />
                 </Link>
               </div>
             </div>
           </div>
 
           {/* Right Mobile Phone Mockup */}
-          <div className="lg:col-span-7 flex justify-center">
+          <div className="lg:col-span-7 flex justify-center w-full overflow-hidden">
             {/* Outer high-fidelity phone frame container */}
-            <div className="relative mx-auto select-none">
-              {/* Left Side Buttons (Volume) */}
-              <div className={`absolute left-[-15px] top-[120px] w-[3px] h-[50px] rounded-l transition-colors duration-300 ${
+            <div className="relative mx-auto select-none p-4 sm:p-0">
+              {/* Left Side Buttons (Volume) - hidden on mobile/tablet to avoid overflow */}
+              <div className={`absolute left-[-12px] top-[120px] w-[3px] h-[50px] rounded-l transition-colors duration-300 hidden sm:block ${
                 isDarkMode ? "bg-slate-800" : "bg-slate-300"
               }`} />
-              <div className={`absolute left-[-15px] top-[180px] w-[3px] h-[50px] rounded-l transition-colors duration-300 ${
+              <div className={`absolute left-[-12px] top-[180px] w-[3px] h-[50px] rounded-l transition-colors duration-300 hidden sm:block ${
                 isDarkMode ? "bg-slate-800" : "bg-slate-300"
               }`} />
               
-              {/* Right Side Button (Power) */}
-              <div className={`absolute right-[-15px] top-[140px] w-[3px] h-[75px] rounded-r transition-colors duration-300 ${
+              {/* Right Side Button (Power) - hidden on mobile/tablet to avoid overflow */}
+              <div className={`absolute right-[-12px] top-[140px] w-[3px] h-[75px] rounded-r transition-colors duration-300 hidden sm:block ${
                 isDarkMode ? "bg-slate-800" : "bg-slate-300"
               }`} />
 
-              {/* Phone body */}
-              <div className={`relative w-[360px] h-[720px] rounded-[50px] border-[12px] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.35)] overflow-hidden flex flex-col z-10 transition-all duration-300 ${
+              {/* Phone body - responsive width/height and border scale */}
+              <div className={`relative w-[280px] min-[375px]:w-[320px] sm:w-[360px] h-[560px] min-[375px]:h-[640px] sm:h-[720px] rounded-[32px] sm:rounded-[50px] border-[8px] sm:border-[12px] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.35)] overflow-hidden flex flex-col z-10 transition-all duration-300 ${
                 isDarkMode ? "border-slate-800 bg-slate-950" : "border-slate-300 bg-white"
               }`}>
                 
                 {/* 1. Android Status Bar (Fixed at top - prevents overlapping Notch) */}
-                <div className="bg-black text-white h-7 px-6 flex items-center justify-between text-[10px] font-bold z-50 select-none relative flex-shrink-0">
+                <div className="bg-black text-white h-7 px-4 sm:px-6 flex items-center justify-between text-[10px] font-bold z-50 select-none relative flex-shrink-0">
                   {/* Integrated camera speaker Notch */}
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-4 bg-black rounded-b-xl flex items-center justify-center">
-                    <div className="w-6 h-1 bg-slate-900 rounded-full mb-1" />
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-20 sm:w-24 h-4 bg-black rounded-b-xl flex items-center justify-center">
+                    <div className="w-5 sm:w-6 h-1 bg-slate-900 rounded-full mb-1" />
                   </div>
                   
                   <span>11:06</span>
@@ -542,7 +542,7 @@ export default function LandingPage({ restaurant }: LandingPageProps) {
                 >
                   
                   {/* Immersive Banner Section matching Header.js */}
-                  <div className="relative h-44 w-full bg-slate-800 flex-shrink-0">
+                  <div className="relative h-36 sm:h-44 w-full bg-slate-800 flex-shrink-0">
                     <Image 
                       src={restaurant?.banner || "https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=2070"} 
                       alt="banner" 
@@ -554,22 +554,22 @@ export default function LandingPage({ restaurant }: LandingPageProps) {
                     
                     {/* Rating / Address overlays matching Header.js */}
                     <div className="absolute bottom-3 left-4 right-4 text-white">
-                      <h5 className="font-extrabold text-white text-lg leading-tight drop-shadow-md">{restaurantName}</h5>
-                      <p className="text-gray-300 text-[9px] opacity-90 truncate leading-none mt-1">
+                      <h5 className="font-extrabold text-white text-base sm:text-lg leading-tight drop-shadow-md">{restaurantName}</h5>
+                      <p className="text-gray-300 text-[8px] sm:text-[9px] opacity-90 truncate leading-none mt-1">
                         {restaurant?.address || "Victoria Park, Meerut"}
                       </p>
                       
-                      <div className="flex gap-3 items-center mt-2.5 opacity-90 text-[9px] font-bold">
+                      <div className="flex gap-2 sm:gap-3 items-center mt-2 opacity-90 text-[8px] sm:text-[9px] font-bold">
                         <div className="flex items-center gap-1">
-                          <Star size={10} fill="#f97316" className="text-green-500" />
+                          <Star size={8} fill="#f97316" className="text-green-500 sm:w-2.5 sm:h-2.5" />
                           <span>4.2</span>
                         </div>
                         <div className="flex items-center gap-1">
-                          <Clock size={10} />
+                          <Clock size={8} className="sm:w-2.5 sm:h-2.5" />
                           <span>20-30 mins</span>
                         </div>
                         <div className="flex items-center gap-0.5">
-                          <IndianRupee size={10} />
+                          <IndianRupee size={8} className="sm:w-2.5 sm:h-2.5" />
                           <span>150 per person</span>
                         </div>
                       </div>
@@ -577,45 +577,45 @@ export default function LandingPage({ restaurant }: LandingPageProps) {
                   </div>
 
                   {/* Floating Search Bar & Preference filters matching Header.js */}
-                  <div className="bg-white px-3 -mt-3 relative z-10 flex-shrink-0">
-                    <div className="flex gap-2 items-center">
+                  <div className="bg-white px-2.5 sm:px-3 -mt-3 relative z-10 flex-shrink-0">
+                    <div className="flex gap-1.5 sm:gap-2 items-center">
                       <div className="relative flex-1">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <SearchIcon size={14} className="text-gray-400" />
+                        <div className="absolute inset-y-0 left-0 pl-2.5 sm:pl-3 flex items-center pointer-events-none">
+                          <SearchIcon size={12} className="text-gray-400 sm:w-3.5 sm:h-3.5" />
                         </div>
                         <input
                           type="search"
-                          placeholder="Start typing to search..."
+                          placeholder="Search menu..."
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
-                          className="w-full bg-white rounded-xl h-9 pl-9 pr-3 text-xs text-gray-900 font-medium placeholder-gray-400 shadow-[0_4px_12px_rgba(0,0,0,0.06)] focus:outline-none border border-gray-100"
+                          className="w-full bg-white rounded-xl h-8 sm:h-9 pl-8 sm:pl-9 pr-2.5 sm:pr-3 text-[11px] sm:text-xs text-gray-900 font-medium placeholder-gray-400 shadow-[0_4px_12px_rgba(0,0,0,0.06)] focus:outline-none border border-gray-100"
                         />
                       </div>
                       <button
                         onClick={() => setIsFilterDrawerOpen(true)}
-                        className={`flex-shrink-0 w-9 h-9 bg-white rounded-xl flex items-center justify-center shadow-[0_4px_12px_rgba(0,0,0,0.06)] border border-gray-100 transition-colors ${
+                        className={`flex-shrink-0 w-8 sm:w-9 h-8 sm:h-9 bg-white rounded-xl flex items-center justify-center shadow-[0_4px_12px_rgba(0,0,0,0.06)] border border-gray-100 transition-colors ${
                           isFilterDrawerOpen || sortBy !== "default" ? 'text-green-500' : 'text-gray-800'
                         }`}
                       >
-                        <SlidersHorizontal size={14} strokeWidth={2.5} />
+                        <SlidersHorizontal size={12} strokeWidth={2.5} className="sm:w-3.5 sm:h-3.5" />
                       </button>
                     </div>
 
                     {/* Veg / Non-Veg Toggle Pills */}
-                    <div className="flex gap-2 mt-2 pb-1.5 border-b border-gray-50">
+                    <div className="flex gap-1.5 sm:gap-2 mt-1.5 pb-1 border-b border-gray-50">
                       <button
                         onClick={() => {
                           setVegOnly(!vegOnly);
                           if (!vegOnly) setNonVegOnly(false);
                         }}
-                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border text-[9px] font-bold transition-all ${
+                        className={`inline-flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg border text-[8px] sm:text-[9px] font-bold transition-all ${
                           vegOnly 
                             ? "border-green-400 bg-green-50 text-green-600 shadow-[0_2px_8px_rgba(34,197,94,0.1)]" 
                             : "border-gray-100 bg-white text-gray-700 hover:bg-gray-50"
                         }`}
                       >
-                        <div className="w-2.5 h-2.5 border border-green-500 rounded-[2px] flex items-center justify-center flex-shrink-0">
-                          <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                        <div className="w-2 sm:w-2.5 h-2 sm:h-2.5 border border-green-500 rounded-[2px] flex items-center justify-center flex-shrink-0">
+                          <div className="w-1 sm:w-1.5 h-1 sm:h-1.5 rounded-full bg-green-500" />
                         </div>
                         Veg Only
                       </button>
@@ -625,14 +625,14 @@ export default function LandingPage({ restaurant }: LandingPageProps) {
                           setNonVegOnly(!nonVegOnly);
                           if (!nonVegOnly) setVegOnly(false);
                         }}
-                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border text-[9px] font-bold transition-all ${
+                        className={`inline-flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg border text-[8px] sm:text-[9px] font-bold transition-all ${
                           nonVegOnly 
                             ? "border-red-400 bg-red-50 text-red-600 shadow-[0_2px_8px_rgba(239,68,68,0.1)]" 
                             : "border-gray-100 bg-white text-gray-700 hover:bg-gray-50"
                         }`}
                       >
-                        <div className="w-2.5 h-2.5 border border-red-500 rounded-[2px] flex items-center justify-center flex-shrink-0">
-                          <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                        <div className="w-2 sm:w-2.5 h-2 sm:h-2.5 border border-red-500 rounded-[2px] flex items-center justify-center flex-shrink-0">
+                          <div className="w-1 sm:w-1.5 h-1 sm:h-1.5 rounded-full bg-red-500" />
                         </div>
                         Non-veg Only
                       </button>
@@ -641,7 +641,7 @@ export default function LandingPage({ restaurant }: LandingPageProps) {
 
                   {/* Category Tabs Switcher (Exactly matches CategoryTabs.js) */}
                   <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-100 flex-shrink-0" suppressHydrationWarning>
-                    <div className="flex overflow-x-auto scrollbar-none space-x-6 px-4" role="tablist">
+                    <div className="flex overflow-x-auto scrollbar-none space-x-4 sm:space-x-6 px-3 sm:px-4" role="tablist">
                       {categories.map((category) => {
                         const isActive = selectedCategory === category;
                         return (
@@ -650,7 +650,7 @@ export default function LandingPage({ restaurant }: LandingPageProps) {
                             role="tab"
                             aria-selected={isActive}
                             onClick={() => setSelectedCategory(category)}
-                            className={`whitespace-nowrap py-3 px-1 text-xs font-extrabold tracking-tight transition-all relative focus:outline-none rounded-lg ${
+                            className={`whitespace-nowrap py-2 sm:py-3 px-0.5 text-[11px] sm:text-xs font-extrabold tracking-tight transition-all relative focus:outline-none rounded-lg ${
                               isActive 
                                 ? "text-gray-900" 
                                 : "text-gray-400 hover:text-gray-900"
@@ -667,24 +667,24 @@ export default function LandingPage({ restaurant }: LandingPageProps) {
                   </div>
 
                   {/* Menu Items List grouped by Category matching MenuClient.js */}
-                  <div className="flex-1 bg-gray-50 p-3 space-y-5">
+                  <div className="flex-1 bg-gray-50 p-2.5 sm:p-3 space-y-4 sm:space-y-5">
                     {/* Brand Story Quote matching MenuClient.js */}
-                    <div className="text-center px-2 py-1">
-                      <p className="text-gray-500 font-medium italic text-[10px] leading-relaxed">
+                    <div className="text-center px-1 py-0.5">
+                      <p className="text-gray-500 font-medium italic text-[9px] sm:text-[10px] leading-relaxed">
                         &quot;Our Chefs traveled the globe to bring the best flavours for you. Make sure you taste a bit from every course.&quot;
                       </p>
                     </div>
 
                     {groupedCategories.map(group => (
-                      <div key={group.category} className="space-y-2.5">
-                        <div className="flex items-center gap-2 mt-4">
+                      <div key={group.category} className="space-y-2">
+                        <div className="flex items-center gap-1.5 mt-3 sm:mt-4">
                           {getCategoryIcon(group.category)}
-                          <h4 className="font-black text-gray-900 text-xs tracking-tight uppercase">
+                          <h4 className="font-black text-gray-900 text-[10px] sm:text-xs tracking-tight uppercase">
                             {group.category}
                           </h4>
                         </div>
 
-                        <div className="space-y-2.5">
+                        <div className="space-y-2">
                           {group.items.map(item => {
                             const quantity = cart[item.id] || 0;
                             const isSpicy = item.description?.toLowerCase().includes('spicy') || item.description?.toLowerCase().includes('chili');
@@ -692,89 +692,89 @@ export default function LandingPage({ restaurant }: LandingPageProps) {
                             return (
                               <div 
                                 key={item.id}
-                                className="bg-white rounded-[20px] border border-gray-100 flex flex-row p-0 gap-0 overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.02)]"
+                                className="bg-white rounded-xl sm:rounded-[20px] border border-gray-100 flex flex-row p-0 gap-0 overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.02)]"
                               >
                                 {/* Image Section (Left) */}
-                                <div className="relative w-[110px] min-h-[120px] flex-shrink-0">
+                                <div className="relative w-[90px] min-[375px]:w-[100px] sm:w-[110px] min-h-[100px] sm:min-h-[120px] flex-shrink-0">
                                   <Image
                                     src={item.image || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&q=80"}
                                     alt={item.name}
                                     fill
-                                    sizes="110px"
+                                    sizes="(max-width: 640px) 100px, 110px"
                                     className="object-cover"
                                   />
 
                                   {/* Popular Tag Overlay */}
                                   {item.isPopular && (
-                                    <div className="absolute top-2 left-2 bg-white/95 text-green-500 px-1.5 py-0.5 rounded-md text-[0.6rem] font-black shadow-sm flex items-center gap-0.5 z-10">
-                                      <Star size={10} fill="currentColor" /> POPULAR
+                                    <div className="absolute top-1.5 left-1.5 bg-white/95 text-green-500 px-1 py-0.5 rounded text-[8px] sm:text-[0.6rem] font-black shadow-sm flex items-center gap-0.5 z-10">
+                                      <Star size={8} fill="currentColor" /> POPULAR
                                     </div>
                                   )}
                                 </div>
 
                                 {/* Content Section (Right) */}
-                                <div className="flex-1 flex flex-col justify-between p-3">
+                                <div className="flex-1 flex flex-col justify-between p-2.5 sm:p-3">
                                   <div>
-                                    <div className="flex items-start justify-between mb-1">
-                                      <div className="flex items-center gap-1.5">
-                                        <h3 className="font-extrabold text-sm text-gray-900 leading-tight">
+                                    <div className="flex items-start justify-between mb-0.5 sm:mb-1">
+                                      <div className="flex items-center gap-1 sm:gap-1.5">
+                                        <h3 className="font-extrabold text-xs sm:text-sm text-gray-900 leading-tight">
                                           {item.name}
                                         </h3>
-                                        {isSpicy && <Flame size={12} color="#ef4444" fill="#ef4444" className="flex-shrink-0" />}
+                                        {isSpicy && <Flame size={10} color="#ef4444" fill="#ef4444" className="flex-shrink-0 sm:w-3 sm:h-3" />}
                                       </div>
 
                                       {/* Veg/Non-veg Indicator */}
-                                      <div className={`w-4 h-4 border rounded-[3px] flex items-center justify-center flex-shrink-0 mt-0.5 ml-2 ${item.isVeg ? 'border-green-500' : 'border-red-500'}`}>
-                                        <div className={`w-2 h-2 rounded-full ${item.isVeg ? 'bg-green-500' : 'bg-red-500'}`} />
+                                      <div className={`w-3.5 h-3.5 sm:w-4 sm:h-4 border rounded-[3px] flex items-center justify-center flex-shrink-0 mt-0.5 ml-1.5 sm:ml-2 ${item.isVeg ? 'border-green-500' : 'border-red-500'}`}>
+                                        <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${item.isVeg ? 'bg-green-500' : 'bg-red-500'}`} />
                                       </div>
                                     </div>
 
-                                    <p className="text-gray-500 text-[10px] leading-snug line-clamp-2 mb-2">
+                                    <p className="text-gray-500 text-[9px] sm:text-[10px] leading-snug line-clamp-2 mb-1.5 sm:mb-2">
                                       {item.description}
                                     </p>
 
-                                    <div className="flex items-center gap-3 opacity-70 text-gray-500">
+                                    <div className="flex items-center gap-2 sm:gap-3 opacity-70 text-gray-500">
                                        <div className="flex items-center gap-1">
-                                          <Clock size={10} />
-                                          <span className="text-[9px] font-bold">15-20m</span>
+                                          <Clock size={8} className="sm:w-2.5 sm:h-2.5" />
+                                          <span className="text-[8px] sm:text-[9px] font-bold">15-20m</span>
                                        </div>
                                        <div className="flex items-center gap-1">
-                                          <Info size={10} />
-                                          <span className="text-[9px] font-bold">Details</span>
+                                          <Info size={8} className="sm:w-2.5 sm:h-2.5" />
+                                          <span className="text-[8px] sm:text-[9px] font-bold">Details</span>
                                        </div>
                                     </div>
                                   </div>
 
-                                  <div className="flex items-center justify-between mt-auto pt-2">
-                                    <span className="font-black text-gray-900 text-sm">
+                                  <div className="flex items-center justify-between mt-auto pt-1.5 sm:pt-2">
+                                    <span className="font-black text-gray-900 text-xs sm:text-sm">
                                       ₹{item.price}
                                     </span>
 
                                     <div>
                                       {quantity > 0 ? (
-                                        <div className="flex items-center gap-2 bg-gray-50 border border-gray-100 rounded-xl p-0.5">
+                                        <div className="flex items-center gap-1.5 sm:gap-2 bg-gray-50 border border-gray-100 rounded-lg sm:rounded-xl p-0.5">
                                           <button
-                                            className="w-7 h-7 flex items-center justify-center bg-white text-green-500 rounded-lg shadow-sm hover:bg-green-55 focus-visible:outline-none transition-colors"
+                                            className="w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center bg-white text-green-500 rounded-md sm:rounded-lg shadow-sm hover:bg-green-55 focus-visible:outline-none transition-colors"
                                             onClick={() => updateCart(item.id, -1)}
                                           >
-                                            <Minus size={14} strokeWidth={4} />
+                                            <Minus size={12} strokeWidth={4} />
                                           </button>
-                                          <span className="font-black text-gray-900 text-xs min-w-[16px] text-center">
+                                          <span className="font-black text-gray-900 text-[10px] sm:text-xs min-w-[14px] sm:min-w-[16px] text-center">
                                             {quantity}
                                           </span>
                                           <button
-                                            className="w-7 h-7 flex items-center justify-center bg-green-500 text-white rounded-lg shadow-sm hover:bg-green-600 focus-visible:outline-none transition-colors"
+                                            className="w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center bg-green-500 text-white rounded-md sm:rounded-lg shadow-sm hover:bg-green-600 focus-visible:outline-none transition-colors"
                                             onClick={() => updateCart(item.id, 1)}
                                           >
-                                            <Plus size={14} strokeWidth={4} />
+                                            <Plus size={12} strokeWidth={4} />
                                           </button>
                                         </div>
                                       ) : (
                                         <button
                                           onClick={() => updateCart(item.id, 1)}
-                                          className="w-9 h-9 flex items-center justify-center bg-green-500 text-white rounded-[10px] hover:bg-green-600 focus-visible:outline-none transition-colors"
+                                          className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-green-500 text-white rounded-lg sm:rounded-[10px] hover:bg-green-600 focus-visible:outline-none transition-colors"
                                         >
-                                          <Plus size={22} strokeWidth={3} />
+                                          <Plus size={18} strokeWidth={3} className="sm:w-[22px] sm:h-[22px]" />
                                         </button>
                                       )}
                                     </div>
@@ -915,88 +915,88 @@ export default function LandingPage({ restaurant }: LandingPageProps) {
       </section>
 
       {/* Feature Grids */}
-      <section id="features" className={`relative z-10 max-w-7xl mx-auto px-6 py-24 border-t rounded-t-[50px] transition-all duration-300 ${
+      <section id="features" className={`relative z-10 max-w-7xl mx-auto px-4 min-[576px]:px-6 md:px-8 lg:px-6 py-12 sm:py-16 md:py-20 lg:py-24 border-t rounded-t-[24px] sm:rounded-t-[36px] lg:rounded-t-[50px] transition-all duration-300 ${
         isDarkMode ? "border-white/5 bg-slate-900/20" : "border-slate-200/80 bg-slate-100/50"
       }`}>
-        <div className="text-center max-w-2xl mx-auto mb-20 space-y-4">
-          <h2 className={`text-4xl font-black tracking-tight transition-colors duration-300 ${isDarkMode ? "text-white" : "text-slate-900"}`}>Features Built to Boost Margins.</h2>
-          <p className={`text-lg transition-colors duration-300 ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>Everything you need to modernize tableside dining, drive average order value, and reduce operational workload.</p>
+        <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-14 lg:mb-20 space-y-3 sm:space-y-4">
+          <h2 className={`text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight transition-colors duration-300 ${isDarkMode ? "text-white" : "text-slate-900"}`}>Features Built to Boost Margins.</h2>
+          <p className={`text-sm sm:text-base lg:text-lg transition-colors duration-300 ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>Everything you need to modernize tableside dining, drive average order value, and reduce operational workload.</p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8">
-          <div className={`p-8 rounded-3xl border transition-all duration-300 group ${
+        <div className="grid md:grid-cols-3 gap-6 sm:gap-8">
+          <div className={`p-6 sm:p-8 rounded-3xl border transition-all duration-300 group ${
             isDarkMode 
               ? "bg-slate-900/40 border-white/5 hover:border-green-500/30 text-white" 
               : "bg-white border-slate-200/80 hover:border-green-500/30 text-slate-800 shadow-sm"
           }`}>
-            <div className="w-12 h-12 rounded-2xl bg-green-500/10 border border-green-500/20 flex items-center justify-center text-green-500 group-hover:scale-110 transition-transform">
-              <QrCode size={24} />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-green-500/10 border border-green-500/20 flex items-center justify-center text-green-500 group-hover:scale-110 transition-transform">
+              <QrCode size={20} className="sm:w-6 sm:h-6" />
             </div>
-            <h3 className="text-xl font-bold mt-4">Quick QR Table Mapping</h3>
-            <p className={`text-sm leading-relaxed mt-2 transition-colors duration-300 ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>Generate uniquely routed QR codes for each table. When scanned, orders automatically flag the correct table number on the kitchen dashboard.</p>
+            <h3 className="text-lg sm:text-xl font-bold mt-4">Quick QR Table Mapping</h3>
+            <p className={`text-xs sm:text-sm leading-relaxed mt-2 transition-colors duration-300 ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>Generate uniquely routed QR codes for each table. When scanned, orders automatically flag the correct table number on the kitchen dashboard.</p>
           </div>
 
-          <div className={`p-8 rounded-3xl border transition-all duration-300 group ${
+          <div className={`p-6 sm:p-8 rounded-3xl border transition-all duration-300 group ${
             isDarkMode 
               ? "bg-slate-900/40 border-white/5 hover:border-green-500/30 text-white" 
               : "bg-white border-slate-200/80 hover:border-green-500/30 text-slate-800 shadow-sm"
           }`}>
-            <div className="w-12 h-12 rounded-2xl bg-green-500/10 border border-green-500/20 flex items-center justify-center text-green-500 group-hover:scale-110 transition-transform">
-              <UploadCloud size={24} />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-green-500/10 border border-green-500/20 flex items-center justify-center text-green-500 group-hover:scale-110 transition-transform">
+              <UploadCloud size={20} className="sm:w-6 sm:h-6" />
             </div>
-            <h3 className="text-xl font-bold mt-4">Dynamic Info Uploads</h3>
-            <p className={`text-sm leading-relaxed mt-2 transition-colors duration-300 ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>Update menus, toggle item availabilities, upload custom banner artwork, and tweak descriptions in real-time. Paid clients get full media controls.</p>
+            <h3 className="text-lg sm:text-xl font-bold mt-4">Dynamic Info Uploads</h3>
+            <p className={`text-xs sm:text-sm leading-relaxed mt-2 transition-colors duration-300 ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>Update menus, toggle item availabilities, upload custom banner artwork, and tweak descriptions in real-time. Paid clients get full media controls.</p>
           </div>
 
-          <div className={`p-8 rounded-3xl border transition-all duration-300 group ${
+          <div className={`p-6 sm:p-8 rounded-3xl border transition-all duration-300 group ${
             isDarkMode 
               ? "bg-slate-900/40 border-white/5 hover:border-green-500/30 text-white" 
               : "bg-white border-slate-200/80 hover:border-green-500/30 text-slate-800 shadow-sm"
           }`}>
-            <div className="w-12 h-12 rounded-2xl bg-green-500/10 border border-green-500/20 flex items-center justify-center text-green-500 group-hover:scale-110 transition-transform">
-              <TrendingUp size={24} />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-green-500/10 border border-green-500/20 flex items-center justify-center text-green-500 group-hover:scale-110 transition-transform">
+              <TrendingUp size={20} className="sm:w-6 sm:h-6" />
             </div>
-            <h3 className="text-xl font-bold mt-4">Analytics & Excel Export</h3>
-            <p className={`text-sm leading-relaxed mt-2 transition-colors duration-300 ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>Track popular dishes, peak order hours, daily revenue trends, and download formatted order logs for external accounting software with one-click exports.</p>
+            <h3 className="text-lg sm:text-xl font-bold mt-4">Analytics & Excel Export</h3>
+            <p className={`text-xs sm:text-sm leading-relaxed mt-2 transition-colors duration-300 ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>Track popular dishes, peak order hours, daily revenue trends, and download formatted order logs for external accounting software with one-click exports.</p>
           </div>
         </div>
       </section>
 
       {/* Pricing Section */}
-      <section id="pricing" className={`relative z-10 max-w-7xl mx-auto px-6 py-24 border-t transition-colors duration-300 ${
+      <section id="pricing" className={`relative z-10 max-w-7xl mx-auto px-4 min-[576px]:px-6 md:px-8 lg:px-6 py-12 sm:py-16 md:py-20 lg:py-24 border-t transition-colors duration-300 ${
         isDarkMode ? "border-white/5" : "border-slate-200/80 bg-white"
       }`}>
-        <div className="text-center max-w-2xl mx-auto mb-16 space-y-4">
+        <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-12 lg:mb-16 space-y-3 sm:space-y-4">
           <span className="text-green-500 font-black text-xs tracking-wider uppercase bg-green-500/10 px-3 py-1 rounded-full">Pricing Plans</span>
-          <h2 className={`text-4xl md:text-5xl font-black tracking-tight transition-colors duration-300 ${isDarkMode ? "text-white" : "text-slate-900"}`}>Flexible Plans for Growing Brands.</h2>
-          <p className={`text-lg transition-colors duration-300 ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>Start free, validate your menu, and upgrade to paid plans to lift item caps and unlock premium dashboard controls.</p>
+          <h2 className={`text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black tracking-tight transition-colors duration-300 ${isDarkMode ? "text-white" : "text-slate-900"}`}>Flexible Plans for Growing Brands.</h2>
+          <p className={`text-sm sm:text-base lg:text-lg transition-colors duration-300 ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>Start free, validate your menu, and upgrade to paid plans to lift item caps and unlock premium dashboard controls.</p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 min-[576px]:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 max-w-6xl mx-auto">
           {/* Free Plan */}
-          <div className={`p-8 rounded-3xl border flex flex-col justify-between relative overflow-hidden transition-all duration-300 ${
+          <div className={`p-6 sm:p-8 rounded-3xl border flex flex-col justify-between relative overflow-hidden transition-all duration-300 ${
             isDarkMode ? "bg-slate-900/40 border-white/5" : "bg-white border-slate-200/80 shadow-sm"
           }`}>
             <div>
-              <h3 className={`text-lg font-black transition-colors duration-300 ${isDarkMode ? "text-white" : "text-slate-900"}`}>Free Plan</h3>
+              <h3 className={`text-base sm:text-lg font-black transition-colors duration-300 ${isDarkMode ? "text-white" : "text-slate-900"}`}>Free Plan</h3>
               <p className="text-slate-500 text-xs mt-1">Perfect to test core layout</p>
               
               <div className="my-6">
-                <span className={`text-5xl font-black transition-colors duration-300 ${isDarkMode ? "text-white" : "text-slate-900"}`}>₹0</span>
-                <span className="text-slate-500 text-sm ml-2">/ forever</span>
+                <span className={`text-4xl sm:text-5xl font-black transition-colors duration-300 ${isDarkMode ? "text-white" : "text-slate-900"}`}>₹0</span>
+                <span className="text-slate-500 text-xs sm:text-sm ml-2">/ forever</span>
               </div>
 
-              <ul className={`space-y-3.5 text-sm transition-colors duration-300 ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>
+              <ul className={`space-y-3 sm:space-y-3.5 text-xs sm:text-sm transition-colors duration-300 ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>
                 <li className="flex items-center gap-2">
-                  <Check size={16} className="text-green-500 flex-shrink-0" />
+                  <Check size={14} className="text-green-500 flex-shrink-0" />
                   <span>Maximum of <strong>10 menu items</strong></span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check size={16} className="text-green-500 flex-shrink-0" />
+                  <Check size={14} className="text-green-500 flex-shrink-0" />
                   <span>Interactive digital menu</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check size={16} className="text-green-500 flex-shrink-0" />
+                  <Check size={14} className="text-green-500 flex-shrink-0" />
                   <span>Standard table QR codes</span>
                 </li>
                 <li className="flex items-center gap-2 text-slate-500 line-through">
@@ -1008,10 +1008,10 @@ export default function LandingPage({ restaurant }: LandingPageProps) {
               </ul>
             </div>
             
-            <div className="pt-8">
+            <div className="pt-6 sm:pt-8">
               <Link 
                 href="/register"
-                className={`block text-center w-full border font-bold py-3.5 rounded-xl text-sm transition-all duration-300 ${
+                className={`block text-center w-full border font-bold py-3 sm:py-3.5 rounded-xl text-xs sm:text-sm transition-all duration-300 ${
                   isDarkMode 
                     ? "bg-white/5 hover:bg-white/10 border-white/10 text-white" 
                     : "bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-800"
@@ -1023,21 +1023,21 @@ export default function LandingPage({ restaurant }: LandingPageProps) {
           </div>
 
           {/* Monthly Growth Plan - Double Line Border / Separators */}
-          <div className={`p-8 rounded-3xl border-4 border-double border-green-500 flex flex-col justify-between relative shadow-xl shadow-green-500/5 transition-all duration-300 ${
+          <div className={`p-6 sm:p-8 rounded-3xl border-4 border-double border-green-500 flex flex-col justify-between relative shadow-xl shadow-green-500/5 transition-all duration-300 ${
             isDarkMode ? "bg-slate-900/80" : "bg-white"
           }`}>
-            <div className="absolute top-0 right-8 -translate-y-1/2 bg-green-500 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider">
+            <div className="absolute top-0 right-8 -translate-y-1/2 bg-green-500 text-white text-[9px] sm:text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider">
               Most Popular
             </div>
 
             <div>
-              <h3 className={`text-lg font-black transition-colors duration-300 ${isDarkMode ? "text-white" : "text-slate-900"} flex items-center gap-2`}>
-                Monthly Growth <Sparkles size={16} className="text-green-400 animate-spin-slow" />
+              <h3 className={`text-base sm:text-lg font-black transition-colors duration-300 ${isDarkMode ? "text-white" : "text-slate-900"} flex items-center gap-2`}>
+                Monthly Growth <Sparkles size={14} className="text-green-400 animate-spin-slow" />
               </h3>
               
               <div className="my-6">
-                <span className={`text-5xl font-black transition-colors duration-300 ${isDarkMode ? "text-white" : "text-slate-900"}`}>₹99</span>
-                <span className={`${isDarkMode ? "text-slate-400" : "text-slate-50"} text-sm ml-2`}>/ month</span>
+                <span className={`text-4xl sm:text-5xl font-black transition-colors duration-300 ${isDarkMode ? "text-white" : "text-slate-900"}`}>₹99</span>
+                <span className={`${isDarkMode ? "text-slate-400" : "text-slate-50"} text-xs sm:text-sm ml-2`}>/ month</span>
                 
                 {/* Double green separator lines */}
                 <div className="flex flex-col gap-0.5 mt-3">
@@ -1046,34 +1046,34 @@ export default function LandingPage({ restaurant }: LandingPageProps) {
                 </div>
               </div>
 
-              <ul className={`space-y-3.5 text-sm transition-colors duration-300 ${isDarkMode ? "text-slate-200" : "text-slate-700"}`}>
+              <ul className={`space-y-3 sm:space-y-3.5 text-xs sm:text-sm transition-colors duration-300 ${isDarkMode ? "text-slate-200" : "text-slate-700"}`}>
                 <li className="flex items-center gap-2">
-                  <Check size={16} className="text-green-500 flex-shrink-0" />
+                  <Check size={14} className="text-green-500 flex-shrink-0" />
                   <span><strong>Unlimited</strong> menu items (&gt; 10)</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check size={16} className="text-green-500 flex-shrink-0" />
+                  <Check size={14} className="text-green-500 flex-shrink-0" />
                   <span>Upload & update restaurant details</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check size={16} className="text-green-500 flex-shrink-0" />
+                  <Check size={14} className="text-green-500 flex-shrink-0" />
                   <span>Upload custom banner images</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check size={16} className="text-green-500 flex-shrink-0" />
+                  <Check size={14} className="text-green-500 flex-shrink-0" />
                   <span>Toggle "Popular" and "Veg" tags</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check size={16} className="text-green-500 flex-shrink-0" />
+                  <Check size={14} className="text-green-500 flex-shrink-0" />
                   <span>Standard analytics dashboard</span>
                 </li>
               </ul>
             </div>
             
-            <div className="pt-8">
+            <div className="pt-6 sm:pt-8">
               <Link 
                 href="/register"
-                className="block text-center w-full bg-green-500 hover:bg-green-600 active:scale-98 text-white font-black py-3.5 rounded-xl text-sm transition-all shadow-lg shadow-green-500/20"
+                className="block text-center w-full bg-green-500 hover:bg-green-600 active:scale-98 text-white font-black py-3 sm:py-3.5 rounded-xl text-xs sm:text-sm transition-all shadow-lg shadow-green-500/20"
               >
                 Go Growth (Monthly)
               </Link>
@@ -1082,16 +1082,16 @@ export default function LandingPage({ restaurant }: LandingPageProps) {
 
           {/* Annual Premium Plan - Triple Line Border / Separators */}
           <div className="relative group rounded-3xl p-[3px] bg-gradient-to-b from-green-500 via-emerald-400 to-green-600">
-            <div className={`p-8 rounded-[22px] flex flex-col justify-between relative overflow-hidden transition-all duration-300 h-full ${
+            <div className={`p-6 sm:p-8 rounded-[22px] flex flex-col justify-between relative overflow-hidden transition-all duration-300 h-full ${
               isDarkMode ? "bg-slate-950" : "bg-white"
             }`}>
               <div>
-                <h3 className={`text-lg font-black transition-colors duration-300 ${isDarkMode ? "text-white" : "text-slate-900"}`}>Annual Premium</h3>
+                <h3 className={`text-base sm:text-lg font-black transition-colors duration-300 ${isDarkMode ? "text-white" : "text-slate-900"}`}>Annual Premium</h3>
                 <p className="text-slate-500 text-xs mt-1">Best Value Guarantee</p>
                 
                 <div className="my-6">
-                  <span className={`text-5xl font-black transition-colors duration-300 ${isDarkMode ? "text-white" : "text-slate-900"}`}>₹999</span>
-                  <span className="text-slate-500 text-sm ml-2">/ year</span>
+                  <span className={`text-4xl sm:text-5xl font-black transition-colors duration-300 ${isDarkMode ? "text-white" : "text-slate-900"}`}>₹999</span>
+                  <span className="text-slate-500 text-xs sm:text-sm ml-2">/ year</span>
                   
                   {/* Triple green separator lines */}
                   <div className="flex flex-col gap-0.5 mt-3">
@@ -1101,34 +1101,34 @@ export default function LandingPage({ restaurant }: LandingPageProps) {
                   </div>
                 </div>
 
-                <ul className={`space-y-3.5 text-sm transition-colors duration-300 ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>
+                <ul className={`space-y-3 sm:space-y-3.5 text-xs sm:text-sm transition-colors duration-300 ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>
                   <li className="flex items-center gap-2">
-                    <Check size={16} className="text-green-500 flex-shrink-0" />
+                    <Check size={14} className="text-green-500 flex-shrink-0" />
                     <span><strong>Unlimited</strong> menu items</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check size={16} className="text-green-500 flex-shrink-0" />
+                    <Check size={14} className="text-green-500 flex-shrink-0" />
                     <span>Upload & update restaurant details</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check size={16} className="text-green-500 flex-shrink-0" />
+                    <Check size={14} className="text-green-500 flex-shrink-0" />
                     <span><strong>Full Analytics & CSV Exports</strong></span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check size={16} className="text-green-500 flex-shrink-0" />
+                    <Check size={14} className="text-green-500 flex-shrink-0" />
                     <span>Custom theme & design matching</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check size={16} className="text-green-500 flex-shrink-0" />
+                    <Check size={14} className="text-green-500 flex-shrink-0" />
                     <span>Priority 24/7 client support</span>
                   </li>
                 </ul>
               </div>
               
-              <div className="pt-8">
+              <div className="pt-6 sm:pt-8">
                 <Link 
                   href="/register"
-                  className={`block text-center w-full border font-bold py-3.5 rounded-xl text-sm transition-all duration-300 ${
+                  className={`block text-center w-full border font-bold py-3 sm:py-3.5 rounded-xl text-xs sm:text-sm transition-all duration-300 ${
                     isDarkMode 
                       ? "bg-white/5 hover:bg-white/10 border-white/10 text-white" 
                       : "bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-800"
@@ -1143,7 +1143,7 @@ export default function LandingPage({ restaurant }: LandingPageProps) {
       </section>
 
       {/* Footer */}
-      <footer className={`relative z-10 max-w-7xl mx-auto px-6 py-12 border-t text-center text-slate-500 text-xs font-semibold flex flex-col sm:flex-row items-center justify-between gap-4 transition-colors duration-300 ${
+      <footer className={`relative z-10 w-full max-w-7xl mx-auto px-4 min-[576px]:px-6 py-8 sm:py-12 border-t text-center text-slate-500 text-xs font-semibold flex flex-col sm:flex-row items-center justify-between gap-4 transition-colors duration-300 ${
         isDarkMode ? "border-white/5" : "border-slate-200/80"
       }`}>
         <div className="flex items-center gap-2">
