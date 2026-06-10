@@ -15,6 +15,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "MenuGO | Smart Digital Menu for Restaurants",
   description: "Experience the future of dining with MenuGO. Browse menus, place orders, and track your meal in real-time.",
+  verification: {
+    google: "EWODIrKK4OlJYCbLfMQvZPZiFWu-dVh0OvazszeqvM8",
+  },
 };
 
 import ThemeRegistry from "@/components/ThemeRegistry";
