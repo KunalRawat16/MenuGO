@@ -56,24 +56,22 @@ export default function MenuClient({ restaurant }) {
     if (!activeOrder?._id) return;
     const checkStatus = async () => {
       try {
-        const res = await fetch(`/api/orders`);
+        const res = await fetch(`/api/orders/${activeOrder._id}`);
         const data = await res.json();
-        if (data.success) {
-          const myOrder = data.orders.find(o => o._id === activeOrder._id);
-          if (myOrder) {
-            if (myOrder.status !== activeOrder.status) {
-              setActiveOrder(myOrder);
-              if (myOrder.status === 'Completed') {
-                setTimeout(() => {
-                  setActiveOrder(null);
-                  localStorage.removeItem(`activeOrder_${restaurant.slug}`);
-                }, 5000);
-              }
+        if (data.success && data.order) {
+          const myOrder = data.order;
+          if (myOrder.status !== activeOrder.status) {
+            setActiveOrder(myOrder);
+            if (myOrder.status === 'Completed') {
+              setTimeout(() => {
+                setActiveOrder(null);
+                localStorage.removeItem(`activeOrder_${restaurant.slug}`);
+              }, 5000);
             }
-          } else {
-            setActiveOrder(null);
-            localStorage.removeItem(`activeOrder_${restaurant.slug}`);
           }
+        } else if (res.status === 404) {
+          setActiveOrder(null);
+          localStorage.removeItem(`activeOrder_${restaurant.slug}`);
         }
       } catch (e) {
         console.error("Polling error", e);

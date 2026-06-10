@@ -5,6 +5,7 @@ import Restaurant from "@/models/Restaurant";
 import PlatformSettings from "@/models/PlatformSettings";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
+import bcrypt from "bcryptjs";
 
 import { v2 as cloudinary } from "cloudinary";
 
@@ -46,35 +47,61 @@ export async function uploadImageAction(formData) {
 }
 
 export async function saveMenuItemAction(slug, item) {
+  const { cookies } = await import("next/headers");
+  const cookieStore = await cookies();
+  const sessionData = cookieStore.get("admin_session")?.value;
+  if (!sessionData) return { error: "Unauthorized" };
+  try {
+    const session = JSON.parse(sessionData);
+    if (session.role !== "superadmin" && session.slug !== slug) {
+      return { error: "Forbidden: You do not have permission to edit this menu" };
+    }
+  } catch {
+    return { error: "Invalid session" };
+  }
+
   await dbConnect();
-  const restaurant = await Restaurant.findOne({ slug });
-  if (!restaurant) return { error: "Restaurant not found" };
 
   if (!item.id) {
     item.id = "m" + Date.now();
-    restaurant.menuItems.push(item);
+    const result = await Restaurant.updateOne(
+      { slug },
+      { $push: { menuItems: item } }
+    );
+    if (result.matchedCount === 0) return { error: "Restaurant not found" };
   } else {
-    const itemIndex = restaurant.menuItems.findIndex(m => m.id === item.id);
-    if (itemIndex !== -1) {
-      restaurant.menuItems[itemIndex] = { ...restaurant.menuItems[itemIndex].toObject(), ...item };
-    } else {
-      return { error: "Item not found" };
-    }
+    const result = await Restaurant.updateOne(
+      { slug, "menuItems.id": item.id },
+      { $set: { "menuItems.$": item } }
+    );
+    if (result.matchedCount === 0) return { error: "Restaurant or Item not found" };
   }
 
-  await restaurant.save();
   revalidatePath(`/${slug}`);
   revalidatePath(`/admin/${slug}`);
   return { success: true };
 }
 
 export async function deleteMenuItemAction(slug, itemId) {
-  await dbConnect();
-  const restaurant = await Restaurant.findOne({ slug });
-  if (!restaurant) return { error: "Restaurant not found" };
+  const { cookies } = await import("next/headers");
+  const cookieStore = await cookies();
+  const sessionData = cookieStore.get("admin_session")?.value;
+  if (!sessionData) return { error: "Unauthorized" };
+  try {
+    const session = JSON.parse(sessionData);
+    if (session.role !== "superadmin" && session.slug !== slug) {
+      return { error: "Forbidden: You do not have permission to edit this menu" };
+    }
+  } catch {
+    return { error: "Invalid session" };
+  }
 
-  restaurant.menuItems = restaurant.menuItems.filter(m => m.id !== itemId);
-  await restaurant.save();
+  await dbConnect();
+  const result = await Restaurant.updateOne(
+    { slug },
+    { $pull: { menuItems: { id: itemId } } }
+  );
+  if (result.matchedCount === 0) return { error: "Restaurant not found" };
   
   revalidatePath(`/${slug}`);
   revalidatePath(`/admin/${slug}`);
@@ -82,6 +109,19 @@ export async function deleteMenuItemAction(slug, itemId) {
 }
 
 export async function updateRestaurantInfoAction(slug, updatedInfo) {
+  const { cookies } = await import("next/headers");
+  const cookieStore = await cookies();
+  const sessionData = cookieStore.get("admin_session")?.value;
+  if (!sessionData) return { error: "Unauthorized" };
+  try {
+    const session = JSON.parse(sessionData);
+    if (session.role !== "superadmin" && session.slug !== slug) {
+      return { error: "Forbidden: You do not have permission to update restaurant info" };
+    }
+  } catch {
+    return { error: "Invalid session" };
+  }
+
   await dbConnect();
   const restaurant = await Restaurant.findOne({ slug });
   if (!restaurant) return { error: "Restaurant not found" };
@@ -102,6 +142,19 @@ export async function updateRestaurantInfoAction(slug, updatedInfo) {
 }
 
 export async function updateRestaurantCategoriesAction(slug, categories) {
+  const { cookies } = await import("next/headers");
+  const cookieStore = await cookies();
+  const sessionData = cookieStore.get("admin_session")?.value;
+  if (!sessionData) return { error: "Unauthorized" };
+  try {
+    const session = JSON.parse(sessionData);
+    if (session.role !== "superadmin" && session.slug !== slug) {
+      return { error: "Forbidden: You do not have permission to update restaurant categories" };
+    }
+  } catch {
+    return { error: "Invalid session" };
+  }
+
   await dbConnect();
   const restaurant = await Restaurant.findOne({ slug });
   if (!restaurant) return { error: "Restaurant not found" };
@@ -138,7 +191,7 @@ export async function createRestaurantAction(restaurantData) {
     username: slug,
     logo: restaurantData.logo || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&q=80",
     banner: restaurantData.banner || "https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=1000",
-    adminPassword: restaurantData.adminPassword || "password123",
+    adminPassword: await bcrypt.hash(restaurantData.adminPassword || "password123", 10),
     address: restaurantData.address,
     categories: ["Appetizers & Soups", "Salads", "Main Courses", "Sides", "Desserts", "Beverages"],
     menuItems: [],
@@ -166,25 +219,67 @@ export async function loginAction(username, password) {
   await dbConnect();
   let settings = await PlatformSettings.findOne({ id: "global_settings" });
   if (!settings) {
-    settings = await PlatformSettings.create({ id: "global_settings" });
+    // Hash default superadmin password on first creation
+    const hashedDefault = await bcrypt.hash("admin123", 10);
+    settings = await PlatformSettings.create({ id: "global_settings", superadminPassword: hashedDefault });
   }
 
   const SUPERADMIN_USERNAME = settings.superadminUsername || "superadmin";
-  const SUPERADMIN_PASSWORD = settings.superadminPassword || "admin123";
+  const storedSuperPw = settings.superadminPassword || "admin123";
 
-  if (username === SUPERADMIN_USERNAME && password === SUPERADMIN_PASSWORD) {
-    role = "superadmin";
-    console.log("Superadmin login successful");
-  } else {
+  // --- Superadmin authentication (with bcrypt) ---
+  if (username === SUPERADMIN_USERNAME) {
+    const isHashed = storedSuperPw.startsWith("$2");
+    let isMatch = false;
+
+    if (isHashed) {
+      isMatch = await bcrypt.compare(password, storedSuperPw);
+    } else {
+      // Legacy plaintext — compare and auto-migrate to hashed
+      isMatch = password === storedSuperPw;
+      if (isMatch) {
+        const hashed = await bcrypt.hash(storedSuperPw, 10);
+        await PlatformSettings.updateOne({ id: "global_settings" }, { $set: { superadminPassword: hashed } });
+        console.log("Auto-migrated superadmin password to bcrypt hash");
+      }
+    }
+
+    if (isMatch) {
+      role = "superadmin";
+      console.log("Superadmin login successful");
+    }
+  }
+
+  // --- Restaurant admin authentication (with bcrypt) ---
+  if (!role) {
     try {
-      await dbConnect();
       const restaurant = await Restaurant.findOne({ 
         $or: [{ username: username }, { slug: username }] 
       });
-      if (restaurant && restaurant.adminPassword === password) {
-        role = "admin";
-        slug = restaurant.slug;
-        console.log(`Admin login successful for ${slug}`);
+      if (restaurant) {
+        const storedPw = restaurant.adminPassword;
+        const isHashed = storedPw.startsWith("$2");
+        let isMatch = false;
+
+        if (isHashed) {
+          isMatch = await bcrypt.compare(password, storedPw);
+        } else {
+          // Legacy plaintext — compare and auto-migrate to hashed
+          isMatch = password === storedPw;
+          if (isMatch) {
+            const hashed = await bcrypt.hash(storedPw, 10);
+            await Restaurant.updateOne({ _id: restaurant._id }, { $set: { adminPassword: hashed } });
+            console.log(`Auto-migrated password to bcrypt for ${restaurant.slug}`);
+          }
+        }
+
+        if (isMatch) {
+          role = "admin";
+          slug = restaurant.slug;
+          console.log(`Admin login successful for ${slug}`);
+        } else {
+          console.log(`Login failed for ${username}`);
+        }
       } else {
         console.log(`Login failed for ${username}`);
       }
@@ -200,7 +295,7 @@ export async function loginAction(username, password) {
     
     cookieStore.set("admin_session", sessionData, {
       httpOnly: true,
-      secure: false,
+      secure: process.env.NODE_ENV === 'production',
       maxAge: 60 * 60 * 24, 
       path: "/",
       sameSite: 'lax'
@@ -321,7 +416,29 @@ export async function getPlatformSettingsAction() {
   if (!settings) {
     settings = await PlatformSettings.create({ id: "global_settings" });
   }
-  return { success: true, settings: JSON.parse(JSON.stringify(settings)) };
+
+  // Filter sensitive superadmin credential details for regular users/visitors
+  const { cookies } = await import("next/headers");
+  const cookieStore = await cookies();
+  const sessionData = cookieStore.get("admin_session")?.value;
+  
+  let isSuperAdmin = false;
+  if (sessionData) {
+    try {
+      const session = JSON.parse(sessionData);
+      if (session.role === "superadmin") {
+        isSuperAdmin = true;
+      }
+    } catch (_) {}
+  }
+
+  const settingsObj = JSON.parse(JSON.stringify(settings));
+  if (!isSuperAdmin) {
+    delete settingsObj.superadminUsername;
+    delete settingsObj.superadminPassword;
+  }
+  
+  return { success: true, settings: settingsObj };
 }
 
 export async function updatePlatformSettingsAction(updatedSettings) {
@@ -334,6 +451,11 @@ export async function updatePlatformSettingsAction(updatedSettings) {
   if (session.role !== "superadmin") return { error: "Forbidden: Only superadmin can change global settings" };
 
   await dbConnect();
+  // Hash superadmin password if it's being changed
+  if (updatedSettings.superadminPassword) {
+    updatedSettings.superadminPassword = await bcrypt.hash(updatedSettings.superadminPassword, 10);
+  }
+
   const settings = await PlatformSettings.findOneAndUpdate(
     { id: "global_settings" },
     { $set: updatedSettings },
@@ -373,7 +495,7 @@ export async function updateRestaurantCredentialsAction(slug, newUsername, newPa
   if (!restaurant) return { error: "Restaurant not found" };
 
   if (newUsername) restaurant.username = newUsername;
-  if (newPassword) restaurant.adminPassword = newPassword;
+  if (newPassword) restaurant.adminPassword = await bcrypt.hash(newPassword, 10);
 
   await restaurant.save();
   
@@ -414,7 +536,7 @@ export async function registerRestaurantAction(restaurantData) {
       username: slug, // Username is always slug
       logo: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&q=80",
       banner: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=1000",
-      adminPassword: password, // Password chosen by restaurant owner
+      adminPassword: await bcrypt.hash(password, 10), // Password hashed with bcrypt
       address: address || "Victoria Park, Meerut",
       categories: ["Appetizers & Soups", "Salads", "Main Courses", "Sides", "Desserts", "Beverages"],
       menuItems: [],
@@ -436,7 +558,7 @@ export async function registerRestaurantAction(restaurantData) {
     const sessionData = JSON.stringify({ role: "admin", slug: slug });
     cookieStore.set("admin_session", sessionData, {
       httpOnly: true,
-      secure: false,
+      secure: process.env.NODE_ENV === 'production',
       maxAge: 60 * 60 * 24, 
       path: "/",
       sameSite: 'lax'

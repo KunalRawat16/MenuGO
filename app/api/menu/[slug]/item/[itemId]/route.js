@@ -1,30 +1,56 @@
 import dbConnect from "@/lib/db";
 import Restaurant from "@/models/Restaurant";
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
+
+// Helper to check authentication
+async function verifyAuth(slug) {
+  const cookieStore = await cookies();
+  const sessionCookie = cookieStore.get("admin_session")?.value;
+  if (!sessionCookie) return { authorized: false, error: "Unauthorized", status: 401 };
+
+  try {
+    const session = JSON.parse(sessionCookie);
+    if (session.role !== "superadmin" && session.slug !== slug) {
+      return { authorized: false, error: "Forbidden", status: 403 };
+    }
+    return { authorized: true };
+  } catch {
+    return { authorized: false, error: "Invalid session", status: 401 };
+  }
+}
 
 export async function PUT(request, { params }) {
   try {
     const { slug, itemId } = await params;
+
+    // Check authorization
+    const auth = await verifyAuth(slug);
+    if (!auth.authorized) {
+      return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
+    }
+
     const body = await request.json();
     await dbConnect();
 
-    const restaurant = await Restaurant.findOne({ slug });
-    if (!restaurant) {
-      return NextResponse.json({ success: false, error: "Restaurant not found" }, { status: 404 });
+    // Prepare atomic update object for subdocument fields
+    const updateObj = {};
+    for (const key in body) {
+      if (key !== "id") {
+        updateObj[`menuItems.$.${key}`] = body[key];
+      }
     }
 
-    const itemIndex = restaurant.menuItems.findIndex(item => item.id === itemId);
-    if (itemIndex === -1) {
-      return NextResponse.json({ success: false, error: "Item not found" }, { status: 404 });
+    const result = await Restaurant.updateOne(
+      { slug, "menuItems.id": itemId },
+      { $set: updateObj }
+    );
+
+    if (result.matchedCount === 0) {
+      return NextResponse.json({ success: false, error: "Restaurant or Item not found" }, { status: 404 });
     }
 
-    // Merge updates
-    const existingItem = restaurant.menuItems[itemIndex].toObject ? restaurant.menuItems[itemIndex].toObject() : restaurant.menuItems[itemIndex];
-    restaurant.menuItems[itemIndex] = { ...existingItem, ...body };
-    
-    await restaurant.save();
-
-    return NextResponse.json({ success: true, data: restaurant.menuItems[itemIndex] });
+    return NextResponse.json({ success: true, message: "Item updated successfully" });
   } catch (error) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
@@ -33,21 +59,28 @@ export async function PUT(request, { params }) {
 export async function DELETE(request, { params }) {
   try {
     const { slug, itemId } = await params;
+
+    // Check authorization
+    const auth = await verifyAuth(slug);
+    if (!auth.authorized) {
+      return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
+    }
+
     await dbConnect();
 
-    const restaurant = await Restaurant.findOne({ slug });
-    if (!restaurant) {
+    // Atomic $pull to remove item from the array
+    const result = await Restaurant.updateOne(
+      { slug },
+      { $pull: { menuItems: { id: itemId } } }
+    );
+
+    if (result.matchedCount === 0) {
       return NextResponse.json({ success: false, error: "Restaurant not found" }, { status: 404 });
     }
 
-    const initialLength = restaurant.menuItems.length;
-    restaurant.menuItems = restaurant.menuItems.filter(item => item.id !== itemId);
-    
-    if (restaurant.menuItems.length === initialLength) {
+    if (result.modifiedCount === 0) {
       return NextResponse.json({ success: false, error: "Item not found" }, { status: 404 });
     }
-
-    await restaurant.save();
 
     return NextResponse.json({ success: true, message: "Item deleted" });
   } catch (error) {

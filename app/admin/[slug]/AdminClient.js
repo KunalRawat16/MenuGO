@@ -307,7 +307,7 @@ export default function AdminClient({ restaurant }) {
               <p className="text-xs font-semibold text-indigo-600 bg-white border border-indigo-100 px-3 py-1.5 rounded-lg shadow-sm cursor-pointer hover:bg-indigo-50" onClick={() => setActiveTab("support")}>
                 Contact Admin to Upgrade
               </p>
-              <p className="text-[10px] text-gray-500 mt-1.5 font-medium">₹99/mo or ₹999/yr</p>
+              <p className="text-[10px] text-gray-500 mt-1.5 font-medium">₹199/mo or ₹1999/yr</p>
             </div>
           )}
         </div>

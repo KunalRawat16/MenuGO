@@ -24,9 +24,16 @@ export default function OrdersDashboard({ restaurantId }) {
 
   useEffect(() => {
     fetchOrders();
-    const interval = setInterval(fetchOrders, 15000); // 15 seconds
-    return () => clearInterval(interval);
-  }, [restaurantId, fetchOrders]);
+
+    // Smart Polling: Poll every 12 seconds if active orders exist, drop to 45 seconds if idle
+    const intervalTime = orders.length > 0 ? 12000 : 45000;
+    const timer = setTimeout(async function run() {
+      await fetchOrders();
+      setTimeout(run, orders.length > 0 ? 12000 : 45000);
+    }, intervalTime);
+
+    return () => clearTimeout(timer);
+  }, [restaurantId, fetchOrders, orders.length]);
 
   const updateStatus = async (orderId, newStatus) => {
     try {

@@ -7,7 +7,7 @@ export async function GET(request, { params }) {
     const { slug } = await params;
     await dbConnect();
 
-    const restaurant = await Restaurant.findOne({ slug });
+    const restaurant = await Restaurant.findOne({ slug }).select("-adminPassword");
     
     if (!restaurant) {
       return NextResponse.json({ success: false, error: "Restaurant not found" }, { status: 404 });

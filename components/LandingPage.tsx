@@ -343,7 +343,7 @@ export default function LandingPage({ restaurant }: LandingPageProps) {
               <p className="text-slate-500 text-[9px] sm:text-xs font-bold uppercase tracking-wider mt-1">Self-Managed</p>
             </div>
             <div>
-              <p className={`text-xl sm:text-2xl md:text-3xl font-black transition-colors duration-300 ${isDarkMode ? "text-white" : "text-slate-900"}`}>₹99/mo</p>
+              <p className={`text-xl sm:text-2xl md:text-3xl font-black transition-colors duration-300 ${isDarkMode ? "text-white" : "text-slate-900"}`}>₹199/mo</p>
               <p className="text-slate-500 text-[9px] sm:text-xs font-bold uppercase tracking-wider mt-1">Starting Price</p>
             </div>
             <div>
@@ -1036,7 +1036,7 @@ export default function LandingPage({ restaurant }: LandingPageProps) {
               </h3>
               
               <div className="my-6">
-                <span className={`text-4xl sm:text-5xl font-black transition-colors duration-300 ${isDarkMode ? "text-white" : "text-slate-900"}`}>₹99</span>
+                <span className={`text-4xl sm:text-5xl font-black transition-colors duration-300 ${isDarkMode ? "text-white" : "text-slate-900"}`}>₹199</span>
                 <span className={`${isDarkMode ? "text-slate-400" : "text-slate-50"} text-xs sm:text-sm ml-2`}>/ month</span>
                 
                 {/* Double green separator lines */}
@@ -1090,7 +1090,7 @@ export default function LandingPage({ restaurant }: LandingPageProps) {
                 <p className="text-slate-500 text-xs mt-1">Best Value Guarantee</p>
                 
                 <div className="my-6">
-                  <span className={`text-4xl sm:text-5xl font-black transition-colors duration-300 ${isDarkMode ? "text-white" : "text-slate-900"}`}>₹999</span>
+                  <span className={`text-4xl sm:text-5xl font-black transition-colors duration-300 ${isDarkMode ? "text-white" : "text-slate-900"}`}>₹1999</span>
                   <span className="text-slate-500 text-xs sm:text-sm ml-2">/ year</span>
                   
                   {/* Triple green separator lines */}

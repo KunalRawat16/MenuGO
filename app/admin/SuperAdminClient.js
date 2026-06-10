@@ -431,8 +431,8 @@ export default function SuperAdminClient({ initialRestaurants }) {
                               >
                                 <option value="free" className="bg-gray-900 text-white">FREE</option>
                                 <option value="trial" className="bg-gray-900 text-white">TRIAL</option>
-                                <option value="paid-monthly" className="bg-gray-900 text-white">PAID (₹99/MO)</option>
-                                <option value="paid-yearly" className="bg-gray-900 text-white">PAID (₹999/YR)</option>
+                                <option value="paid-monthly" className="bg-gray-900 text-white">PAID (₹199/MO)</option>
+                                <option value="paid-yearly" className="bg-gray-900 text-white">PAID (₹1999/YR)</option>
                               </select>
                               {r.subscription?.plan !== 'free' && r.subscription?.validUntil && (
                                 <span className="text-[10px] text-gray-500">

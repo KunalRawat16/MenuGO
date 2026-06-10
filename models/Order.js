@@ -35,8 +35,12 @@ const OrderSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['Pending', 'Preparing', 'Served', 'Cancelled'],
+    enum: ['Pending', 'Preparing', 'Served', 'Completed', 'Cancelled'],
     default: 'Pending'
+  },
+  completedAt: {
+    type: Date,
+    default: null
   },
   createdAt: {
     type: Date,
@@ -49,8 +53,9 @@ const OrderSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // Add indexes for performance
-OrderSchema.index({ restaurantId: 1, status: 1 });
-OrderSchema.index({ restaurantSlug: 1, status: 1 });
+OrderSchema.index({ restaurantId: 1, status: 1, createdAt: -1 });
+OrderSchema.index({ restaurantSlug: 1, status: 1, createdAt: -1 });
 OrderSchema.index({ createdAt: -1 });
+OrderSchema.index({ completedAt: 1 }, { expireAfterSeconds: 7 * 24 * 60 * 60 }); // Auto-delete after 7 days
 
 export default mongoose.models.Order || mongoose.model('Order', OrderSchema);
