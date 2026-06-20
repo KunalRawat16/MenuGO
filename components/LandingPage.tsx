@@ -259,6 +259,7 @@ export default function LandingPage({ restaurant }: LandingPageProps) {
           <a href="#features" className={`transition-colors ${isDarkMode ? "hover:text-white" : "hover:text-slate-900"}`}>Features</a>
           <a href="#demo" className={`transition-colors ${isDarkMode ? "hover:text-white" : "hover:text-slate-900"}`}>Interactive Demo</a>
           <a href="#pricing" className={`transition-colors ${isDarkMode ? "hover:text-white" : "hover:text-slate-900"}`}>Pricing</a>
+          <a href="#about" className={`transition-colors ${isDarkMode ? "hover:text-white" : "hover:text-slate-900"}`}>About</a>
         </nav>
 
         <div className="flex items-center gap-2 sm:gap-4">
@@ -958,6 +959,94 @@ export default function LandingPage({ restaurant }: LandingPageProps) {
             </div>
             <h3 className="text-lg sm:text-xl font-bold mt-4">Analytics & Excel Export</h3>
             <p className={`text-xs sm:text-sm leading-relaxed mt-2 transition-colors duration-300 ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>Track popular dishes, peak order hours, daily revenue trends, and download formatted order logs for external accounting software with one-click exports.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* About the Founder Section */}
+      <section id="about" className={`relative z-10 max-w-7xl mx-auto px-4 min-[576px]:px-6 md:px-8 lg:px-6 py-16 sm:py-20 lg:py-24 border-t transition-colors duration-300 ${
+        isDarkMode ? "border-white/5" : "border-slate-200/80 bg-white"
+      }`}>
+        <div className="grid md:grid-cols-12 gap-8 md:gap-12 lg:gap-16 items-center">
+          {/* Left Column: Image Card */}
+          <div className="md:col-span-5 flex justify-center">
+            <div className="relative group w-full max-w-[320px]">
+              {/* Glowing decorative background elements */}
+              <div className="absolute inset-0 bg-gradient-to-tr from-green-500/25 to-emerald-500/25 rounded-3xl filter blur-xl group-hover:scale-105 transition-transform duration-500 opacity-70" />
+              
+              {/* Main image container */}
+              <div className={`relative rounded-3xl p-3 border transition-all duration-300 w-full ${
+                isDarkMode ? "bg-slate-900/80 border-white/10" : "bg-white border-slate-200 shadow-sm"
+              }`}>
+                <div className="relative aspect-square w-full rounded-2xl overflow-hidden shadow-inner">
+                  <Image 
+                    src="/kunal.jpg" 
+                    alt="Kunal Rawat - Founder of MenuGO" 
+                    fill
+                    className="object-cover object-top filter contrast-[1.02] brightness-[1.02] transition-transform duration-500 group-hover:scale-105"
+                  />
+                </div>
+                <div className="mt-4 text-center">
+                  <h3 className={`text-lg font-black transition-colors duration-300 ${isDarkMode ? "text-white" : "text-slate-900"}`}>
+                    Kunal Rawat
+                  </h3>
+                  <p className="text-green-500 text-xs font-bold uppercase tracking-wider mt-0.5">
+                    Founder
+                  </p>
+                  
+                  <div className="flex justify-center gap-2 mt-3">
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                      isDarkMode ? "bg-white/5 text-slate-300" : "bg-slate-100 text-slate-700 border border-slate-200"
+                    }`}>
+                      MCA Graduate
+                    </span>
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                      isDarkMode ? "bg-white/5 text-slate-300" : "bg-slate-100 text-slate-700 border border-slate-200"
+                    }`}>
+                      Problem Solver
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column: Bio / Pitch */}
+          <div className="md:col-span-7 space-y-6 text-left">
+            <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[10px] sm:text-xs font-black tracking-wider uppercase transition-colors duration-300 ${
+              isDarkMode ? "bg-white/5 border-white/10 text-green-400" : "bg-green-50/50 border-green-500/20 text-green-600"
+            }`}>
+              <Info size={12} /> From the Founder
+            </div>
+            
+            <h2 className={`text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight leading-tight transition-colors duration-300 ${
+              isDarkMode ? "text-white" : "text-slate-900"
+            }`}>
+              Solving Real-World Problems for <span className="bg-gradient-to-r from-green-500 to-emerald-400 bg-clip-text text-transparent">Modern Restaurants.</span>
+            </h2>
+
+            <div className={`space-y-4 text-sm sm:text-base leading-relaxed font-medium transition-colors duration-300 ${
+              isDarkMode ? "text-slate-400" : "text-slate-600"
+            }`}>
+              <p>
+                As an MCA graduate with a deep passion for technology and solving real-world challenges, I saw a major friction point in how traditional restaurants operate. Paper menus are static, expensive to update, and create unnecessary bottlenecks for both the serving staff and guests.
+              </p>
+              <p>
+                I built <strong className={isDarkMode ? "text-white" : "text-slate-900"}>MenuGO</strong> to completely eliminate this friction. By converting tables into interactive digital ordering hubs, we help owners reduce human errors, speed up service, and lift sales—while guests enjoy a modern, seamless dining experience with no app downloads needed.
+              </p>
+              <p>
+                Our vision is to partner with more and more restaurants, providing them with affordable, developer-crafted tools that boost their margins and make tableside ordering completely stress-free.
+              </p>
+            </div>
+
+            <div className={`pt-4 border-t border-dashed flex items-center gap-4 ${
+              isDarkMode ? "border-slate-800" : "border-slate-200"
+            }`}>
+              <div className="flex flex-col">
+                <span className={`font-black text-base leading-none ${isDarkMode ? "text-white" : "text-slate-900"}`}>Kunal Rawat</span>
+                <span className="text-slate-500 text-xs mt-1 font-semibold">Founder, MenuGO</span>
+              </div>
+            </div>
           </div>
         </div>
       </section>
