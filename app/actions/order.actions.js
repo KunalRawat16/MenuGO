@@ -164,3 +164,85 @@ export async function getOrderByIdPublicAction(orderId) {
 
   return { success: true, order: JSON.parse(JSON.stringify(order)) };
 }
+
+// ─────────────────────────────────────────────────────────────────────
+// DELETE SINGLE ORDER (owner dashboard)
+// ─────────────────────────────────────────────────────────────────────
+
+export async function deleteOrderAction(restaurantId, orderId) {
+  const session = await requireRestaurantAccess(restaurantId);
+  if (session.error) return { error: session.error };
+
+  await dbConnect();
+  const deleted = await Order.findOneAndDelete({ _id: orderId, restaurantId });
+  if (!deleted) return { error: 'Order not found or permission denied.' };
+
+  return { success: true };
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// DELETE ORDERS BY DATE RANGE (bulk purge / cleanup)
+// ─────────────────────────────────────────────────────────────────────
+
+export async function deleteOrdersByDateRangeAction(restaurantId, { startDate, endDate, status = 'all' }) {
+  const session = await requireRestaurantAccess(restaurantId);
+  if (session.error) return { error: session.error };
+
+  if (!startDate || !endDate) {
+    return { error: 'Start date and end date are required.' };
+  }
+
+  await dbConnect();
+
+  const start = new Date(startDate);
+  start.setHours(0, 0, 0, 0);
+
+  const end = new Date(endDate);
+  end.setHours(23, 59, 59, 999);
+
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+    return { error: 'Invalid date range provided.' };
+  }
+
+  const query = {
+    restaurantId,
+    createdAt: { $gte: start, $lte: end },
+  };
+
+  if (status && status !== 'all') {
+    query.status = status;
+  }
+
+  const res = await Order.deleteMany(query);
+
+  return { success: true, deletedCount: res.deletedCount || 0 };
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// UPDATE ORDER DETAILS (owner edit)
+// ─────────────────────────────────────────────────────────────────────
+
+export async function updateOrderDetailsAction(restaurantId, orderId, updateData) {
+  const session = await requireRestaurantAccess(restaurantId);
+  if (session.error) return { error: session.error };
+
+  await dbConnect();
+
+  const allowedFields = ['customerName', 'tableNumber', 'status', 'specialInstructions', 'items', 'totalAmount'];
+  const update = {};
+  for (const field of allowedFields) {
+    if (updateData[field] !== undefined) {
+      update[field] = updateData[field];
+    }
+  }
+
+  const updated = await Order.findOneAndUpdate(
+    { _id: orderId, restaurantId },
+    { $set: update },
+    { new: true }
+  );
+
+  if (!updated) return { error: 'Order not found or permission denied.' };
+
+  return { success: true, order: JSON.parse(JSON.stringify(updated)) };
+}

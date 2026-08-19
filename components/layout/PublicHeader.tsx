@@ -10,7 +10,7 @@ export function PublicHeader() {
 
   const navLinks = [
     { label: "Features", href: "#features" },
-    { label: "Interactive Demo", href: "#demo" },
+    { label: "Live Menus", href: "#demo" },
     { label: "Pricing", href: "#pricing" },
     { label: "FAQ", href: "#faq" },
   ];

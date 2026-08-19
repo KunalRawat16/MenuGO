@@ -17,13 +17,25 @@ import {
   Clock,
   Eye,
   Filter,
+  Trash2,
+  Edit3,
+  Plus,
+  AlertTriangle,
+  FileText,
 } from "lucide-react";
 import { StatCard } from "@/components/ui/StatCard";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
+import { Input } from "@/components/ui/Input";
 import { getMyBusinessAction } from "@/app/actions/restaurant.actions";
-import { getOrdersAction } from "@/app/actions/order.actions";
+import {
+  getOrdersAction,
+  createOrderAction,
+  deleteOrderAction,
+  deleteOrdersByDateRangeAction,
+  updateOrderDetailsAction,
+} from "@/app/actions/order.actions";
 
 export interface OrderItem {
   name: string;
@@ -51,7 +63,38 @@ export default function AnalyticsPage() {
   const [timeRange, setTimeRange] = useState<"7d" | "30d" | "all">("7d");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  
+  // Custom Date Range Filters for Order History
+  const [startDateFilter, setStartDateFilter] = useState<string>("");
+  const [endDateFilter, setEndDateFilter] = useState<string>("");
+
+  // Modals state
   const [selectedOrderForModal, setSelectedOrderForModal] = useState<OrderData | null>(null);
+  const [selectedOrderForEdit, setSelectedOrderForEdit] = useState<OrderData | null>(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isPurgeModalOpen, setIsPurgeModalOpen] = useState(false);
+
+  // Edit Form State
+  const [editCustomerName, setEditCustomerName] = useState("");
+  const [editTableNumber, setEditTableNumber] = useState("");
+  const [editStatus, setEditStatus] = useState<any>("completed");
+  const [editTotalAmount, setEditTotalAmount] = useState<number>(0);
+  const [isUpdatingOrder, setIsUpdatingOrder] = useState(false);
+
+  // Create Manual Order Form State
+  const [createCustomerName, setCreateCustomerName] = useState("Walk-in Guest");
+  const [createTableNumber, setCreateTableNumber] = useState("");
+  const [createItemName, setCreateItemName] = useState("");
+  const [createItemPrice, setCreateItemPrice] = useState<string>("100");
+  const [createItemQty, setCreateItemQty] = useState<string>("1");
+  const [createStatus, setCreateStatus] = useState<any>("completed");
+  const [isCreatingOrder, setIsCreatingOrder] = useState(false);
+
+  // Purge / Delete Date Range State
+  const [purgeStartDate, setPurgeStartDate] = useState<string>("");
+  const [purgeEndDate, setPurgeEndDate] = useState<string>("");
+  const [purgeStatus, setPurgeStatus] = useState<string>("all");
+  const [isPurging, setIsPurging] = useState(false);
 
   // Fetch Business & Orders
   const fetchData = async () => {
@@ -61,7 +104,7 @@ export default function AnalyticsPage() {
       if (bizRes.success && bizRes.business) {
         setBusiness(bizRes.business);
 
-        const ordersRes = await getOrdersAction(bizRes.business._id, { limit: 500 });
+        const ordersRes = await getOrdersAction(bizRes.business._id, { limit: 1000 });
         if (ordersRes.success && ordersRes.orders) {
           setOrders(ordersRes.orders);
         }
@@ -79,11 +122,11 @@ export default function AnalyticsPage() {
 
   const currencySymbol = business?.localization?.currencySymbol || "₹";
 
-  // Filter orders by time range
+  // Filter orders by period preset (7d, 30d, all)
   const filteredOrdersByPeriod = useMemo(() => {
     const now = Date.now();
     const daysMs = timeRange === "7d" ? 7 * 86400000 : timeRange === "30d" ? 30 * 86400000 : 3650 * 86400000;
-    
+
     return orders.filter((o) => {
       const orderTime = new Date(o.createdAt).getTime();
       return now - orderTime <= daysMs;
@@ -103,60 +146,36 @@ export default function AnalyticsPage() {
     return completedOrders.length > 0 ? totalPeriodRevenue / completedOrders.length : 0;
   }, [completedOrders, totalPeriodRevenue]);
 
-  // Compute Daily Sales Trend (Mon-Sun or Last 7 Days)
+  // Compute Daily Sales Trend
   const revenueChartData = useMemo(() => {
     const daysMap: Record<string, number> = {};
 
-    if (timeRange === "7d") {
-      const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-      const last7Days: { key: string; label: string; dateStr: string }[] = [];
+    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const last7Days: { key: string; label: string; dateStr: string }[] = [];
 
-      for (let i = 6; i >= 0; i--) {
-        const d = new Date();
-        d.setDate(d.getDate() - i);
-        const dateStr = d.toISOString().split("T")[0];
-        const dayLabel = days[d.getDay()];
-        last7Days.push({ key: dateStr, label: dayLabel, dateStr });
-        daysMap[dateStr] = 0;
-      }
+    const numColumns = timeRange === "7d" ? 7 : 7;
+    const stepDays = timeRange === "30d" ? 4 : 1;
 
-      for (const order of completedOrders) {
-        const orderDateStr = new Date(order.createdAt).toISOString().split("T")[0];
-        if (daysMap[orderDateStr] !== undefined) {
-          daysMap[orderDateStr] += order.totalAmount || 0;
-        }
-      }
-
-      return last7Days.map((d) => ({
-        label: d.label,
-        revenue: daysMap[d.dateStr] || 0,
-      }));
-    } else {
-      // 30 Days grouping by week or day
-      const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-      const last7Days: { key: string; label: string; dateStr: string }[] = [];
-
-      for (let i = 6; i >= 0; i--) {
-        const d = new Date();
-        d.setDate(d.getDate() - i * 4);
-        const dateStr = d.toISOString().split("T")[0];
-        const dayLabel = days[d.getDay()];
-        last7Days.push({ key: dateStr, label: dayLabel, dateStr });
-        daysMap[dateStr] = 0;
-      }
-
-      for (const order of completedOrders) {
-        const orderDateStr = new Date(order.createdAt).toISOString().split("T")[0];
-        if (daysMap[orderDateStr] !== undefined) {
-          daysMap[orderDateStr] += order.totalAmount || 0;
-        }
-      }
-
-      return last7Days.map((d) => ({
-        label: d.label,
-        revenue: daysMap[d.dateStr] || 0,
-      }));
+    for (let i = numColumns - 1; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i * stepDays);
+      const dateStr = d.toISOString().split("T")[0];
+      const dayLabel = days[d.getDay()];
+      last7Days.push({ key: dateStr, label: dayLabel, dateStr });
+      daysMap[dateStr] = 0;
     }
+
+    for (const order of completedOrders) {
+      const orderDateStr = new Date(order.createdAt).toISOString().split("T")[0];
+      if (daysMap[orderDateStr] !== undefined) {
+        daysMap[orderDateStr] += order.totalAmount || 0;
+      }
+    }
+
+    return last7Days.map((d) => ({
+      label: d.label,
+      revenue: daysMap[d.dateStr] || 0,
+    }));
   }, [completedOrders, timeRange]);
 
   const maxRevenueInChart = useMemo(() => {
@@ -190,11 +209,23 @@ export default function AnalyticsPage() {
     }));
   }, [completedOrders]);
 
-  // Filter Order History Table
+  // Filter Order History Table (by search, status, and custom start/end date range)
   const filteredHistoryOrders = useMemo(() => {
-    return filteredOrdersByPeriod.filter((o) => {
+    return orders.filter((o) => {
+      // 1. Status Filter
       if (statusFilter !== "all" && o.status !== statusFilter) return false;
 
+      // 2. Custom Date Range Filter
+      if (startDateFilter) {
+        const startMs = new Date(startDateFilter).setHours(0, 0, 0, 0);
+        if (new Date(o.createdAt).getTime() < startMs) return false;
+      }
+      if (endDateFilter) {
+        const endMs = new Date(endDateFilter).setHours(23, 59, 59, 999);
+        if (new Date(o.createdAt).getTime() > endMs) return false;
+      }
+
+      // 3. Search Query
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         const matchId = o._id.toLowerCase().includes(q);
@@ -206,14 +237,184 @@ export default function AnalyticsPage() {
 
       return true;
     });
-  }, [filteredOrdersByPeriod, statusFilter, searchQuery]);
+  }, [orders, statusFilter, startDateFilter, endDateFilter, searchQuery]);
+
+  // Dynamic preview count of orders to be deleted in Date-Range Purge
+  const purgePreviewCount = useMemo(() => {
+    if (!purgeStartDate || !purgeEndDate) return 0;
+    const startMs = new Date(purgeStartDate).setHours(0, 0, 0, 0);
+    const endMs = new Date(purgeEndDate).setHours(23, 59, 59, 999);
+    if (isNaN(startMs) || isNaN(endMs)) return 0;
+
+    return orders.filter((o) => {
+      const orderTime = new Date(o.createdAt).getTime();
+      const matchesDate = orderTime >= startMs && orderTime <= endMs;
+      const matchesStatus = purgeStatus === "all" ? true : o.status === purgeStatus;
+      return matchesDate && matchesStatus;
+    }).length;
+  }, [orders, purgeStartDate, purgeEndDate, purgeStatus]);
 
   // ─────────────────────────────────────────────────────────────
-  // 1-CLICK EXCEL / CSV EXPORT FUNCTION
+  // CRUD HANDLERS
   // ─────────────────────────────────────────────────────────────
+
+  // 1. Delete Single Order
+  const handleDeleteSingleOrder = async (orderId: string) => {
+    if (!confirm("Are you sure you want to permanently delete this order?")) return;
+
+    try {
+      if (!business?._id) return;
+      const res = await deleteOrderAction(business._id, orderId);
+      if (res.success) {
+        setOrders((prev) => prev.filter((o) => o._id !== orderId));
+      } else {
+        alert(res.error || "Failed to delete order.");
+      }
+    } catch (err) {
+      console.error("Delete order error:", err);
+      alert("An error occurred while deleting order.");
+    }
+  };
+
+  // 2. Open Edit Order Modal
+  const openEditModal = (order: OrderData) => {
+    setSelectedOrderForEdit(order);
+    setEditCustomerName(order.customerName || "");
+    setEditTableNumber(order.tableNumber || "");
+    setEditStatus(order.status || "completed");
+    setEditTotalAmount(order.totalAmount || 0);
+  };
+
+  // 3. Save Order Edit
+  const handleSaveEditOrder = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedOrderForEdit || !business?._id) return;
+
+    setIsUpdatingOrder(true);
+    try {
+      const res = await updateOrderDetailsAction(business._id, selectedOrderForEdit._id, {
+        customerName: editCustomerName,
+        tableNumber: editTableNumber || null,
+        status: editStatus,
+        totalAmount: Number(editTotalAmount),
+      });
+
+      if (res.success && res.order) {
+        setOrders((prev) => prev.map((o) => (o._id === res.order._id ? (res.order as any) : o)));
+        setSelectedOrderForEdit(null);
+      } else {
+        alert(res.error || "Failed to update order.");
+      }
+    } catch (err) {
+      console.error("Update order error:", err);
+      alert("Failed to update order details.");
+    } finally {
+      setIsUpdatingOrder(false);
+    }
+  };
+
+  // 4. Save New Manual Order
+  const handleCreateManualOrder = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!business?.slug) return;
+
+    if (!createItemName.trim()) {
+      alert("Item name is required.");
+      return;
+    }
+
+    setIsCreatingOrder(true);
+    try {
+      const qty = parseInt(createItemQty) || 1;
+      const price = parseFloat(createItemPrice) || 0;
+      const totalAmount = price * qty;
+
+      const res = await createOrderAction({
+        restaurantSlug: business.slug,
+        customerName: createCustomerName,
+        tableNumber: createTableNumber || null,
+        items: [{ name: createItemName.trim(), price, quantity: qty }],
+        totalAmount,
+        orderSource: "manual-entry",
+      });
+
+      if (res.success && res.order) {
+        // Automatically update status if created as completed/accepted
+        if (createStatus !== "incoming" && business?._id) {
+          const statusRes = await updateOrderDetailsAction(business._id, res.order._id, {
+            status: createStatus,
+          });
+          if (statusRes.success && statusRes.order) {
+            setOrders((prev) => [statusRes.order as any, ...prev]);
+          } else {
+            setOrders((prev) => [res.order, ...prev]);
+          }
+        } else {
+          setOrders((prev) => [res.order, ...prev]);
+        }
+
+        setIsCreateModalOpen(false);
+        setCreateItemName("");
+        setCreateItemPrice("100");
+        setCreateItemQty("1");
+      } else {
+        alert(res.error || "Failed to create order.");
+      }
+    } catch (err) {
+      console.error("Create order error:", err);
+      alert("Failed to create manual order.");
+    } finally {
+      setIsCreatingOrder(false);
+    }
+  };
+
+  // 5. Bulk Purge / Delete Orders by Date Range
+  const handlePurgeDateRange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!purgeStartDate || !purgeEndDate) {
+      alert("Please select both Start Date and End Date.");
+      return;
+    }
+
+    if (purgePreviewCount === 0) {
+      alert("No orders match the selected date range and status criteria.");
+      return;
+    }
+
+    const confirmPurge = confirm(
+      `⚠️ PERMANENT ACTION: Are you sure you want to permanently delete ${purgePreviewCount} orders between ${purgeStartDate} and ${purgeEndDate}? This cannot be undone.`
+    );
+    if (!confirmPurge) return;
+
+    setIsPurging(true);
+    try {
+      const res = await deleteOrdersByDateRangeAction(business._id, {
+        startDate: purgeStartDate,
+        endDate: purgeEndDate,
+        status: purgeStatus,
+      });
+
+      if (res.success) {
+        alert(`Successfully deleted ${res.deletedCount} orders.`);
+        setIsPurgeModalOpen(false);
+        setPurgeStartDate("");
+        setPurgeEndDate("");
+        fetchData();
+      } else {
+        alert(res.error || "Failed to delete orders.");
+      }
+    } catch (err) {
+      console.error("Purge orders error:", err);
+      alert("Failed to delete orders by date range.");
+    } finally {
+      setIsPurging(false);
+    }
+  };
+
+  // 6. Export Filtered CSV (respects date range + search + status)
   const exportToExcelCSV = () => {
-    if (orders.length === 0) {
-      alert("No order history available to export.");
+    if (filteredHistoryOrders.length === 0) {
+      alert("No order history matching current criteria to export.");
       return;
     }
 
@@ -253,7 +454,7 @@ export default function AnalyticsPage() {
     const csvContent = "data:text/csv;charset=utf-8," + csvRows.join("\n");
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
-    const filename = `MenuGO_Orders_Report_${business?.slug || "restaurant"}_${new Date().toISOString().split("T")[0]}.csv`;
+    const filename = `MenuGO_Orders_Report_${business?.slug || "restaurant"}_${startDateFilter || "all"}_to_${endDateFilter || "today"}.csv`;
     link.setAttribute("href", encodedUri);
     link.setAttribute("download", filename);
     document.body.appendChild(link);
@@ -264,47 +465,52 @@ export default function AnalyticsPage() {
   return (
     <div className="space-y-8 select-none">
       {/* ─────────────────────────────────────────────────────────────
-          1. HEADER & TIME RANGE SELECTOR
+          1. HEADER & ACTIONS
       ───────────────────────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-extrabold text-slate-900 tracking-tight font-heading flex items-center gap-2">
-            <BarChart3 size={22} className="text-indigo-600" /> Analytics & Sales Insights
+            <BarChart3 size={22} className="text-indigo-600" /> Analytics & Order Management
           </h1>
           <p className="text-xs text-slate-500">
-            Real-time performance metrics, sales trends, top-selling dishes & exported receipts for {business?.name || "your business"}
+            Real-time performance metrics, sales trends, full CRUD order history, date-range purge & CSV reports for {business?.name || "your business"}
           </p>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
+          {/* Create Manual Order Button */}
+          <Button
+            variant="default"
+            size="sm"
+            onClick={() => setIsCreateModalOpen(true)}
+            leftIcon={<Plus size={14} />}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold"
+          >
+            Create Order
+          </Button>
+
           {/* Time Range Selector */}
           <div className="flex items-center gap-1 p-1 bg-white border border-slate-200 rounded-xl shadow-xs">
             <button
               onClick={() => setTimeRange("7d")}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                timeRange === "7d"
-                  ? "bg-indigo-600 text-white shadow-xs"
-                  : "text-slate-600 hover:bg-slate-100"
+                timeRange === "7d" ? "bg-indigo-600 text-white shadow-xs" : "text-slate-600 hover:bg-slate-100"
               }`}
             >
-              Last 7 Days
+              7 Days
             </button>
             <button
               onClick={() => setTimeRange("30d")}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                timeRange === "30d"
-                  ? "bg-indigo-600 text-white shadow-xs"
-                  : "text-slate-600 hover:bg-slate-100"
+                timeRange === "30d" ? "bg-indigo-600 text-white shadow-xs" : "text-slate-600 hover:bg-slate-100"
               }`}
             >
-              Last 30 Days
+              30 Days
             </button>
             <button
               onClick={() => setTimeRange("all")}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                timeRange === "all"
-                  ? "bg-indigo-600 text-white shadow-xs"
-                  : "text-slate-600 hover:bg-slate-100"
+                timeRange === "all" ? "bg-indigo-600 text-white shadow-xs" : "text-slate-600 hover:bg-slate-100"
               }`}
             >
               All Time
@@ -323,7 +529,7 @@ export default function AnalyticsPage() {
       </div>
 
       {/* ─────────────────────────────────────────────────────────────
-          2. KPI SUMMARY CARDS (Dynamic from MongoDB)
+          2. KPI SUMMARY CARDS
       ───────────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <StatCard
@@ -364,7 +570,6 @@ export default function AnalyticsPage() {
             </Badge>
           </div>
 
-          {/* SVG Bar Chart */}
           <div className="h-56 flex items-end justify-between gap-3 pt-6 px-2">
             {revenueChartData.map((item, idx) => {
               const heightPercent = maxRevenueInChart > 0 ? (item.revenue / maxRevenueInChart) * 100 : 0;
@@ -428,70 +633,119 @@ export default function AnalyticsPage() {
       </div>
 
       {/* ─────────────────────────────────────────────────────────────
-          4. ORDER HISTORY TABLE & EXCEL / CSV EXPORT
+          4. ORDER HISTORY TABLE with CRUD, DATE-RANGE FILTER & PURGE
       ───────────────────────────────────────────────────────────── */}
       <div className="bg-white rounded-2xl border border-slate-200/80 p-6 space-y-5 shadow-sm">
-        {/* Table Controls Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+        {/* Header Controls */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
           <div>
             <h2 className="text-base font-extrabold text-slate-900 tracking-tight font-heading flex items-center gap-2">
               <FileSpreadsheet size={18} className="text-emerald-600" /> Order History & Sales Reports
             </h2>
             <p className="text-xs text-slate-500">
-              Audit historical completed and active orders with itemized breakdown and 1-click Excel export
+              Audit historical orders, filter by custom date ranges, perform CRUD edits, download CSV or purge history
             </p>
           </div>
 
-          <Button
-            variant="default"
-            size="sm"
-            onClick={exportToExcelCSV}
-            leftIcon={<Download size={15} />}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm font-bold"
-          >
-            Export to Excel / CSV
-          </Button>
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Delete History by Date Range Button */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsPurgeModalOpen(true)}
+              leftIcon={<Trash2 size={14} className="text-rose-600" />}
+              className="border-rose-200 text-rose-700 hover:bg-rose-50 font-bold"
+            >
+              Purge Date Range
+            </Button>
+
+            {/* Export CSV Button */}
+            <Button
+              variant="default"
+              size="sm"
+              onClick={exportToExcelCSV}
+              leftIcon={<Download size={15} />}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm font-bold"
+            >
+              Export CSV ({filteredHistoryOrders.length})
+            </Button>
+          </div>
         </div>
 
-        {/* Filters & Search */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+        {/* Filters Row (Search + Date Range Pickers + Status Pills) */}
+        <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 bg-slate-50/80 p-3.5 rounded-xl border border-slate-200/80">
           {/* Search Box */}
-          <div className="relative w-full sm:w-72">
+          <div className="relative flex-1 min-w-[200px]">
             <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
               placeholder="Search Order ID, Customer, Table..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-4 py-2 text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full rounded-xl border border-slate-200 bg-white pl-9 pr-4 py-2 text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
 
+          {/* Date Range Inputs */}
+          <div className="flex items-center gap-2 text-xs">
+            <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-xl px-2.5 py-1.5">
+              <Calendar size={13} className="text-slate-400" />
+              <span className="text-[11px] font-bold text-slate-500">From:</span>
+              <input
+                type="date"
+                value={startDateFilter}
+                onChange={(e) => setStartDateFilter(e.target.value)}
+                className="bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer"
+              />
+            </div>
+            <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-xl px-2.5 py-1.5">
+              <Calendar size={13} className="text-slate-400" />
+              <span className="text-[11px] font-bold text-slate-500">To:</span>
+              <input
+                type="date"
+                value={endDateFilter}
+                onChange={(e) => setEndDateFilter(e.target.value)}
+                className="bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer"
+              />
+            </div>
+            {(startDateFilter || endDateFilter) && (
+              <button
+                onClick={() => {
+                  setStartDateFilter("");
+                  setEndDateFilter("");
+                }}
+                className="text-[11px] font-bold text-indigo-600 hover:underline px-1"
+              >
+                Clear Dates
+              </button>
+            )}
+          </div>
+
           {/* Status Filter Pills */}
-          <div className="flex items-center gap-1.5 overflow-x-auto hide-scrollbar w-full sm:w-auto">
+          <div className="flex items-center gap-1.5 overflow-x-auto hide-scrollbar">
             <button
               onClick={() => setStatusFilter("all")}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
-                statusFilter === "all" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                statusFilter === "all" ? "bg-slate-900 text-white" : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-100"
               }`}
             >
-              All Statuses ({filteredOrdersByPeriod.length})
+              All ({orders.length})
             </button>
             <button
               onClick={() => setStatusFilter("completed")}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
-                statusFilter === "completed" ? "bg-emerald-600 text-white" : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                statusFilter === "completed" ? "bg-emerald-600 text-white" : "bg-white text-emerald-700 border border-slate-200 hover:bg-emerald-50"
               }`}
             >
-              Completed ({filteredOrdersByPeriod.filter((o) => o.status === "completed").length})
+              Completed ({orders.filter((o) => o.status === "completed").length})
             </button>
             <button
               onClick={() => setStatusFilter("cancelled")}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
-                statusFilter === "cancelled" ? "bg-rose-600 text-white" : "bg-rose-50 text-rose-700 hover:bg-rose-100"
+                statusFilter === "cancelled" ? "bg-rose-600 text-white" : "bg-white text-rose-700 border border-slate-200 hover:bg-rose-50"
               }`}
             >
-              Cancelled / Rejected
+              Cancelled
             </button>
           </div>
         </div>
@@ -515,7 +769,7 @@ export default function AnalyticsPage() {
               {filteredHistoryOrders.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="text-center py-10 text-slate-400 italic">
-                    No orders match your active filter.
+                    No orders match your active search or date range filters.
                   </td>
                 </tr>
               ) : (
@@ -528,6 +782,7 @@ export default function AnalyticsPage() {
                       {new Date(order.createdAt).toLocaleDateString("en-IN", {
                         day: "2-digit",
                         month: "short",
+                        year: "numeric",
                         hour: "2-digit",
                         minute: "2-digit",
                       })}
@@ -563,14 +818,34 @@ export default function AnalyticsPage() {
                       </Badge>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setSelectedOrderForModal(order)}
-                        leftIcon={<Eye size={13} />}
-                      >
-                        Receipt
-                      </Button>
+                      <div className="flex items-center justify-end gap-1">
+                        {/* Receipt Button */}
+                        <button
+                          onClick={() => setSelectedOrderForModal(order)}
+                          className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+                          title="View Receipt"
+                        >
+                          <Eye size={14} />
+                        </button>
+
+                        {/* Edit Button */}
+                        <button
+                          onClick={() => openEditModal(order)}
+                          className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                          title="Edit Order Details"
+                        >
+                          <Edit3 size={14} />
+                        </button>
+
+                        {/* Delete Single Order Button */}
+                        <button
+                          onClick={() => handleDeleteSingleOrder(order._id)}
+                          className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
+                          title="Delete Order"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -581,7 +856,7 @@ export default function AnalyticsPage() {
       </div>
 
       {/* ─────────────────────────────────────────────────────────────
-          5. ITEMIZED ORDER RECEIPT MODAL
+          5. MODAL: ITEMIZED RECEIPT
       ───────────────────────────────────────────────────────────── */}
       <Modal
         isOpen={!!selectedOrderForModal}
@@ -627,6 +902,226 @@ export default function AnalyticsPage() {
             </div>
           </div>
         )}
+      </Modal>
+
+      {/* ─────────────────────────────────────────────────────────────
+          6. MODAL: EDIT ORDER DETAILS
+      ───────────────────────────────────────────────────────────── */}
+      <Modal
+        isOpen={!!selectedOrderForEdit}
+        onClose={() => setSelectedOrderForEdit(null)}
+        title={`Edit Order #${selectedOrderForEdit?._id?.slice(-6).toUpperCase()}`}
+        maxWidth="sm"
+      >
+        {selectedOrderForEdit && (
+          <form onSubmit={handleSaveEditOrder} className="space-y-4 text-xs">
+            <Input
+              label="Customer Name"
+              value={editCustomerName}
+              onChange={(e) => setEditCustomerName(e.target.value)}
+              required
+            />
+
+            <Input
+              label="Table Number (Optional)"
+              value={editTableNumber}
+              onChange={(e) => setEditTableNumber(e.target.value)}
+              placeholder="e.g. 5"
+            />
+
+            <div>
+              <label className="block text-slate-700 font-semibold mb-1">Order Status</label>
+              <select
+                value={editStatus}
+                onChange={(e) => setEditStatus(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              >
+                <option value="incoming">INCOMING</option>
+                <option value="accepted">ACCEPTED</option>
+                <option value="preparing">PREPARING</option>
+                <option value="served">SERVED</option>
+                <option value="completed">COMPLETED</option>
+                <option value="cancelled">CANCELLED</option>
+                <option value="rejected">REJECTED</option>
+              </select>
+            </div>
+
+            <Input
+              label={`Total Amount (${currencySymbol})`}
+              type="number"
+              step="0.01"
+              value={editTotalAmount}
+              onChange={(e) => setEditTotalAmount(parseFloat(e.target.value) || 0)}
+              required
+            />
+
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" size="sm" onClick={() => setSelectedOrderForEdit(null)}>
+                Cancel
+              </Button>
+              <Button type="submit" variant="default" size="sm" isLoading={isUpdatingOrder}>
+                Save Changes
+              </Button>
+            </div>
+          </form>
+        )}
+      </Modal>
+
+      {/* ─────────────────────────────────────────────────────────────
+          7. MODAL: CREATE MANUAL ORDER
+      ───────────────────────────────────────────────────────────── */}
+      <Modal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        title="Create Manual / Offline Order"
+        maxWidth="sm"
+      >
+        <form onSubmit={handleCreateManualOrder} className="space-y-4 text-xs">
+          <Input
+            label="Customer Name"
+            value={createCustomerName}
+            onChange={(e) => setCreateCustomerName(e.target.value)}
+            placeholder="e.g. Walk-in Guest"
+            required
+          />
+
+          <Input
+            label="Table Number (Optional)"
+            value={createTableNumber}
+            onChange={(e) => setCreateTableNumber(e.target.value)}
+            placeholder="e.g. 12"
+          />
+
+          <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
+            <p className="font-bold text-slate-800">Dish Details</p>
+            <Input
+              label="Item Name"
+              value={createItemName}
+              onChange={(e) => setCreateItemName(e.target.value)}
+              placeholder="e.g. Butter Chicken"
+              required
+            />
+            <div className="grid grid-cols-2 gap-2">
+              <Input
+                label={`Price (${currencySymbol})`}
+                type="number"
+                value={createItemPrice}
+                onChange={(e) => setCreateItemPrice(e.target.value)}
+                required
+              />
+              <Input
+                label="Quantity"
+                type="number"
+                value={createItemQty}
+                onChange={(e) => setCreateItemQty(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-slate-700 font-semibold mb-1">Status</label>
+            <select
+              value={createStatus}
+              onChange={(e) => setCreateStatus(e.target.value)}
+              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+            >
+              <option value="completed">COMPLETED (Paid)</option>
+              <option value="accepted">ACCEPTED</option>
+              <option value="preparing">PREPARING</option>
+              <option value="incoming">INCOMING</option>
+            </select>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" size="sm" onClick={() => setIsCreateModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" variant="default" size="sm" isLoading={isCreatingOrder}>
+              Create Order
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* ─────────────────────────────────────────────────────────────
+          8. MODAL: PURGE / DELETE ORDERS BY DATE RANGE
+      ───────────────────────────────────────────────────────────── */}
+      <Modal
+        isOpen={isPurgeModalOpen}
+        onClose={() => setIsPurgeModalOpen(false)}
+        title="Purge / Delete Order History by Date Range"
+        maxWidth="sm"
+      >
+        <form onSubmit={handlePurgeDateRange} className="space-y-4 text-xs">
+          <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 flex items-start gap-2">
+            <AlertTriangle size={18} className="shrink-0 text-rose-600 mt-0.5" />
+            <div>
+              <p className="font-bold">Permanent Deletion Warning</p>
+              <p className="text-[11px] text-rose-600">
+                This operation permanently deletes all order records within the selected date range from your database.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="block text-slate-700 font-semibold mb-1">Start Date</label>
+              <input
+                type="date"
+                value={purgeStartDate}
+                onChange={(e) => setPurgeStartDate(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-slate-700 font-semibold mb-1">End Date</label>
+              <input
+                type="date"
+                value={purgeEndDate}
+                onChange={(e) => setPurgeEndDate(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-slate-700 font-semibold mb-1">Target Status Scope</label>
+            <select
+              value={purgeStatus}
+              onChange={(e) => setPurgeStatus(e.target.value)}
+              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+            >
+              <option value="all">All Statuses (Completed, Cancelled, Active)</option>
+              <option value="completed">Completed Orders Only</option>
+              <option value="cancelled">Cancelled / Rejected Orders Only</option>
+            </select>
+          </div>
+
+          {purgeStartDate && purgeEndDate && (
+            <div className="p-3 rounded-xl bg-slate-100 border border-slate-200 flex justify-between items-center font-bold">
+              <span className="text-slate-700">Orders to be deleted:</span>
+              <span className="text-rose-600 text-sm font-heading">{purgePreviewCount} orders</span>
+            </div>
+          )}
+
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" size="sm" onClick={() => setIsPurgeModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="danger"
+              size="sm"
+              isLoading={isPurging}
+              disabled={purgePreviewCount === 0}
+            >
+              Confirm & Delete Orders
+            </Button>
+          </div>
+        </form>
       </Modal>
     </div>
   );

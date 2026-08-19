@@ -5,8 +5,7 @@ import User from '@/models/User';
 import Business from '@/models/Business';
 import Order from '@/models/Order';
 import PlatformSettings from '@/models/PlatformSettings';
-import { requireRole } from '@/lib/auth';
-import { hashPassword } from '@/lib/auth';
+import { requireRole, hashPassword, createSession, getSession } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
 
 // ─────────────────────────────────────────────────────────────────────
@@ -233,4 +232,47 @@ export async function updatePlatformSettingsAction(data) {
 
   revalidatePath('/admin');
   return { success: true };
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// IMPERSONATE BUSINESS (super admin direct access)
+// ─────────────────────────────────────────────────────────────────────
+
+export async function impersonateBusinessAction(restaurantId) {
+  const session = await requireRole(['super_admin']);
+  if (session.error) return { error: session.error };
+
+  await dbConnect();
+  const business = await Business.findById(restaurantId);
+  if (!business) return { error: 'Business not found.' };
+
+  await createSession({
+    userId: session.userId || 'superadmin',
+    role: 'super_admin',
+    restaurantId: business._id.toString(),
+    restaurantSlug: business.slug,
+    name: `Admin (${business.name})`,
+    isImpersonating: true,
+    impersonatedName: business.name,
+    isOnboarded: true,
+  });
+
+  return { success: true, redirect: '/dashboard' };
+}
+
+export async function stopImpersonationAction() {
+  const session = await getSession();
+  if (!session) return { error: 'Unauthorized' };
+
+  await createSession({
+    userId: 'superadmin',
+    role: 'super_admin',
+    restaurantId: null,
+    restaurantSlug: null,
+    name: 'Super Admin',
+    isImpersonating: false,
+    isOnboarded: true,
+  });
+
+  return { success: true, redirect: '/admin/businesses' };
 }

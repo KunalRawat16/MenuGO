@@ -1,14 +1,16 @@
 "use client";
 
 import React, { useState } from "react";
-import { Bell, Menu, User } from "lucide-react";
+import { Bell, Menu, User, ShieldAlert, LogOut } from "lucide-react";
 import { updateOpenStatusAction } from "@/app/actions/restaurant.actions";
+import { stopImpersonationAction } from "@/app/actions/admin.actions";
 
 export interface DashboardTopBarProps {
   title?: string;
   businessId?: string;
   initialIsOpen?: boolean;
   userName?: string;
+  isImpersonating?: boolean;
   onMobileMenuClick?: () => void;
 }
 
@@ -17,10 +19,22 @@ export function DashboardTopBar({
   businessId,
   initialIsOpen = true,
   userName = "Owner",
+  isImpersonating = false,
   onMobileMenuClick,
 }: DashboardTopBarProps) {
   const [isOpen, setIsOpen] = useState(initialIsOpen);
   const [isUpdating, setIsUpdating] = useState(false);
+
+  const handleExitImpersonation = async () => {
+    try {
+      const res = await stopImpersonationAction();
+      if (res.success && res.redirect) {
+        window.location.href = res.redirect;
+      }
+    } catch (err) {
+      console.error("Exit impersonation error:", err);
+    }
+  };
 
   const handleToggleOpen = async () => {
     if (!businessId || isUpdating) return;
@@ -56,6 +70,20 @@ export function DashboardTopBar({
         <h1 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight font-heading truncate">
           {title}
         </h1>
+        {isImpersonating && (
+          <div className="flex items-center gap-2 px-3 py-1 bg-amber-500/10 border border-amber-500/30 text-amber-700 rounded-full text-xs font-semibold shrink-0">
+            <ShieldAlert size={14} className="text-amber-600 animate-pulse" />
+            <span className="hidden sm:inline font-bold">Admin Mode</span>
+            <button
+              onClick={handleExitImpersonation}
+              className="flex items-center gap-1 ml-1 px-2 py-0.5 rounded-md bg-amber-600 text-white hover:bg-amber-700 text-[11px] font-bold transition-colors"
+              title="Exit Impersonation & Return to Admin Directory"
+            >
+              <LogOut size={12} />
+              <span>Exit Admin Mode</span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Right Controls */}

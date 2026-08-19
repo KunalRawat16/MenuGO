@@ -28,34 +28,54 @@ export default function MarketingLandingPage() {
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
-  const demoAccounts = [
+  const realBusinesses = [
     {
-      title: "Rustic Spoon Bistro",
-      type: "Restaurant & Fine Dining",
+      title: "La Bella Italia",
+      type: "Italian Restaurant & Fine Dining",
       icon: Utensils,
-      slug: "rustic-spoon",
+      slug: "la-bella-italia",
+      location: "Bengaluru, Karnataka",
+      rating: 4.9,
+      itemCount: 11,
       image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=600",
+      description: "Authentic Italian pizzeria & trattoria serving handmade pasta, wood-fired pizzas, and classic desserts.",
+      tags: ["Italian", "Pizza", "Pasta"],
     },
     {
-      title: "Artisan Coffee Bar",
-      type: "Café & Bakery",
+      title: "Dragon Fly Bistro",
+      type: "Pan-Asian Bistro & Dim Sum",
+      icon: Utensils,
+      slug: "dragon-fly-bistro",
+      location: "Noida, Uttar Pradesh",
+      rating: 4.8,
+      itemCount: 8,
+      image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?q=80&w=600",
+      description: "Contemporary Pan-Asian bistro & dim sum parlor offering gourmet sushi rolls, rich ramen, and handmade bao buns.",
+      tags: ["Pan-Asian", "Sushi", "Ramen"],
+    },
+    {
+      title: "The Copper Handi",
+      type: "Heritage Mughlai & North Indian",
+      icon: Utensils,
+      slug: "copper-handi",
+      location: "New Delhi",
+      rating: 4.7,
+      itemCount: 7,
+      image: "https://images.unsplash.com/photo-1514933651103-005eec06c04b?q=80&w=600",
+      description: "Royal Mughlai & North Indian heritage dining featuring slow-cooked biryanis, tandoori kebabs, and rich gravies.",
+      tags: ["North Indian", "Biryani", "Kebabs"],
+    },
+    {
+      title: "Brew & Bean Roastery",
+      type: "Artisanal Café & Bakery",
       icon: Coffee,
-      slug: "artisan-cafe",
+      slug: "brew-and-bean",
+      location: "Mumbai, Maharashtra",
+      rating: 4.9,
+      itemCount: 7,
       image: "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?q=80&w=600",
-    },
-    {
-      title: "Velvet Wellness Spa",
-      type: "Spa & Beauty Salon",
-      icon: Scissors,
-      slug: "velvet-spa",
-      image: "https://images.unsplash.com/photo-1540555700478-4be289fbecef?q=80&w=600",
-    },
-    {
-      title: "Grand Horizon Suites",
-      type: "Hotel In-Room Dining",
-      icon: Hotel,
-      slug: "grand-horizon",
-      image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=600",
+      description: "Artisanal specialty coffee house, sourdough bakery, and all-day brunch lounge with fresh roasted single-origin beans.",
+      tags: ["Cafe", "Coffee", "Brunch"],
     },
   ];
 
@@ -122,7 +142,7 @@ export default function MarketingLandingPage() {
               <Button
                 variant="outline"
                 size="lg"
-                className="w-full sm:w-auto border-slate-700 text-white hover:bg-slate-800"
+                className="w-full sm:w-auto border-slate-700 text-slate-900 hover:bg-slate-800 hover:text-slate-300"
                 leftIcon={<Play size={16} />}
               >
                 See Live Demo
@@ -145,23 +165,23 @@ export default function MarketingLandingPage() {
         </div>
       </section>
 
-      {/* 3. Interactive Sandbox Demo Section */}
+      {/* 3. Real Business Owner Menus Section */}
       <section id="demo" className="py-20 bg-white border-y border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
           <div className="text-center space-y-3 max-w-2xl mx-auto">
             <Badge variant="default" size="md">
-              Interactive Demo Sandbox
+              Real Business Owner Menus
             </Badge>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight font-heading">
-              Experience Live Customer Digital Menus
+              Explore Live Business Digital Menus
             </h2>
             <p className="text-sm text-slate-500">
-              Click any demo establishment below to test the instant customer browsing and checkout flow.
+              Click any active business below to experience their live digital menu, browse itemized categories, and test customer ordering.
             </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {demoAccounts.map((item) => {
+            {realBusinesses.map((item) => {
               const Icon = item.icon;
               return (
                 <div
@@ -169,12 +189,18 @@ export default function MarketingLandingPage() {
                   className="bg-slate-50 rounded-2xl border border-slate-200 p-4 shadow-sm hover:shadow-md transition-all duration-200 group flex flex-col justify-between space-y-4"
                 >
                   <div className="space-y-3">
-                    <div className="h-32 rounded-xl bg-slate-200 relative overflow-hidden">
+                    <div className="h-36 rounded-xl bg-slate-200 relative overflow-hidden">
                       <img
                         src={item.image}
                         alt={item.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
+                      <div className="absolute top-2.5 right-2.5 px-2.5 py-1 rounded-full bg-slate-900/80 backdrop-blur-md text-amber-400 text-[11px] font-bold flex items-center gap-1 shadow-xs">
+                        ★ {item.rating}
+                      </div>
+                      <div className="absolute bottom-2.5 left-2.5 px-2 py-0.5 rounded-md bg-indigo-600/90 backdrop-blur-xs text-white text-[10px] font-bold">
+                        {item.itemCount} Menu Items
+                      </div>
                     </div>
                     <div>
                       <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-600 flex items-center gap-1">
@@ -183,19 +209,37 @@ export default function MarketingLandingPage() {
                       <h3 className="text-base font-extrabold text-slate-900 tracking-tight font-heading mt-0.5">
                         {item.title}
                       </h3>
+                      <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                        📍 {item.location}
+                      </p>
+                      <p className="text-xs text-slate-600 mt-2 line-clamp-2 leading-relaxed">
+                        {item.description}
+                      </p>
                     </div>
                   </div>
 
-                  <Link href={`/auth/register`} className="block">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full justify-center group-hover:bg-indigo-600 group-hover:text-white group-hover:border-indigo-600 transition-colors"
-                      rightIcon={<ArrowRight size={14} />}
-                    >
-                      Try This Template
-                    </Button>
-                  </Link>
+                  <div className="space-y-2 pt-2 border-t border-slate-200/60">
+                    <Link href={`/${item.slug}`} className="block">
+                      <Button
+                        variant="default"
+                        size="sm"
+                        className="w-full justify-center shadow-xs group-hover:bg-indigo-700"
+                        rightIcon={<ArrowRight size={14} />}
+                      >
+                        View Live Menu
+                      </Button>
+                    </Link>
+                    <Link href={`/${item.slug}?table=T1`} className="block">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full justify-center text-[11px] h-7 border-slate-200 text-slate-600 hover:text-indigo-600 hover:border-indigo-200"
+                        leftIcon={<QrCode size={12} />}
+                      >
+                        Test Table QR Code
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
               );
             })}
@@ -292,21 +336,19 @@ export default function MarketingLandingPage() {
             <div className="inline-flex items-center gap-3 p-1.5 bg-slate-100 rounded-full border border-slate-200">
               <button
                 onClick={() => setBillingCycle("monthly")}
-                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${
-                  billingCycle === "monthly"
-                    ? "bg-white text-slate-900 shadow-xs"
-                    : "text-slate-600"
-                }`}
+                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${billingCycle === "monthly"
+                  ? "bg-white text-slate-900 shadow-xs"
+                  : "text-slate-600"
+                  }`}
               >
                 Monthly Billing
               </button>
               <button
                 onClick={() => setBillingCycle("yearly")}
-                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  billingCycle === "yearly"
-                    ? "bg-indigo-600 text-white shadow-xs"
-                    : "text-slate-600"
-                }`}
+                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 ${billingCycle === "yearly"
+                  ? "bg-indigo-600 text-white shadow-xs"
+                  : "text-slate-600"
+                  }`}
               >
                 Annual Billing <span className="text-[10px] bg-amber-400 text-slate-950 font-black px-1.5 py-0.5 rounded-md uppercase">Save 20%</span>
               </button>

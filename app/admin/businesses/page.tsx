@@ -20,6 +20,7 @@ import {
   toggleRestaurantStatusAction,
   deleteRestaurantAction,
   resetRestaurantCredentialsAction,
+  impersonateBusinessAction,
 } from "@/app/actions/admin.actions";
 
 export default function AdminBusinessesPage() {
@@ -83,6 +84,20 @@ export default function AdminBusinessesPage() {
       alert("Business deleted permanently.");
     } catch (err) {
       console.error("Delete business error:", err);
+    }
+  };
+
+  const handleImpersonate = async (bizId: string) => {
+    try {
+      const res = await impersonateBusinessAction(bizId);
+      if (res.success && res.redirect) {
+        window.location.href = res.redirect;
+      } else if (res.error) {
+        alert(res.error);
+      }
+    } catch (err) {
+      console.error("Impersonate error:", err);
+      alert("Failed to access business dashboard.");
     }
   };
 
@@ -218,6 +233,16 @@ export default function AdminBusinessesPage() {
                     </td>
                     <td className="py-3.5 text-right">
                       <div className="flex items-center justify-end gap-2">
+                        {/* Open & Manage Business Dashboard (Super Admin Direct Access) */}
+                        <button
+                          onClick={() => handleImpersonate(b._id)}
+                          className="p-1.5 rounded-lg border border-indigo-700 bg-indigo-950/60 text-indigo-300 hover:bg-indigo-900 transition-colors flex items-center gap-1 font-semibold text-[11px] px-2.5"
+                          title="Open & Manage Business Dashboard"
+                        >
+                          <ExternalLink size={13} />
+                          <span>Manage</span>
+                        </button>
+
                         {/* Toggle Suspend */}
                         <button
                           onClick={() => handleToggleSuspend(b._id, b.isSuspended)}

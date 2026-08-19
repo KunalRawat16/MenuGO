@@ -29,7 +29,7 @@ export function PublicFooter() {
             <p className="text-xs font-bold text-white uppercase tracking-wider">Product</p>
             <ul className="space-y-2 text-xs">
               <li><a href="#features" className="hover:text-white transition-colors">Features</a></li>
-              <li><a href="#demo" className="hover:text-white transition-colors">Interactive Demo</a></li>
+              <li><a href="#demo" className="hover:text-white transition-colors">Live Business Menus</a></li>
               <li><a href="#pricing" className="hover:text-white transition-colors">Pricing & Plans</a></li>
               <li><a href="#faq" className="hover:text-white transition-colors">FAQ</a></li>
             </ul>

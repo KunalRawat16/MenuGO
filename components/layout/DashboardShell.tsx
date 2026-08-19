@@ -7,9 +7,10 @@ import { DashboardTopBar } from "./DashboardTopBar";
 export interface DashboardShellProps {
   children: React.ReactNode;
   business: any;
+  isImpersonating?: boolean;
 }
 
-export function DashboardShell({ children, business }: DashboardShellProps) {
+export function DashboardShell({ children, business, isImpersonating }: DashboardShellProps) {
   const [mobileIsOpen, setMobileIsOpen] = useState(false);
 
   return (
@@ -29,6 +30,7 @@ export function DashboardShell({ children, business }: DashboardShellProps) {
           businessId={business._id}
           initialIsOpen={business.settings?.isOpen !== false}
           userName={business.name}
+          isImpersonating={isImpersonating}
           onMobileMenuClick={() => setMobileIsOpen(true)}
         />
 
