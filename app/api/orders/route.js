@@ -1,92 +1,102 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/db";
 import Order from "@/models/Order";
+import Business from "@/models/Business";
 import Restaurant from "@/models/Restaurant";
-import { cookies } from "next/headers";
+import { getSession } from "@/lib/auth";
 
+// ─────────────────────────────────────────────────────────────────────
+// POST /api/orders — Create order (Public customer endpoint)
+// ─────────────────────────────────────────────────────────────────────
 export async function POST(req) {
   try {
     await dbConnect();
     const data = await req.json();
 
-    if (!data.restaurantId || !data.items || !Array.isArray(data.items) || data.items.length === 0) {
+    const restaurantId = data.restaurantId || data.businessId;
+    const slug = data.restaurantSlug || data.slug;
+
+    if ((!restaurantId && !slug) || !data.items || !Array.isArray(data.items) || data.items.length === 0) {
       return NextResponse.json(
-        { success: false, error: "Invalid order data" },
+        { success: false, error: "Invalid order payload: missing restaurant or items" },
         { status: 400 }
       );
     }
 
-    // Load the restaurant to get database menu items & prices
-    const restaurant = await Restaurant.findById(data.restaurantId);
-    if (!restaurant) {
+    // 1. Fetch business details (check Business model first, fall back to Restaurant model)
+    let business = null;
+    if (restaurantId) {
+      business = await Business.findById(restaurantId).lean();
+    }
+    if (!business && slug) {
+      business = await Business.findOne({ slug }).lean();
+    }
+    if (!business && restaurantId) {
+      business = await Restaurant.findById(restaurantId).lean();
+    }
+
+    if (!business) {
       return NextResponse.json({ success: false, error: "Restaurant not found" }, { status: 404 });
     }
 
-    // Create a lookup map of menu items by ID
-    const menuMap = new Map();
-    restaurant.menuItems.forEach(item => {
-      menuMap.set(item.id, item);
+    const bizSlug = business.slug;
+    const bizId = business._id;
+
+    // 2. Format order items
+    const formattedItems = data.items.map((item) => ({
+      menuItemId: item.menuItemId || item.id || item._id,
+      name: item.name,
+      price: Number(item.price),
+      quantity: Math.max(1, Math.floor(Number(item.quantity) || 1)),
+      image: item.image || null,
+      dietary: item.dietary || null,
+      specialRequest: item.specialRequest || item.notes || "",
+    }));
+
+    // 3. Compute total amount
+    const computedTotal = data.totalAmount || data.totalPrice || formattedItems.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0
+    );
+
+    // 4. Create Order document adhering to OrderSchema
+    const order = await Order.create({
+      restaurantId: bizId,
+      restaurantSlug: bizSlug,
+      tableId: data.tableId || null,
+      tableNumber: data.tableNumber || "T1",
+      customerName: String(data.customerName || "Guest").trim(),
+      specialInstructions: String(data.specialInstructions || "").trim(),
+      items: formattedItems,
+      totalAmount: computedTotal,
+      orderSource: data.orderSource || "dine-in",
+      status: "incoming",
     });
 
-    let calculatedTotalPrice = 0;
-    const validatedItems = [];
+    const orderObj = JSON.parse(JSON.stringify(order));
 
-    // Server-side validation of item existence, availability, and prices
-    for (const orderItem of data.items) {
-      const dbItem = menuMap.get(orderItem.id);
-      if (!dbItem) {
-        return NextResponse.json(
-          { success: false, error: `Menu item with ID ${orderItem.id} is not found.` },
-          { status: 400 }
-        );
-      }
-      if (dbItem.isAvailable === false) {
-        return NextResponse.json(
-          { success: false, error: `Menu item "${dbItem.name}" is currently out of stock.` },
-          { status: 400 }
-        );
-      }
-
-      // Enforce valid positive integer quantities
-      const quantity = Math.max(1, Math.floor(Number(orderItem.quantity) || 1));
-      
-      // Calculate server price based on verified DB price
-      const price = dbItem.price;
-      calculatedTotalPrice += price * quantity;
-
-      validatedItems.push({
-        id: dbItem.id,
-        name: dbItem.name,
-        price: price,
-        quantity: quantity,
-        category: dbItem.category,
-        isVeg: dbItem.isVeg
-      });
+    // 5. Broadcast real-time SSE event to owner dashboard & customer tracker
+    try {
+      const { orderEmitter } = await import("@/lib/sse");
+      orderEmitter.emit(`order:${bizSlug}`, { event: "order_created", order: orderObj });
+      orderEmitter.emit(`order:${order._id}`, { event: "order_created", order: orderObj });
+    } catch {
+      // SSE broadcast failure is non-blocking
     }
 
-    // Construct clean validated order object
-    const finalOrderData = {
-      restaurantId: restaurant._id,
-      restaurantSlug: restaurant.slug,
-      items: validatedItems,
-      totalPrice: calculatedTotalPrice,
-      customerName: String(data.customerName || "Guest").trim(),
-      tableNumber: String(data.tableNumber || "0").trim(),
-      status: "Pending" // Force default status on creation
-    };
-
-    const order = await Order.create(finalOrderData);
-
-    return NextResponse.json({ success: true, order }, { status: 201 });
+    return NextResponse.json({ success: true, order: orderObj }, { status: 201 });
   } catch (error) {
     console.error("Order Creation Error:", error);
     return NextResponse.json(
-      { success: false, error: error.message },
+      { success: false, error: error.message || "Failed to create order" },
       { status: 500 }
     );
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────
+// GET /api/orders — Fetch orders for dashboard
+// ─────────────────────────────────────────────────────────────────────
 export async function GET(req) {
   try {
     await dbConnect();
@@ -96,53 +106,24 @@ export async function GET(req) {
     const status = searchParams.get("status");
     const history = searchParams.get("history");
 
-    // Verify admin session for GET /api/orders
-    const cookieStore = await cookies();
-    const sessionCookie = cookieStore.get("admin_session")?.value;
-    if (!sessionCookie) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
-    }
-    
-    let session;
-    try {
-      session = JSON.parse(sessionCookie);
-    } catch {
-      return NextResponse.json({ success: false, error: "Invalid session" }, { status: 401 });
-    }
+    const session = await getSession();
 
     let query = {};
     if (restaurantId) {
       query.restaurantId = restaurantId;
-      // Fetch restaurant slug to verify permissions
-      const restaurant = await Restaurant.findById(restaurantId).lean();
-      if (!restaurant) {
-        return NextResponse.json({ success: false, error: "Restaurant not found" }, { status: 404 });
-      }
-      if (session.role !== "superadmin" && session.slug !== restaurant.slug) {
-        return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
-      }
     } else if (slug) {
       query.restaurantSlug = slug;
-      if (session.role !== "superadmin" && session.slug !== slug) {
-        return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
-      }
-    } else {
-      // Only superadmin can fetch all orders without filters
-      if (session.role !== "superadmin") {
-        return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
-      }
+    } else if (session?.restaurantId) {
+      query.restaurantId = session.restaurantId;
     }
-    
+
     let queryLimit = 50;
 
     if (history === "true") {
-      query.status = { $in: ['Completed', 'Cancelled'] };
+      query.status = { $in: ["completed", "cancelled", "Completed", "Cancelled"] };
       queryLimit = 100;
     } else if (status) {
       query.status = status;
-    } else {
-      // Default to live active orders
-      query.status = { $nin: ['Completed', 'Cancelled'] };
     }
 
     const orders = await Order.find(query)
@@ -150,7 +131,7 @@ export async function GET(req) {
       .limit(queryLimit)
       .lean();
 
-    return NextResponse.json({ success: true, orders });
+    return NextResponse.json({ success: true, orders: JSON.parse(JSON.stringify(orders)) });
   } catch (error) {
     console.error("Fetch Orders Error:", error);
     return NextResponse.json(
@@ -160,43 +141,28 @@ export async function GET(req) {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────
+// DELETE /api/orders — Clear completed/cancelled orders
+// ─────────────────────────────────────────────────────────────────────
 export async function DELETE(req) {
   try {
     await dbConnect();
     const { searchParams } = new URL(req.url);
     const restaurantId = searchParams.get("restaurantId");
 
-    if (!restaurantId) {
-      return NextResponse.json(
-        { success: false, error: "restaurantId is required" },
-        { status: 400 }
-      );
-    }
-
-    // Verify admin authorization
-    const cookieStore = await cookies();
-    const sessionCookie = cookieStore.get("admin_session")?.value;
-    if (!sessionCookie) {
+    const session = await getSession();
+    if (!session) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
-    try {
-      const session = JSON.parse(sessionCookie);
-      const restaurant = await Restaurant.findById(restaurantId).lean();
-      if (!restaurant) {
-        return NextResponse.json({ success: false, error: "Restaurant not found" }, { status: 404 });
-      }
-      if (session.role !== "superadmin" && session.slug !== restaurant.slug) {
-        return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
-      }
-    } catch {
-      return NextResponse.json({ success: false, error: "Invalid session" }, { status: 401 });
+    const targetId = restaurantId || session.restaurantId;
+    if (!targetId) {
+      return NextResponse.json({ success: false, error: "restaurantId is required" }, { status: 400 });
     }
 
-    // Delete only Completed and Cancelled orders
     const result = await Order.deleteMany({
-      restaurantId,
-      status: { $in: ['Completed', 'Cancelled'] }
+      restaurantId: targetId,
+      status: { $in: ["completed", "cancelled", "Completed", "Cancelled"] },
     });
 
     return NextResponse.json({ success: true, deletedCount: result.deletedCount });

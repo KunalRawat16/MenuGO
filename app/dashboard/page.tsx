@@ -116,7 +116,7 @@ export default function OwnerDashboardPage() {
       }
     };
 
-    // 2. Auto-polling fallback (fetches new orders every 3.5s)
+    // 2. Auto-polling fallback (fetches new orders every 2s)
     const interval = setInterval(async () => {
       try {
         const ordersRes = await getOrdersAction(business._id, { limit: 100 });
@@ -134,7 +134,7 @@ export default function OwnerDashboardPage() {
       } catch (err) {
         console.error("Orders auto-poll error:", err);
       }
-    }, 3500);
+    }, 2000);
 
     return () => {
       eventSource.close();
