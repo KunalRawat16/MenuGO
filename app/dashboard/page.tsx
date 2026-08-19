@@ -44,6 +44,7 @@ export default function OwnerDashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [refreshIntervalSec, setRefreshIntervalSec] = useState<number>(3);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [mobileColumn, setMobileColumn] = useState<"all" | "incoming" | "preparing" | "served" | "completed">("all");
 
   // Fetch Business & Initial Orders
   const fetchData = async () => {
