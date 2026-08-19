@@ -4,11 +4,11 @@ import Business from "@/models/Business";
 export default async function sitemap() {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://menugo.in";
 
-  let businessUrls: any[] = [];
+  let businessUrls = [];
   try {
     await dbConnect();
     const businesses = await Business.find({ isActive: true, isSuspended: false }).select("slug updatedAt").lean();
-    businessUrls = businesses.map((b: any) => ({
+    businessUrls = businesses.map((b) => ({
       url: `${baseUrl}/${b.slug}`,
       lastModified: b.updatedAt ? new Date(b.updatedAt) : new Date(),
       changeFrequency: "daily",
