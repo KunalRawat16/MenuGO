@@ -259,14 +259,14 @@ export default function OwnerDashboardPage() {
         />
       </div>
 
-      {/* Real-time Order Pipeline (Kanban Column View) */}
+      {/* Real-time Active Orders Queue */}
       <div className="space-y-4 pt-2">
         <div className="flex items-center justify-between">
           <h2 className="text-base font-extrabold text-slate-900 tracking-tight uppercase font-heading flex items-center gap-2">
-            <Sparkles size={16} className="text-indigo-600" /> Live Order Pipeline
+            <Sparkles size={16} className="text-indigo-600" /> Active Kitchen Orders
           </h2>
           <span className="text-xs font-semibold text-slate-500">
-            Auto-updates via WebSockets / SSE
+            Auto-updating in real time
           </span>
         </div>
 

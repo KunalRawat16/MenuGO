@@ -214,7 +214,7 @@ export function OrderStatusTracker({ initialOrder, slug, business }: OrderStatus
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
               <div>
                 <span className="text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider block">
-                  Ticket #{order._id?.slice(-6).toUpperCase()}
+                  Order #{order._id?.slice(-6).toUpperCase()}
                 </span>
                 <h2 className="text-lg font-extrabold text-slate-900 font-heading">
                   Hello, {order.customerName}!
