@@ -23,6 +23,11 @@ import { getOrderByIdPublicAction } from "@/app/actions/order.actions";
 export interface OrderStatusTrackerProps {
   initialOrder: any;
   slug: string;
+  business?: {
+    name?: string;
+    logo?: string;
+    banner?: string;
+  } | null;
 }
 
 const STEPS = [
@@ -32,7 +37,7 @@ const STEPS = [
   { key: "completed", label: "Completed & Paid", desc: "Order finished" },
 ];
 
-export function OrderStatusTracker({ initialOrder, slug }: OrderStatusTrackerProps) {
+export function OrderStatusTracker({ initialOrder, slug, business }: OrderStatusTrackerProps) {
   const [order, setOrder] = useState(initialOrder);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [userRating, setUserRating] = useState<number | null>(null);
@@ -111,11 +116,14 @@ export function OrderStatusTracker({ initialOrder, slug }: OrderStatusTrackerPro
           href={`/${slug}`}
           className="flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-indigo-600 transition-colors"
         >
-          <ArrowLeft size={16} /> Digital Menu
+          <ArrowLeft size={16} /> <span className="font-extrabold text-indigo-600 font-heading">MenuGO</span> Menu
         </Link>
-        <h1 className="text-sm font-extrabold text-slate-900 tracking-tight font-heading flex items-center gap-1.5">
-          <Sparkles size={15} className="text-amber-500" /> Live Order Tracking
-        </h1>
+        <div className="flex items-center gap-1.5 text-center">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <h1 className="text-xs sm:text-sm font-extrabold text-slate-900 tracking-tight font-heading truncate max-w-[180px] sm:max-w-xs">
+            {business?.name ? `${business.name} • Live Tracker` : "MenuGO Order Tracking"}
+          </h1>
+        </div>
         <button
           onClick={fetchLatestOrder}
           className="p-2 text-slate-400 hover:text-slate-700 transition-colors"

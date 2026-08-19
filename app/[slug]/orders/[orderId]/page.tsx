@@ -1,6 +1,7 @@
 import React from "react";
 import { notFound } from "next/navigation";
 import { getOrderByIdPublicAction } from "@/app/actions/order.actions";
+import { getBusinessBySlugAction } from "@/app/actions/restaurant.actions";
 import { OrderStatusTracker } from "@/components/menu/OrderStatusTracker";
 
 interface PageProps {
@@ -10,11 +11,16 @@ interface PageProps {
 export default async function CustomerOrderTrackingPage({ params }: PageProps) {
   const { slug, orderId } = await params;
 
-  const res = await getOrderByIdPublicAction(orderId);
+  const [orderRes, bizRes] = await Promise.all([
+    getOrderByIdPublicAction(orderId),
+    getBusinessBySlugAction(slug),
+  ]);
 
-  if (!res.success || !res.order) {
+  if (!orderRes.success || !orderRes.order) {
     notFound();
   }
 
-  return <OrderStatusTracker initialOrder={res.order} slug={slug} />;
+  const business = bizRes.success && bizRes.business ? bizRes.business : null;
+
+  return <OrderStatusTracker initialOrder={orderRes.order} slug={slug} business={business} />;
 }
