@@ -131,7 +131,13 @@ export async function getMyBusinessAction() {
 
   await dbConnect();
 
-  const business = await Business.findById(session.restaurantId).lean();
+  let business = null;
+  if (session.restaurantId) {
+    business = await Business.findById(session.restaurantId).lean();
+  }
+  if (!business && session.userId) {
+    business = await Business.findOne({ ownerId: session.userId }).lean();
+  }
   if (!business) return { error: 'Business not found' };
 
   return { success: true, business: JSON.parse(JSON.stringify(business)) };
