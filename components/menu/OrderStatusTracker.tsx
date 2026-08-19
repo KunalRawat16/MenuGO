@@ -48,10 +48,11 @@ export function OrderStatusTracker({ initialOrder, slug }: OrderStatusTrackerPro
     }
   };
 
-  // Real-time SSE listener for instant status updates from the kitchen
+  // Real-time SSE listener + 3s Auto-Polling fallback for instant status updates
   useEffect(() => {
     if (!slug || !order?._id) return;
 
+    // 1. SSE Stream listener (Instant Push)
     const eventSource = new EventSource(`/api/orders/stream?slug=${slug}`);
 
     eventSource.onmessage = (event) => {
@@ -65,8 +66,21 @@ export function OrderStatusTracker({ initialOrder, slug }: OrderStatusTrackerPro
       }
     };
 
+    // 2. Auto-polling fallback (every 3s)
+    const interval = setInterval(async () => {
+      try {
+        const res = await getOrderByIdPublicAction(order._id);
+        if (res.success && res.order) {
+          setOrder(res.order);
+        }
+      } catch (err) {
+        console.error("Order polling error:", err);
+      }
+    }, 3000);
+
     return () => {
       eventSource.close();
+      clearInterval(interval);
     };
   }, [slug, order?._id]);
 

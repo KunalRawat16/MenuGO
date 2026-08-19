@@ -67,10 +67,33 @@ export default function OwnerDashboardPage() {
     fetchData();
   }, []);
 
-  // SSE Stream Listener for Real-Time Incoming Orders
-  useEffect(() => {
-    if (!business?.slug) return;
+  // Web Audio chime helper for incoming order alerts
+  const playNewOrderChime = () => {
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+      osc.frequency.setValueAtTime(880, ctx.currentTime + 0.15); // A5
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.5);
+    } catch {
+      // Audio autoplay restrictions ignored
+    }
+  };
 
+  // Real-Time Listener (SSE Push + 3.5s Auto Polling Fallback)
+  useEffect(() => {
+    if (!business?.slug || !business?._id) return;
+
+    // 1. SSE Stream listener (Instant Push)
     const eventSource = new EventSource(`/api/orders/stream?slug=${business.slug}`);
 
     eventSource.onmessage = (event) => {
@@ -78,7 +101,11 @@ export default function OwnerDashboardPage() {
         const payload = JSON.parse(event.data);
 
         if (payload.event === "order_created" && payload.order) {
-          setOrders((prev) => [payload.order, ...prev.filter((o) => o._id !== payload.order._id)]);
+          setOrders((prev) => {
+            const exists = prev.some((o) => o._id === payload.order._id);
+            if (!exists) playNewOrderChime();
+            return [payload.order, ...prev.filter((o) => o._id !== payload.order._id)];
+          });
         } else if (payload.event === "order_updated" && payload.order) {
           setOrders((prev) =>
             prev.map((o) => (o._id === payload.order._id ? payload.order : o))
@@ -89,10 +116,31 @@ export default function OwnerDashboardPage() {
       }
     };
 
+    // 2. Auto-polling fallback (fetches new orders every 3.5s)
+    const interval = setInterval(async () => {
+      try {
+        const ordersRes = await getOrdersAction(business._id, { limit: 100 });
+        if (ordersRes.success && ordersRes.orders) {
+          setOrders((prev) => {
+            const newOrderArrived = ordersRes.orders.some(
+              (newO: any) => !prev.some((oldO) => oldO._id === newO._id)
+            );
+            if (newOrderArrived && prev.length > 0) {
+              playNewOrderChime();
+            }
+            return ordersRes.orders;
+          });
+        }
+      } catch (err) {
+        console.error("Orders auto-poll error:", err);
+      }
+    }, 3500);
+
     return () => {
       eventSource.close();
+      clearInterval(interval);
     };
-  }, [business?.slug]);
+  }, [business?.slug, business?._id]);
 
   // Handle status updates
   const handleStatusChange = async (orderId: string, newStatus: string) => {
