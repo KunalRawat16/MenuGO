@@ -42,10 +42,12 @@ export default function OwnerDashboardPage() {
   const [business, setBusiness] = useState<any | null>(null);
   const [orders, setOrders] = useState<OrderData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [mobileColumn, setMobileColumn] = useState<"all" | "incoming" | "preparing" | "served" | "completed">("all");
+  const [refreshIntervalSec, setRefreshIntervalSec] = useState<number>(3);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   // Fetch Business & Initial Orders
   const fetchData = async () => {
+    setIsSyncing(true);
     try {
       const bizRes = await getMyBusinessAction();
       if (bizRes.success && bizRes.business) {
@@ -60,6 +62,7 @@ export default function OwnerDashboardPage() {
       console.error("Dashboard fetch error:", err);
     } finally {
       setIsLoading(false);
+      setTimeout(() => setIsSyncing(false), 500);
     }
   };
 
@@ -89,9 +92,9 @@ export default function OwnerDashboardPage() {
     }
   };
 
-  // Real-Time Listener (SSE Push + 3.5s Auto Polling Fallback)
+  // Real-Time Listener (SSE Push + Configurable Auto Polling Fallback)
   useEffect(() => {
-    if (!business?.slug || !business?._id) return;
+    if (!business?.slug || !business?._id || refreshIntervalSec <= 0) return;
 
     // 1. SSE Stream listener (Instant Push)
     const eventSource = new EventSource(`/api/orders/stream?slug=${business.slug}`);
@@ -116,9 +119,10 @@ export default function OwnerDashboardPage() {
       }
     };
 
-    // 2. Auto-polling fallback (fetches new orders every 2s)
+    // 2. Auto-polling fallback with configurable frequency
     const interval = setInterval(async () => {
       try {
+        setIsSyncing(true);
         const ordersRes = await getOrdersAction(business._id, { limit: 100 });
         if (ordersRes.success && ordersRes.orders) {
           setOrders((prev) => {
@@ -133,14 +137,16 @@ export default function OwnerDashboardPage() {
         }
       } catch (err) {
         console.error("Orders auto-poll error:", err);
+      } finally {
+        setTimeout(() => setIsSyncing(false), 500);
       }
-    }, 2000);
+    }, refreshIntervalSec * 1000);
 
     return () => {
       eventSource.close();
       clearInterval(interval);
     };
-  }, [business?.slug, business?._id]);
+  }, [business?.slug, business?._id, refreshIntervalSec]);
 
   // Handle status updates
   const handleStatusChange = async (orderId: string, newStatus: string) => {
@@ -191,14 +197,33 @@ export default function OwnerDashboardPage() {
           </p>
         </div>
 
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={fetchData}
-          leftIcon={<RefreshCw size={14} />}
-        >
-          Refresh Data
-        </Button>
+        {/* Auto Sync Control Pill */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 bg-white border border-slate-200/90 rounded-xl px-3 py-1.5 shadow-xs text-xs font-semibold">
+            <span className={`w-2 h-2 rounded-full ${refreshIntervalSec > 0 ? "bg-emerald-500 animate-pulse" : "bg-slate-300"}`} />
+            <span className="text-slate-500">Auto Sync:</span>
+            <select
+              value={refreshIntervalSec}
+              onChange={(e) => setRefreshIntervalSec(Number(e.target.value))}
+              className="bg-transparent font-bold text-indigo-600 focus:outline-none cursor-pointer"
+            >
+              <option value={3}>3s (Fastest)</option>
+              <option value={5}>5s</option>
+              <option value={10}>10s (Standard)</option>
+              <option value={30}>30s</option>
+              <option value={0}>Paused</option>
+            </select>
+          </div>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={fetchData}
+            leftIcon={<RefreshCw size={14} className={isSyncing ? "animate-spin text-indigo-600" : ""} />}
+          >
+            Refresh Now
+          </Button>
+        </div>
       </div>
 
       {/* KPI Cards Row */}
