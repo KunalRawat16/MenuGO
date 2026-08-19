@@ -12,6 +12,9 @@ import {
   ShoppingBag,
   Sparkles,
   RefreshCw,
+  Heart,
+  Star,
+  PartyPopper,
 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -32,6 +35,7 @@ const STEPS = [
 export function OrderStatusTracker({ initialOrder, slug }: OrderStatusTrackerProps) {
   const [order, setOrder] = useState(initialOrder);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [userRating, setUserRating] = useState<number | null>(null);
 
   const fetchLatestOrder = async () => {
     if (!order?._id) return;
@@ -86,6 +90,7 @@ export function OrderStatusTracker({ initialOrder, slug }: OrderStatusTrackerPro
 
   const currentStatus = order?.status || "incoming";
   const isRejected = currentStatus === "rejected" || currentStatus === "cancelled";
+  const isCompleted = currentStatus === "completed";
 
   // Calculate current active step index (0 to 3)
   const getStepIndex = (status: string) => {
@@ -99,7 +104,7 @@ export function OrderStatusTracker({ initialOrder, slug }: OrderStatusTrackerPro
   const activeStep = getStepIndex(currentStatus);
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-16 select-none">
+    <div className="min-h-screen bg-slate-50/80 pb-16 select-none">
       {/* Top Navigation */}
       <header className="h-16 bg-white border-b border-slate-200/80 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 shadow-xs">
         <Link
@@ -134,6 +139,64 @@ export function OrderStatusTracker({ initialOrder, slug }: OrderStatusTrackerPro
               <p className="text-xs text-rose-700">
                 We're sorry, the kitchen was unable to process this order. Please speak with your server or front desk.
               </p>
+            </div>
+          </div>
+        ) : isCompleted ? (
+          /* 🌟 ORDER COMPLETED & THANK YOU BANNER */
+          <div className="bg-gradient-to-br from-emerald-600 via-teal-700 to-emerald-800 text-white rounded-3xl p-6 sm:p-8 shadow-2xl space-y-5 text-center relative overflow-hidden animate-in zoom-in-95 duration-300">
+            <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-md text-white flex items-center justify-center mx-auto shadow-inner border border-white/30 animate-bounce">
+              <CheckCircle2 size={38} strokeWidth={2.5} />
+            </div>
+
+            <div className="space-y-2">
+              <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-white/20 backdrop-blur-sm text-white text-xs font-extrabold uppercase tracking-wider">
+                <PartyPopper size={14} /> Order Paid & Completed
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight font-heading">
+                Thank You, {order.customerName}!
+              </h2>
+              <p className="text-xs sm:text-sm text-emerald-100 max-w-sm mx-auto leading-relaxed font-medium">
+                Your order is completed and payment received. We hope you loved your dining experience! Please visit us again soon. ❤️
+              </p>
+            </div>
+
+            {/* Interactive Feedback Form Teaser */}
+            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20 text-center space-y-2">
+              <p className="text-xs font-bold text-white flex items-center justify-center gap-1.5">
+                <Heart size={14} className="text-rose-300 fill-rose-300" /> How was your experience today?
+              </p>
+              <div className="flex items-center justify-center gap-2 pt-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setUserRating(star)}
+                    className={`p-1 transition-all ${
+                      userRating && userRating >= star
+                        ? "text-amber-300 scale-110"
+                        : "text-white/40 hover:text-amber-300 hover:scale-125"
+                    }`}
+                    title={`Rate ${star} Stars`}
+                  >
+                    <Star size={24} fill={userRating && userRating >= star ? "currentColor" : "none"} />
+                  </button>
+                ))}
+              </div>
+              {userRating ? (
+                <p className="text-xs font-bold text-amber-300 animate-in fade-in-50">
+                  ✨ Thank you for rating us {userRating}/5 stars!
+                </p>
+              ) : (
+                <p className="text-[10px] text-emerald-200">Tap a star to leave feedback</p>
+              )}
+            </div>
+
+            <div className="pt-2">
+              <Link href={`/${slug}`}>
+                <Button variant="secondary" className="w-full justify-center font-bold text-slate-900 bg-white hover:bg-emerald-50 shadow-md">
+                  🍔 Back to Digital Menu / Order More
+                </Button>
+              </Link>
             </div>
           </div>
         ) : (
@@ -176,12 +239,12 @@ export function OrderStatusTracker({ initialOrder, slug }: OrderStatusTrackerPro
                 <div className="absolute top-1/2 left-0 right-0 h-1 bg-slate-100 -translate-y-1/2 -z-0" />
                 {/* Active Progress Line */}
                 <div
-                  className="absolute top-1/2 left-0 h-1 bg-indigo-600 -translate-y-1/2 transition-all duration-500 -z-0"
+                  className="absolute top-1/2 left-0 h-1 bg-emerald-500 -translate-y-1/2 transition-all duration-500 -z-0"
                   style={{ width: `${(activeStep / (STEPS.length - 1)) * 100}%` }}
                 />
 
                 {STEPS.map((step, idx) => {
-                  const isDone = activeStep > idx;
+                  const isDone = activeStep > idx || (idx === 3 && activeStep === 3);
                   const isCurrent = activeStep === idx;
 
                   return (
@@ -189,13 +252,13 @@ export function OrderStatusTracker({ initialOrder, slug }: OrderStatusTrackerPro
                       key={step.key}
                       className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold z-10 transition-all ${
                         isDone
-                          ? "bg-emerald-500 text-white shadow-sm"
+                          ? "bg-emerald-500 text-white shadow-sm ring-2 ring-emerald-200"
                           : isCurrent
                           ? "bg-indigo-600 text-white ring-4 ring-indigo-100 scale-110 shadow-md animate-pulse"
                           : "bg-slate-100 text-slate-400 border border-slate-200"
                       }`}
                     >
-                      {isDone ? <CheckCircle2 size={18} /> : idx + 1}
+                      {isDone ? <CheckCircle2 size={18} strokeWidth={2.5} /> : idx + 1}
                     </div>
                   );
                 })}
@@ -205,16 +268,16 @@ export function OrderStatusTracker({ initialOrder, slug }: OrderStatusTrackerPro
               <div className="grid grid-cols-4 text-center gap-1">
                 {STEPS.map((step, idx) => {
                   const isCurrent = activeStep === idx;
-                  const isDone = activeStep > idx;
+                  const isDone = activeStep > idx || (idx === 3 && activeStep === 3);
 
                   return (
                     <div key={step.key} className="space-y-0.5">
                       <p
                         className={`text-[11px] font-bold tracking-tight ${
-                          isCurrent
+                          isDone
+                            ? "text-emerald-700 font-extrabold"
+                            : isCurrent
                             ? "text-indigo-600 font-extrabold"
-                            : isDone
-                            ? "text-emerald-700 font-semibold"
                             : "text-slate-400"
                         }`}
                       >
@@ -258,7 +321,7 @@ export function OrderStatusTracker({ initialOrder, slug }: OrderStatusTrackerPro
           </div>
 
           <div className="pt-2 border-t border-slate-200 flex items-center justify-between text-xs font-extrabold">
-            <span className="text-slate-900 font-heading">Total Amount:</span>
+            <span className="text-slate-900 font-heading">Total Amount Paid/Due:</span>
             <span className="text-indigo-600 text-sm font-heading">
               ₹{order.totalAmount?.toFixed(2)}
             </span>
