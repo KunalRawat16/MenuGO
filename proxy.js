@@ -1,27 +1,20 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
 // ============================================================
 // RATE LIMITING ENGINE
 // ============================================================
-// In-memory store: Map<string, { count: number, windowStart: number }>
-// Works per-server instance. For distributed rate limiting, use Upstash Redis.
 const rateLimitStore = new Map();
 let lastCleanup = Date.now();
 
-/** Remove expired entries to prevent memory leaks */
 function cleanupExpiredEntries() {
   const now = Date.now();
-  if (now - lastCleanup < 60 * 1000) return; // Cleanup every 1 minute
+  if (now - lastCleanup < 60 * 1000) return;
   lastCleanup = now;
   for (const [key, data] of rateLimitStore) {
     if (now - data.windowStart > 120 * 1000) rateLimitStore.delete(key);
   }
 }
 
-/**
- * Check if a request should be rate limited
- * @returns {{ limited: boolean, remaining: number, retryAfterSec: number }}
- */
 function checkRateLimit(identifier, maxRequests, windowMs) {
   cleanupExpiredEntries();
   const now = Date.now();
@@ -41,93 +34,124 @@ function checkRateLimit(identifier, maxRequests, windowMs) {
   return { limited: false, remaining: maxRequests - entry.count, retryAfterSec: 0 };
 }
 
-/** Extract real client IP from request headers */
 function getClientIP(request) {
-  const forwarded = request.headers.get("x-forwarded-for");
-  if (forwarded) return forwarded.split(",")[0].trim();
-  return request.headers.get("x-real-ip") || "unknown";
+  const forwarded = request.headers.get('x-forwarded-for');
+  if (forwarded) return forwarded.split(',')[0].trim();
+  return request.headers.get('x-real-ip') || 'unknown';
 }
 
 // ============================================================
-// PROXY (Next.js 16 Middleware)
+// PROXY ENGINE (Next.js 16 convention)
 // ============================================================
+
+const COOKIE_NAME = 'menugo_session';
 
 export function proxy(request) {
   const pathname = request.nextUrl.pathname;
   const method = request.method;
 
   // ----------------------------------------------------------
-  // 1. RATE LIMITING (API routes only)
+  // 1. RATE LIMITING (API routes)
   // ----------------------------------------------------------
-  if (pathname.startsWith("/api/")) {
+  if (pathname.startsWith('/api/')) {
     const ip = getClientIP(request);
 
-    // Rule 1: Order Creation — STRICT (5 per minute per IP)
-    if (pathname === "/api/orders" && method === "POST") {
-      const { limited, remaining, retryAfterSec } = checkRateLimit(
-        `order_create:${ip}`, 5, 60 * 1000
-      );
+    // Rule 1: Order Creation (5 per min)
+    if (pathname === '/api/orders' && method === 'POST') {
+      const { limited, remaining, retryAfterSec } = checkRateLimit(`order_create:${ip}`, 5, 60 * 1000);
       if (limited) {
         return NextResponse.json(
-          { success: false, error: `Too many orders. Please wait ${retryAfterSec}s before trying again.` },
-          { status: 429, headers: { "Retry-After": String(retryAfterSec) } }
+          { success: false, error: `Too many orders. Please wait ${retryAfterSec}s.` },
+          { status: 429, headers: { 'Retry-After': String(retryAfterSec) } }
         );
       }
       const response = NextResponse.next();
-      response.headers.set("X-RateLimit-Limit", "5");
-      response.headers.set("X-RateLimit-Remaining", String(remaining));
+      response.headers.set('X-RateLimit-Limit', '5');
+      response.headers.set('X-RateLimit-Remaining', String(remaining));
       return response;
     }
 
-    // Rule 2: Order Status Updates — MODERATE (20 per minute per IP)
-    if (pathname.startsWith("/api/orders/") && method === "PATCH") {
-      const { limited } = checkRateLimit(`order_update:${ip}`, 20, 60 * 1000);
-      if (limited) {
-        return NextResponse.json(
-          { success: false, error: "Too many requests. Please slow down." },
-          { status: 429 }
-        );
-      }
-    }
-
-    // Rule 3: General API — RELAXED (60 per minute per IP)
+    // Rule 2: General API (60 per min)
     const { limited } = checkRateLimit(`api_general:${ip}`, 60, 60 * 1000);
     if (limited) {
       return NextResponse.json(
-        { success: false, error: "Rate limit exceeded. Please try again later." },
+        { success: false, error: 'Rate limit exceeded. Please try again later.' },
         { status: 429 }
       );
     }
   }
 
   // ----------------------------------------------------------
-  // 2. AUTH PROTECTION (Admin routes)
+  // 2. ROUTE PROTECTION & RBAC
   // ----------------------------------------------------------
-  if (pathname.startsWith("/admin")) {
-    const sessionCookie = request.cookies.get("admin_session");
+  const sessionCookie = request.cookies.get(COOKIE_NAME);
 
+  // /dashboard/* — requires role: owner, super_admin, or staff
+  if (pathname.startsWith('/dashboard')) {
     if (!sessionCookie) {
-      return NextResponse.redirect(new URL("/login", request.url));
+      return NextResponse.redirect(new URL('/auth/login', request.url));
     }
-
     try {
       const session = JSON.parse(sessionCookie.value);
-      
-      // If exact /admin path, requires superadmin
-      if (pathname === "/admin" && session.role !== "superadmin") {
-        return NextResponse.redirect(new URL(`/admin/${session.slug}`, request.url));
-      }
-
-      // If /admin/[slug] path, requires superadmin OR matching admin slug
-      if (pathname.startsWith("/admin/")) {
-        const targetSlug = pathname.split("/")[2]; // e.g. /admin/xyz-cafe -> xyz-cafe
-        if (session.role !== "superadmin" && session.slug !== targetSlug) {
-          return NextResponse.redirect(new URL("/login", request.url));
-        }
+      if (!['owner', 'super_admin', 'staff'].includes(session?.role)) {
+        return NextResponse.redirect(new URL('/auth/login', request.url));
       }
     } catch {
-      // Invalid JSON or format
-      return NextResponse.redirect(new URL("/login", request.url));
+      return NextResponse.redirect(new URL('/auth/login', request.url));
+    }
+  }
+
+  // /admin/* — requires role: super_admin only
+  if (pathname.startsWith('/admin')) {
+    if (!sessionCookie) {
+      return NextResponse.redirect(new URL('/auth/login', request.url));
+    }
+    try {
+      const session = JSON.parse(sessionCookie.value);
+      if (session?.role !== 'super_admin') {
+        const dest = session?.role === 'owner' ? '/dashboard' : '/auth/login';
+        return NextResponse.redirect(new URL(dest, request.url));
+      }
+    } catch {
+      return NextResponse.redirect(new URL('/auth/login', request.url));
+    }
+  }
+
+  // /onboard — requires authenticated owner
+  if (pathname.startsWith('/onboard')) {
+    if (!sessionCookie) {
+      return NextResponse.redirect(new URL('/auth/login', request.url));
+    }
+    try {
+      const session = JSON.parse(sessionCookie.value);
+      if (!session?.role) {
+        return NextResponse.redirect(new URL('/auth/login', request.url));
+      }
+      if (session?.isOnboarded) {
+        return NextResponse.redirect(new URL('/dashboard', request.url));
+      }
+    } catch {
+      return NextResponse.redirect(new URL('/auth/login', request.url));
+    }
+  }
+
+  // /auth/* — redirect authenticated users to their home
+  if (pathname.startsWith('/auth/login') || pathname.startsWith('/auth/register')) {
+    if (sessionCookie) {
+      try {
+        const session = JSON.parse(sessionCookie.value);
+        if (session?.role === 'super_admin') {
+          return NextResponse.redirect(new URL('/admin', request.url));
+        }
+        if (session?.role === 'owner' && session?.isOnboarded) {
+          return NextResponse.redirect(new URL('/dashboard', request.url));
+        }
+        if (session?.role === 'owner' && !session?.isOnboarded) {
+          return NextResponse.redirect(new URL('/onboard', request.url));
+        }
+      } catch {
+        // Invalid cookie
+      }
     }
   }
 
@@ -135,5 +159,7 @@ export function proxy(request) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/api/:path*"],
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+  ],
 };

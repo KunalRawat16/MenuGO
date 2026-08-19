@@ -221,10 +221,10 @@ export async function loginAction(username, password) {
   if (!settings) {
     // Hash default superadmin password on first creation
     const hashedDefault = await bcrypt.hash("admin123", 10);
-    settings = await PlatformSettings.create({ id: "global_settings", superadminPassword: hashedDefault });
+    settings = await PlatformSettings.create({ id: "global_settings", superadminUsername: "superadmin@gmail.com", superadminPassword: hashedDefault });
   }
 
-  const SUPERADMIN_USERNAME = settings.superadminUsername || "superadmin";
+  const SUPERADMIN_USERNAME = settings.superadminUsername || "superadmin@gmail.com";
   const storedSuperPw = settings.superadminPassword || "admin123";
 
   // --- Superadmin authentication (with bcrypt) ---

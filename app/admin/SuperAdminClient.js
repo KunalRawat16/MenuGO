@@ -21,7 +21,7 @@ export default function SuperAdminClient({ initialRestaurants }) {
   const [isLoading, setIsLoading] = useState(false);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [platformSettings, setPlatformSettings] = useState({
-    superadminUsername: "superadmin",
+    superadminUsername: "superadmin@gmail.com",
     superadminPassword: "password",
     trialDurationDays: 30,
     freePlanItemLimit: 10

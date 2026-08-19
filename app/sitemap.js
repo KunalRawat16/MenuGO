@@ -1,40 +1,43 @@
-import { getAllRestaurants } from "@/lib/data";
+import dbConnect from "@/lib/db";
+import Business from "@/models/Business";
 
 export default async function sitemap() {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://menugo.vercel.app";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://menugo.in";
 
-  // Fetch all live restaurants
-  const restaurants = await getAllRestaurants();
+  let businessUrls: any[] = [];
+  try {
+    await dbConnect();
+    const businesses = await Business.find({ isActive: true, isSuspended: false }).select("slug updatedAt").lean();
+    businessUrls = businesses.map((b: any) => ({
+      url: `${baseUrl}/${b.slug}`,
+      lastModified: b.updatedAt ? new Date(b.updatedAt) : new Date(),
+      changeFrequency: "daily",
+      priority: 0.8,
+    }));
+  } catch (err) {
+    console.error("Sitemap fetch error:", err);
+  }
 
-  // Create sitemap entries for dynamic restaurant pages
-  const restaurantUrls = restaurants.map((restaurant) => ({
-    url: `${baseUrl}/${restaurant.slug}`,
-    lastModified: new Date(restaurant.updatedAt || new Date()),
-    changeFrequency: 'daily',
-    priority: 0.8,
-  }));
-
-  // Create standard static pages
   const staticUrls = [
     {
       url: baseUrl,
       lastModified: new Date(),
-      changeFrequency: 'weekly',
+      changeFrequency: "weekly",
       priority: 1.0,
     },
     {
-      url: `${baseUrl}/login`,
+      url: `${baseUrl}/auth/login`,
       lastModified: new Date(),
-      changeFrequency: 'monthly',
+      changeFrequency: "monthly",
       priority: 0.5,
     },
     {
-      url: `${baseUrl}/register`,
+      url: `${baseUrl}/auth/register`,
       lastModified: new Date(),
-      changeFrequency: 'monthly',
+      changeFrequency: "monthly",
       priority: 0.8,
-    }
+    },
   ];
 
-  return [...staticUrls, ...restaurantUrls];
+  return [...staticUrls, ...businessUrls];
 }

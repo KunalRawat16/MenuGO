@@ -1,13 +1,28 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
-const platformSettingsSchema = new mongoose.Schema({
-  id: { type: String, default: "global_settings", unique: true },
-  superadminUsername: { type: String, default: "superadmin" },
-  superadminPassword: { type: String, default: "admin123" },
-  trialDurationDays: { type: Number, default: 30 },
-  freePlanItemLimit: { type: Number, default: 10 }
-}, { timestamps: true });
+const PlatformSettingsSchema = new mongoose.Schema(
+  {
+    // Singleton identifier
+    id: { type: String, default: 'global_settings', unique: true },
 
-const PlatformSettings = mongoose.models.PlatformSettings || mongoose.model("PlatformSettings", platformSettingsSchema);
+    // Super admin credentials
+    superadminUsername: { type: String, default: 'superadmin@gmail.com' },
+    superadminPassword: { type: String, default: null }, // bcrypt hash
 
-export default PlatformSettings;
+    // Subscription config
+    trialDurationDays: { type: Number, default: 14 },
+    freePlanItemLimit: { type: Number, default: 10 },
+
+    // Pricing (display only — no payment gateway yet)
+    monthlyPlanPrice: { type: Number, default: 499 },
+    yearlyPlanPrice: { type: Number, default: 4999 },
+
+    // Platform meta
+    platformName: { type: String, default: 'MenuGO' },
+    supportEmail: { type: String, default: 'support@menugo.in' },
+  },
+  { timestamps: true }
+);
+
+export default mongoose.models.PlatformSettings ||
+  mongoose.model('PlatformSettings', PlatformSettingsSchema);

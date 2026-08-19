@@ -1,8 +1,9 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { AlertTriangle, Home, RefreshCw } from 'lucide-react';
-import Link from 'next/link';
+import React, { useEffect } from "react";
+import { AlertTriangle, Home, RefreshCw } from "lucide-react";
+import Link from "next/link";
+import { Button } from "@/components/ui/Button";
 
 export default function GlobalError({
   error,
@@ -12,46 +13,54 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Log the error to an error reporting service in production
-    console.error('Global Error Boundary caught:', error);
+    console.error("Global Error Boundary caught:", error);
   }, [error]);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6 text-center font-sans">
-      <div className="max-w-md w-full bg-white rounded-3xl shadow-xl border border-gray-100 p-8 space-y-6">
-        <div className="mx-auto w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center text-red-500 shadow-inner">
+    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 text-center font-sans select-none">
+      <div className="max-w-md w-full bg-white rounded-3xl shadow-xl border border-slate-200/80 p-8 space-y-6">
+        <div className="mx-auto w-16 h-16 bg-rose-50 rounded-2xl flex items-center justify-center text-rose-500 shadow-inner">
           <AlertTriangle size={32} />
         </div>
-        
+
         <div className="space-y-2">
-          <h1 className="text-3xl font-black text-gray-900 tracking-tight">Something Went Wrong</h1>
-          <p className="text-gray-500 font-bold leading-relaxed text-sm">
-            An unexpected error occurred. We have logged this issue and our team is looking into it.
+          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight font-heading">
+            Something Went Wrong
+          </h1>
+          <p className="text-slate-500 font-normal leading-relaxed text-xs">
+            An unexpected runtime error occurred. You can try refreshing the page or navigating back home.
           </p>
         </div>
 
         {error?.message && (
-          <div className="p-4 bg-gray-50 rounded-xl text-left border border-gray-100">
-            <span className="text-xs font-black text-gray-400 uppercase tracking-wider block mb-1">Details</span>
-            <code className="text-xs font-bold text-red-600 block break-all">{error.message}</code>
+          <div className="p-3.5 bg-slate-50 rounded-xl text-left border border-slate-200">
+            <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block mb-1">
+              Error Trace
+            </span>
+            <code className="text-xs font-mono text-rose-600 block break-all">
+              {error.message}
+            </code>
           </div>
         )}
 
-        <div className="flex flex-col sm:flex-row gap-3">
-          <button
+        <div className="flex flex-col sm:flex-row gap-3 pt-2">
+          <Button
             onClick={() => reset()}
-            className="flex-1 bg-green-500 hover:bg-green-600 text-white font-black py-3 px-4 rounded-xl shadow-lg shadow-green-100 transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer"
+            variant="default"
+            className="flex-1 justify-center shadow-md"
+            leftIcon={<RefreshCw size={16} />}
           >
-            <RefreshCw size={18} />
             Try Again
-          </button>
-          
-          <Link
-            href="/"
-            className="flex-1 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 font-black py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2 active:scale-95"
-          >
-            <Home size={18} />
-            Go Home
+          </Button>
+
+          <Link href="/" className="flex-1">
+            <Button
+              variant="outline"
+              className="w-full justify-center"
+              leftIcon={<Home size={16} />}
+            >
+              Go Home
+            </Button>
           </Link>
         </div>
       </div>

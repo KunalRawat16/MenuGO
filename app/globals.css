@@ -1,61 +1,146 @@
 @import "tailwindcss";
 
-:root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
-  --primary: #22c55e;
+@layer base {
+  :root {
+    /* Brand Design Tokens */
+    --brand-primary: #4f46e5;       /* Indigo 600 */
+    --brand-primary-hover: #4338ca; /* Indigo 700 */
+    --brand-primary-light: #eef2ff; /* Indigo 50 */
+    --brand-accent: #f59e0b;        /* Amber 500 */
+    --brand-accent-light: #fef3c7;  /* Amber 100 */
+    --brand-success: #10b981;       /* Emerald 500 */
+    --brand-danger: #ef4444;        /* Red 500 */
+    --brand-warning: #f97316;       /* Orange 500 */
+
+    /* Surface & Elevation System */
+    --surface-base: #f8fafc;
+    --surface-card: #ffffff;
+    --surface-overlay: rgba(255, 255, 255, 0.85);
+
+    /* Radius System */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 24px;
+    --radius-full: 9999px;
+
+    /* Shadow Elevation Tokens */
+    --shadow-subtle: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
+    --shadow-card: 0 4px 20px -2px rgba(15, 23, 42, 0.08);
+    --shadow-elevated: 0 12px 32px -4px rgba(79, 70, 229, 0.15);
+    --shadow-float: 0 20px 45px -10px rgba(15, 23, 42, 0.2);
+
+    /* HSL standard theme variables (shadcn compatibility) */
+    --background: 210 40% 98%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 238.7 83.5% 58.8%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 238.7 83.5% 58.8%;
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 238.7 83.5% 58.8%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 238.7 83.5% 58.8%;
+  }
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-primary: var(--primary);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-sans), system-ui, -apple-system, sans-serif;
+  --font-heading: var(--font-heading), system-ui, -apple-system, sans-serif;
+  --color-brand-primary: var(--brand-primary);
+  --color-brand-accent: var(--brand-accent);
 }
 
 body {
-  background-color: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  background-color: var(--surface-base);
+  color: hsl(var(--foreground));
+  font-family: var(--font-sans);
   min-height: 100vh;
+  margin: 0;
 }
 
-/* Hide scrollbar utility */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  letter-spacing: -0.02em;
+}
+
+/* Glassmorphism & Modern Utilities */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.dark .glass-panel {
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.gradient-brand-text {
+  background: linear-gradient(135deg, #3730a3 0%, #4f46e5 50%, #6366f1 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.gradient-hero-bg {
+  background: radial-gradient(circle at 50% 0%, rgba(79, 70, 229, 0.12) 0%, rgba(248, 250, 252, 0) 75%);
+}
+
+/* Hide scrollbar utilities */
+.hide-scrollbar::-webkit-scrollbar,
 .scrollbar-none::-webkit-scrollbar {
   display: none;
 }
+.hide-scrollbar,
 .scrollbar-none {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
-  -webkit-overflow-scrolling: touch; /* Momentum scrolling on iOS */
-  overscroll-behavior: contain;
-}
-
-/* Hide scrollbar — used by category tabs and admin tab bars */
-.hide-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.hide-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
 
-/* Global overflow safety — prevent any horizontal scroll */
+/* Global overflow safety */
 html, body {
   max-width: 100vw;
   overflow-x: hidden;
 }
 
-/* Scoped fluid typography for landing page only */
-.landing-page h1 { font-size: clamp(1.75rem, 4vw + 0.5rem, 4.5rem); }
-.landing-page h2 { font-size: clamp(1.5rem, 3vw + 0.5rem, 3rem); }
-.landing-page h3 { font-size: clamp(1.125rem, 1.5vw + 0.5rem, 1.5rem); }
-
-/* Skeleton shimmer sweep animation */
+/* Skeleton shimmer animation */
 @keyframes shimmer {
   100% {
     transform: translateX(100%);
   }
 }
-
