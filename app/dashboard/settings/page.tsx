@@ -10,6 +10,9 @@ import {
   Save,
   CheckCircle2,
   Sparkles,
+  Plus,
+  Trash2,
+  ShoppingBag,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -38,6 +41,11 @@ export default function SettingsPage() {
   const [facebook, setFacebook] = useState("");
   const [tripadvisor, setTripadvisor] = useState("");
   const [website, setWebsite] = useState("");
+  const [cartUpsells, setCartUpsells] = useState<
+    { name: string; price: string; isEnabled: boolean }[]
+  >([
+    { name: "Mineral Water Bottle (1L)", price: "20", isEnabled: true },
+  ]);
 
   useEffect(() => {
     getMyBusinessAction().then((res) => {
@@ -57,10 +65,36 @@ export default function SettingsPage() {
         setFacebook(b.social?.facebook || "");
         setTripadvisor(b.social?.tripadvisor || "");
         setWebsite(b.social?.website || "");
+
+        if (b.settings?.cartUpsells && Array.isArray(b.settings.cartUpsells) && b.settings.cartUpsells.length > 0) {
+          setCartUpsells(
+            b.settings.cartUpsells.map((u: any) => ({
+              name: u.name,
+              price: String(u.price),
+              isEnabled: u.isEnabled !== false,
+            }))
+          );
+        }
       }
       setIsLoading(false);
     });
   }, []);
+
+  const handleAddCartUpsell = (name = "", price = "") => {
+    setCartUpsells((prev) => [...prev, { name, price, isEnabled: true }]);
+  };
+
+  const handleUpdateCartUpsell = (index: number, field: "name" | "price" | "isEnabled", value: any) => {
+    setCartUpsells((prev) => {
+      const copy = [...prev];
+      copy[index] = { ...copy[index], [field]: value };
+      return copy;
+    });
+  };
+
+  const handleRemoveCartUpsell = (index: number) => {
+    setCartUpsells((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,6 +112,16 @@ export default function SettingsPage() {
       address: { street, city, phone },
       localization: { currency, currencySymbol },
       social: { instagram, facebook, tripadvisor, website },
+      settings: {
+        ...(business.settings || {}),
+        cartUpsells: cartUpsells
+          .map((u) => ({
+            name: u.name.trim(),
+            price: parseFloat(u.price) || 0,
+            isEnabled: u.isEnabled,
+          }))
+          .filter((u) => u.name),
+      },
     };
 
     try {
@@ -207,6 +251,99 @@ export default function SettingsPage() {
               onChange={(e) => setWebsite(e.target.value)}
               placeholder="https://yourbusiness.com"
             />
+          </div>
+        </div>
+
+        {/* Cart Quick Upsells (Water Bottle & Extras) Section */}
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 space-y-4 shadow-sm">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+            <div>
+              <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-heading flex items-center gap-1.5">
+                <ShoppingBag size={16} className="text-indigo-600" /> Cart Quick Upsells (Water Bottle & Extras)
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                1-tap add-on prompt displayed to customers on checkout (e.g. Water Bottle {currencySymbol}20, Soft Drink {currencySymbol}40).
+              </p>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() =>
+                  setCartUpsells((prev) => [
+                    ...prev,
+                    { name: "Mineral Water Bottle (1L)", price: "20", isEnabled: true },
+                    { name: "Cold Drink (300ml)", price: "40", isEnabled: true },
+                    { name: "Extra Cutlery Pack", price: "10", isEnabled: true },
+                  ])
+                }
+                className="text-[10px] font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-lg transition-all"
+              >
+                + Presets (Water & Drinks)
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            {cartUpsells.length === 0 ? (
+              <p className="text-xs text-slate-400 italic">
+                No quick upsells configured. Click "+ Add Quick Upsell Item" below.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {cartUpsells.map((u, idx) => (
+                  <div key={idx} className="flex items-center gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                    <label className="flex items-center gap-1.5 cursor-pointer text-xs font-semibold text-slate-700 pr-1 select-none">
+                      <input
+                        type="checkbox"
+                        checked={u.isEnabled}
+                        onChange={(e) => handleUpdateCartUpsell(idx, "isEnabled", e.target.checked)}
+                        className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                      />
+                      <span>Active</span>
+                    </label>
+
+                    <input
+                      type="text"
+                      placeholder="Item Name (e.g. Mineral Water Bottle 1L)"
+                      value={u.name}
+                      onChange={(e) => handleUpdateCartUpsell(idx, "name", e.target.value)}
+                      className="flex-1 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
+                    />
+
+                    <div className="relative w-32">
+                      <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-bold">
+                        {currencySymbol}
+                      </span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        placeholder="Price"
+                        value={u.price}
+                        onChange={(e) => handleUpdateCartUpsell(idx, "price", e.target.value)}
+                        className="w-full rounded-xl border border-slate-300 bg-white pl-6 pr-2 py-1.5 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold"
+                      />
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveCartUpsell(idx)}
+                      className="p-1.5 text-slate-400 hover:text-rose-600 transition-colors"
+                      title="Remove item"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={() => handleAddCartUpsell("", "")}
+              className="text-xs font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1 pt-1"
+            >
+              <Plus size={14} /> Add Quick Upsell Item
+            </button>
           </div>
         </div>
 

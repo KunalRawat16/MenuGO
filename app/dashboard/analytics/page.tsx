@@ -22,6 +22,9 @@ import {
   Plus,
   AlertTriangle,
   FileText,
+  Star,
+  MessageSquare,
+  Heart,
 } from "lucide-react";
 import { StatCard } from "@/components/ui/StatCard";
 import { Badge } from "@/components/ui/Badge";
@@ -54,6 +57,9 @@ export interface OrderData {
   status: "incoming" | "accepted" | "rejected" | "preparing" | "served" | "completed" | "cancelled";
   orderSource?: string;
   createdAt: string;
+  rating?: number | null;
+  feedback?: string;
+  feedbackSubmittedAt?: string | null;
 }
 
 export default function AnalyticsPage() {
@@ -63,6 +69,7 @@ export default function AnalyticsPage() {
   const [timeRange, setTimeRange] = useState<"7d" | "30d" | "all">("7d");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [ratingFilter, setRatingFilter] = useState<string>("all");
   
   // Custom Date Range Filters for Order History
   const [startDateFilter, setStartDateFilter] = useState<string>("");
@@ -145,6 +152,20 @@ export default function AnalyticsPage() {
   const avgOrderValue = useMemo(() => {
     return completedOrders.length > 0 ? totalPeriodRevenue / completedOrders.length : 0;
   }, [completedOrders, totalPeriodRevenue]);
+
+  const ratedOrders = useMemo(() => {
+    return orders.filter((o) => typeof o.rating === "number" && o.rating! > 0);
+  }, [orders]);
+
+  const avgCustomerRating = useMemo(() => {
+    if (ratedOrders.length === 0) return 0;
+    const sum = ratedOrders.reduce((acc, o) => acc + (o.rating || 0), 0);
+    return sum / ratedOrders.length;
+  }, [ratedOrders]);
+
+  const ordersWithFeedback = useMemo(() => {
+    return orders.filter((o) => o.feedback && o.feedback.trim().length > 0);
+  }, [orders]);
 
   // Compute Daily Sales Trend
   const revenueChartData = useMemo(() => {
@@ -235,9 +256,15 @@ export default function AnalyticsPage() {
         if (!matchId && !matchName && !matchTable && !matchItem) return false;
       }
 
+      // 4. Rating Filter
+      if (ratingFilter === "rated" && (!o.rating || o.rating === 0)) return false;
+      if (ratingFilter === "with_feedback" && (!o.feedback || !o.feedback.trim())) return false;
+      if (ratingFilter === "5_star" && o.rating !== 5) return false;
+      if (ratingFilter === "1_3_star" && (!o.rating || o.rating > 3)) return false;
+
       return true;
     });
-  }, [orders, statusFilter, startDateFilter, endDateFilter, searchQuery]);
+  }, [orders, statusFilter, ratingFilter, startDateFilter, endDateFilter, searchQuery]);
 
   // Dynamic preview count of orders to be deleted in Date-Range Purge
   const purgePreviewCount = useMemo(() => {
@@ -427,6 +454,8 @@ export default function AnalyticsPage() {
       "Itemized Dishes",
       "Total Amount (INR)",
       "Order Status",
+      "Rating (1-5)",
+      "Feedback Review",
     ];
 
     const csvRows = [headers.join(",")];
@@ -437,6 +466,7 @@ export default function AnalyticsPage() {
         .map((i) => `${i.quantity}x ${i.name} (Rs.${i.price})`)
         .join(" | ")
         .replace(/"/g, '""');
+      const feedbackClean = (o.feedback || "").replace(/"/g, '""');
 
       const row = [
         `"#${o._id.slice(-6).toUpperCase()}"`,
@@ -447,6 +477,8 @@ export default function AnalyticsPage() {
         `"${itemsFormatted}"`,
         `${o.totalAmount.toFixed(2)}`,
         `"${o.status.toUpperCase()}"`,
+        `"${o.rating ? `${o.rating}/5` : "N/A"}"`,
+        `"${feedbackClean}"`,
       ];
       csvRows.push(row.join(","));
     }
@@ -531,7 +563,7 @@ export default function AnalyticsPage() {
       {/* ─────────────────────────────────────────────────────────────
           2. KPI SUMMARY CARDS
       ───────────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Period Sales Revenue"
           value={`${currencySymbol}${totalPeriodRevenue.toFixed(2)}`}
@@ -553,10 +585,17 @@ export default function AnalyticsPage() {
           trend="neutral"
           icon={Award}
         />
+        <StatCard
+          title="Customer Rating History"
+          value={avgCustomerRating > 0 ? `⭐ ${avgCustomerRating.toFixed(1)} / 5.0` : "No ratings yet"}
+          change={`${ratedOrders.length} rated orders (${ordersWithFeedback.length} with feedback)`}
+          trend={avgCustomerRating >= 4 ? "up" : "neutral"}
+          icon={Star}
+        />
       </div>
 
       {/* ─────────────────────────────────────────────────────────────
-          3. CHARTS GRID (Daily Revenue + Top Selling Dishes)
+          3. CHARTS GRID (Daily Revenue + Top Selling Dishes + Feedback History)
       ───────────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
         {/* Daily Revenue Bar Chart */}
@@ -627,6 +666,58 @@ export default function AnalyticsPage() {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+        </div>
+
+        {/* Customer Reviews & Feedback History Panel */}
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 space-y-4 shadow-sm lg:col-span-2">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+            <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-heading flex items-center gap-1.5">
+              <MessageSquare size={16} className="text-indigo-600" /> Customer Reviews & Rating History
+            </h2>
+            <div className="flex items-center gap-1 text-xs font-bold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200">
+              <Star size={13} fill="currentColor" /> {avgCustomerRating > 0 ? avgCustomerRating.toFixed(1) : "N/A"} ({ratedOrders.length} rated orders)
+            </div>
+          </div>
+
+          {ordersWithFeedback.length === 0 && ratedOrders.length === 0 ? (
+            <p className="text-xs text-slate-400 italic text-center py-8">
+              No customer ratings or feedback reviews submitted yet. Feedback prompt appears when customers view completed order status.
+            </p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-72 overflow-y-auto pr-1">
+              {orders
+                .filter((o) => o.rating || o.feedback)
+                .slice(0, 8)
+                .map((o) => (
+                  <div key={o._id} className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5 shadow-2xs">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-xs text-slate-900">{o.customerName}</span>
+                      <div className="flex items-center text-amber-400">
+                        {[1, 2, 3, 4, 5].map((s) => (
+                          <Star
+                            key={s}
+                            size={11}
+                            fill={o.rating && o.rating >= s ? "currentColor" : "none"}
+                            className={o.rating && o.rating >= s ? "text-amber-400" : "text-slate-300"}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    {o.feedback ? (
+                      <p className="text-xs text-slate-700 italic font-medium leading-relaxed">
+                        "{o.feedback}"
+                      </p>
+                    ) : (
+                      <p className="text-[10px] text-slate-400 italic">No written comment</p>
+                    )}
+                    <div className="flex justify-between items-center text-[10px] text-slate-400 pt-0.5 border-t border-slate-200/60 mt-1">
+                      <span>Order #{o._id.slice(-6).toUpperCase()} {o.tableNumber ? `• Table ${o.tableNumber}` : ""}</span>
+                      <span>{new Date(o.feedbackSubmittedAt || o.createdAt).toLocaleDateString("en-IN")}</span>
+                    </div>
+                  </div>
+                ))}
             </div>
           )}
         </div>
@@ -721,15 +812,27 @@ export default function AnalyticsPage() {
             )}
           </div>
 
-          {/* Status Filter Pills */}
+          {/* Status & Rating Filter Pills */}
           <div className="flex items-center gap-1.5 overflow-x-auto hide-scrollbar">
+            <select
+              value={ratingFilter}
+              onChange={(e) => setRatingFilter(e.target.value)}
+              className="rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+            >
+              <option value="all">All Rating Filter</option>
+              <option value="rated">Rated Orders ({ratedOrders.length})</option>
+              <option value="with_feedback">With Written Reviews ({ordersWithFeedback.length})</option>
+              <option value="5_star">⭐⭐⭐⭐⭐ 5 Stars</option>
+              <option value="1_3_star">⚠️ 1-3 Stars</option>
+            </select>
+
             <button
               onClick={() => setStatusFilter("all")}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
                 statusFilter === "all" ? "bg-slate-900 text-white" : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-100"
               }`}
             >
-              All ({orders.length})
+              All Status ({orders.length})
             </button>
             <button
               onClick={() => setStatusFilter("completed")}
@@ -762,14 +865,15 @@ export default function AnalyticsPage() {
                 <th className="px-4 py-3">Items</th>
                 <th className="px-4 py-3">Total Amount</th>
                 <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Rating & Review</th>
                 <th className="px-4 py-3 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredHistoryOrders.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="text-center py-10 text-slate-400 italic">
-                    No orders match your active search or date range filters.
+                  <td colSpan={9} className="text-center py-10 text-slate-400 italic">
+                    No orders match your active search, rating or date range filters.
                   </td>
                 </tr>
               ) : (
@@ -816,6 +920,30 @@ export default function AnalyticsPage() {
                       >
                         {order.status.toUpperCase()}
                       </Badge>
+                    </td>
+                    <td className="px-4 py-3">
+                      {order.rating ? (
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-0.5 text-amber-500">
+                            {[1, 2, 3, 4, 5].map((s) => (
+                              <Star
+                                key={s}
+                                size={12}
+                                fill={order.rating && order.rating >= s ? "currentColor" : "none"}
+                                className={order.rating && order.rating >= s ? "text-amber-400" : "text-slate-300"}
+                              />
+                            ))}
+                            <span className="text-[11px] font-bold text-slate-700 ml-1">{order.rating}/5</span>
+                          </div>
+                          {order.feedback && (
+                            <p className="text-[10px] text-slate-600 line-clamp-1 italic max-w-xs" title={order.feedback}>
+                              "{order.feedback}"
+                            </p>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-[10px] text-slate-400 italic">No rating</span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
@@ -883,6 +1011,11 @@ export default function AnalyticsPage() {
                 <div key={idx} className="py-2 flex items-center justify-between">
                   <div>
                     <p className="font-bold text-slate-900">{item.quantity}× {item.name}</p>
+                    {(item as any).addons && (item as any).addons.length > 0 && (
+                      <p className="text-[10px] text-indigo-600 font-medium">
+                        + Extras: {(item as any).addons.map((a: any) => `${a.name} (+₹${a.price})`).join(", ")}
+                      </p>
+                    )}
                     {item.specialRequest && (
                       <p className="text-[10px] text-amber-700 italic">Note: {item.specialRequest}</p>
                     )}
@@ -893,6 +1026,37 @@ export default function AnalyticsPage() {
                 </div>
               ))}
             </div>
+
+            {/* Customer Rating & Review Box on Receipt */}
+            {selectedOrderForModal.rating ? (
+              <div className="p-3.5 rounded-xl bg-amber-50/80 border border-amber-200 space-y-1 text-slate-800">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-xs text-amber-900 flex items-center gap-1">
+                    <Star size={13} fill="currentColor" className="text-amber-500" /> Customer Rating:
+                  </span>
+                  <div className="flex items-center text-amber-500">
+                    {[1, 2, 3, 4, 5].map((s) => (
+                      <Star
+                        key={s}
+                        size={13}
+                        fill={selectedOrderForModal.rating && selectedOrderForModal.rating >= s ? "currentColor" : "none"}
+                        className={selectedOrderForModal.rating && selectedOrderForModal.rating >= s ? "text-amber-400" : "text-slate-300"}
+                      />
+                    ))}
+                    <span className="font-extrabold text-xs ml-1 text-slate-900">{selectedOrderForModal.rating}/5</span>
+                  </div>
+                </div>
+                {selectedOrderForModal.feedback && (
+                  <p className="text-xs italic text-slate-700 pt-1">
+                    "{selectedOrderForModal.feedback}"
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-400 italic text-[11px] text-center">
+                No customer review or star rating submitted for this order.
+              </div>
+            )}
 
             <div className="flex justify-between items-center p-3 rounded-xl bg-indigo-50 border border-indigo-100 font-extrabold text-sm">
               <span className="text-slate-900">Total Paid:</span>

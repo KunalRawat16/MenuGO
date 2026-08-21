@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, use } from "react";
+import React, { useState, useEffect, use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useCart, CartProvider } from "@/components/menu/CartContext";
 import { createOrderAction } from "@/app/actions/order.actions";
+import { getBusinessBySlugAction } from "@/app/actions/restaurant.actions";
 
 interface CheckoutPageProps {
   params: Promise<{ slug: string }>;
@@ -30,6 +31,7 @@ function CheckoutContent({ slug }: { slug: string }) {
     items,
     tableNumber,
     setTableNumber,
+    addItem,
     updateQuantity,
     removeItem,
     clearCart,
@@ -44,6 +46,27 @@ function CheckoutContent({ slug }: { slug: string }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [placedOrder, setPlacedOrder] = useState<any | null>(null);
+
+  const [upsells, setUpsells] = useState<{ name: string; price: number; isEnabled: boolean }[]>([
+    { name: "Mineral Water Bottle (1L)", price: 20, isEnabled: true },
+  ]);
+
+  useEffect(() => {
+    getBusinessBySlugAction(slug).then((res) => {
+      if (res.success && res.business) {
+        const customUpsells = res.business.settings?.cartUpsells;
+        if (Array.isArray(customUpsells) && customUpsells.length > 0) {
+          setUpsells(
+            customUpsells.map((u: any) => ({
+              name: u.name,
+              price: Number(u.price) || 0,
+              isEnabled: u.isEnabled !== false,
+            }))
+          );
+        }
+      }
+    });
+  }, [slug]);
 
   const handleSubmitOrder = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,12 +90,14 @@ function CheckoutContent({ slug }: { slug: string }) {
         customerName: customerName.trim(),
         specialInstructions: specialInstructions.trim(),
         items: items.map((item) => ({
-          menuItemId: item.id,
-          name: item.name,
+          menuItemId: item.menuItemId || item.id,
+          name: item.variantName ? `${item.name} (${item.variantName})` : item.name,
           price: item.price,
           quantity: item.quantity,
           image: item.image || null,
           dietary: item.dietary || null,
+          variantName: item.variantName || null,
+          addons: item.selectedAddons || [],
           specialRequest: item.specialRequest || null,
         })),
         totalAmount,
@@ -217,6 +242,81 @@ function CheckoutContent({ slug }: { slug: string }) {
               </div>
             )}
 
+            {/* Cart Quick Upsells Banner (Water Bottle & Extras) */}
+            {upsells.filter((u) => u.isEnabled !== false && u.name).length > 0 && (
+              <div className="bg-gradient-to-r from-indigo-900 via-indigo-800 to-purple-900 text-white rounded-2xl p-4 shadow-md space-y-3 relative overflow-hidden border border-indigo-700/50">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black uppercase tracking-wider text-amber-300 flex items-center gap-1.5 font-heading">
+                    <Sparkles size={14} className="text-amber-400 animate-bounce" />
+                    Frequently Added Extras & Drinks
+                  </span>
+                  <span className="text-[10px] bg-white/10 px-2.5 py-0.5 rounded-full font-bold text-slate-200 border border-white/10">
+                    1-Tap Add
+                  </span>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {upsells
+                    .filter((u) => u.isEnabled !== false && u.name)
+                    .map((upsell, idx) => {
+                      const upsellId = `upsell-${upsell.name.toLowerCase().replace(/[^a-z0-9]/g, "-")}`;
+                      const existingItem = items.find((i) => i.id === upsellId);
+
+                      return (
+                        <div
+                          key={idx}
+                          className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl px-3 py-2 flex items-center gap-3 transition-all hover:bg-white/15"
+                        >
+                          <div className="text-left">
+                            <p className="text-xs font-bold text-white leading-tight">
+                              {upsell.name}
+                            </p>
+                            <p className="text-[11px] text-amber-300 font-extrabold">
+                              ₹{upsell.price.toFixed(2)}
+                            </p>
+                          </div>
+
+                          {existingItem ? (
+                            <div className="flex items-center gap-1 bg-white text-slate-900 rounded-lg p-0.5 font-bold text-xs shadow-xs">
+                              <button
+                                type="button"
+                                onClick={() => updateQuantity(existingItem.id, -1)}
+                                className="w-5 h-5 rounded hover:bg-slate-100 flex items-center justify-center text-slate-700 cursor-pointer"
+                              >
+                                <Minus size={11} />
+                              </button>
+                              <span className="w-5 text-center font-bold">{existingItem.quantity}</span>
+                              <button
+                                type="button"
+                                onClick={() => updateQuantity(existingItem.id, 1)}
+                                className="w-5 h-5 rounded hover:bg-slate-100 flex items-center justify-center text-slate-700 cursor-pointer"
+                              >
+                                <Plus size={11} />
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                addItem({
+                                  id: upsellId,
+                                  menuItemId: upsellId,
+                                  name: upsell.name,
+                                  price: upsell.price,
+                                })
+                              }
+                              className="px-2.5 py-1 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-xs transition-all shadow-xs flex items-center gap-1 cursor-pointer"
+                            >
+                              <Plus size={13} /> Add
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+            )}
+
             {/* 1. Itemized Order Summary */}
             <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm space-y-4">
               <h2 className="text-sm font-extrabold text-slate-900 tracking-tight uppercase font-heading flex items-center gap-2">
@@ -229,11 +329,21 @@ function CheckoutContent({ slug }: { slug: string }) {
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-bold text-slate-900 truncate">
                         {item.name}
+                        {item.variantName && (
+                          <span className="ml-1 text-[11px] text-indigo-600 font-semibold">
+                            ({item.variantName})
+                          </span>
+                        )}
                       </p>
                       <p className="text-[11px] text-slate-500 font-semibold">
                         ₹{item.price.toFixed(2)} × {item.quantity} = ₹
                         {(item.price * item.quantity).toFixed(2)}
                       </p>
+                      {item.selectedAddons && item.selectedAddons.length > 0 && (
+                        <p className="text-[10px] text-indigo-700 font-medium">
+                          + Extras: {item.selectedAddons.map((a) => `${a.name} (+₹${a.price})`).join(", ")}
+                        </p>
+                      )}
                       {item.specialRequest && (
                         <p className="text-[10px] text-amber-700 italic">
                           Note: {item.specialRequest}

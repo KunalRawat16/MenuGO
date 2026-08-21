@@ -12,6 +12,7 @@ import {
   X,
   Sparkles,
   RefreshCw,
+  Star,
 } from "lucide-react";
 import { StatCard } from "@/components/ui/StatCard";
 import { Button } from "@/components/ui/Button";
@@ -36,6 +37,9 @@ export interface OrderData {
   status: "incoming" | "accepted" | "rejected" | "preparing" | "served" | "completed" | "cancelled";
   orderSource?: string;
   createdAt: string;
+  rating?: number | null;
+  feedback?: string;
+  feedbackSubmittedAt?: string | null;
 }
 
 export default function OwnerDashboardPage() {
@@ -565,6 +569,19 @@ export default function OwnerDashboardPage() {
                   <p className="text-[11px] text-slate-500 truncate">
                     {order.customerName} • {order.items?.length} items
                   </p>
+
+                  {order.rating ? (
+                    <div className="pt-1 border-t border-slate-100 flex items-center justify-between text-[10px]">
+                      <div className="flex items-center gap-0.5 text-amber-500 font-bold">
+                        <Star size={11} fill="currentColor" /> {order.rating}/5
+                      </div>
+                      {order.feedback && (
+                        <p className="text-[10px] text-slate-600 italic truncate max-w-[140px]" title={order.feedback}>
+                          "{order.feedback}"
+                        </p>
+                      )}
+                    </div>
+                  ) : null}
                 </div>
               ))
             )}

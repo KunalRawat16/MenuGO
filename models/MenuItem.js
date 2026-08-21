@@ -19,6 +19,24 @@ const MenuItemSchema = new mongoose.Schema(
     price: { type: Number, required: true, min: 0 },
     image: { type: String, default: null },  // Cloudinary URL
 
+    // Price variations
+    hasVariants: { type: Boolean, default: false },
+    variants: [
+      {
+        name: { type: String, required: true, trim: true },
+        price: { type: Number, required: true, min: 0 },
+      },
+    ],
+
+    // Smart Modifiers & Add-ons
+    hasAddons: { type: Boolean, default: false },
+    addons: [
+      {
+        name: { type: String, required: true, trim: true },
+        price: { type: Number, required: true, min: 0, default: 0 },
+      },
+    ],
+
     // Dietary
     dietary: {
       type: String,

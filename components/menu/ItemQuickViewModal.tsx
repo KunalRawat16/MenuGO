@@ -8,6 +8,16 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { useCart } from "./CartContext";
 
+export interface MenuItemVariant {
+  name: string;
+  price: number;
+}
+
+export interface MenuItemAddon {
+  name: string;
+  price: number;
+}
+
 export interface MenuItemData {
   _id: string;
   categoryId?: string;
@@ -22,6 +32,10 @@ export interface MenuItemData {
   isFeatured?: boolean;
   tags?: string[];
   allergens?: string[];
+  hasVariants?: boolean;
+  variants?: MenuItemVariant[];
+  hasAddons?: boolean;
+  addons?: MenuItemAddon[];
 }
 
 export interface ItemQuickViewModalProps {
@@ -41,15 +55,49 @@ export function ItemQuickViewModal({
   const [quantity, setQuantity] = useState(1);
   const [specialRequest, setSpecialRequest] = useState("");
   const [addedToast, setAddedToast] = useState(false);
+  const [selectedVariantIndex, setSelectedVariantIndex] = useState(0);
+  const [selectedAddonIndexes, setSelectedAddonIndexes] = useState<number[]>([]);
+
+  // Reset state when item changes
+  React.useEffect(() => {
+    setSelectedVariantIndex(0);
+    setSelectedAddonIndexes([]);
+    setQuantity(1);
+    setSpecialRequest("");
+  }, [item?._id]);
 
   if (!item) return null;
 
+  const hasVariants = !!(item.hasVariants && item.variants && item.variants.length > 0);
+  const currentVariant = hasVariants && item.variants ? item.variants[selectedVariantIndex] || item.variants[0] : null;
+  const baseUnitPrice = currentVariant ? currentVariant.price : item.price;
+
+  const hasAddons = !!(item.hasAddons && item.addons && item.addons.length > 0);
+
+  const selectedAddonsTotal = hasAddons && item.addons
+    ? selectedAddonIndexes.reduce((sum, idx) => sum + (item.addons![idx]?.price || 0), 0)
+    : 0;
+
+  const unitPrice = baseUnitPrice + selectedAddonsTotal;
+
+  const toggleAddonIndex = (index: number) => {
+    setSelectedAddonIndexes((prev) =>
+      prev.includes(index) ? prev.filter((i) => i !== index) : [...prev, index]
+    );
+  };
+
   const handleAddToCart = () => {
+    const chosenAddons = hasAddons && item.addons
+      ? selectedAddonIndexes.map((idx) => item.addons![idx]).filter(Boolean)
+      : undefined;
+
     for (let i = 0; i < quantity; i++) {
       addItem({
         id: item._id,
         name: item.name,
-        price: item.price,
+        price: unitPrice,
+        variantName: currentVariant ? currentVariant.name : undefined,
+        selectedAddons: chosenAddons,
         image: item.image,
         dietary: item.dietary,
         specialRequest: specialRequest.trim() || undefined,
@@ -61,6 +109,7 @@ export function ItemQuickViewModal({
       onClose();
       setQuantity(1);
       setSpecialRequest("");
+      setSelectedAddonIndexes([]);
     }, 600);
   };
 
@@ -117,7 +166,12 @@ export function ItemQuickViewModal({
               </h2>
               <p className="text-lg font-extrabold text-indigo-600 mt-0.5">
                 {currencySymbol}
-                {item.price.toFixed(2)}
+                {unitPrice.toFixed(2)}
+                {currentVariant && (
+                  <span className="text-xs font-semibold text-slate-500 ml-1.5 font-sans">
+                    ({currentVariant.name})
+                  </span>
+                )}
               </p>
             </div>
           </div>
@@ -127,6 +181,74 @@ export function ItemQuickViewModal({
             <p className="text-xs text-slate-600 leading-relaxed font-normal">
               {item.description}
             </p>
+          )}
+
+          {/* Price Variant Selector */}
+          {hasVariants && item.variants && (
+            <div className="space-y-2 pt-2 border-t border-slate-100">
+              <label className="block text-[11px] font-bold text-slate-900 uppercase tracking-wider">
+                Select Size / Option *
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {item.variants.map((v, idx) => {
+                  const isSelected = selectedVariantIndex === idx;
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => setSelectedVariantIndex(idx)}
+                      className={`p-2.5 rounded-xl border text-left transition-all flex flex-col justify-between ${
+                        isSelected
+                          ? "border-indigo-600 bg-indigo-50/80 text-indigo-950 ring-2 ring-indigo-500/20 shadow-xs"
+                          : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"
+                      }`}
+                    >
+                      <span className="text-xs font-bold truncate">{v.name}</span>
+                      <span className="text-xs font-extrabold text-indigo-600 font-heading mt-1">
+                        {currencySymbol}{v.price.toFixed(2)}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Smart Add-ons / Extras Checkbox Selection */}
+          {hasAddons && item.addons && (
+            <div className="space-y-2 pt-2 border-t border-slate-100">
+              <label className="block text-[11px] font-bold text-slate-900 uppercase tracking-wider">
+                Select Add-ons / Extras (Optional)
+              </label>
+              <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                {item.addons.map((a, idx) => {
+                  const isChecked = selectedAddonIndexes.includes(idx);
+                  return (
+                    <label
+                      key={idx}
+                      className={`p-2.5 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
+                        isChecked
+                          ? "border-indigo-600 bg-indigo-50/80 text-indigo-950 shadow-2xs font-semibold"
+                          : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => toggleAddonIndex(idx)}
+                          className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                        />
+                        <span className="text-xs">{a.name}</span>
+                      </div>
+                      <span className="text-xs font-extrabold text-indigo-600 font-heading">
+                        +{currencySymbol}{a.price.toFixed(2)}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
           )}
 
           {/* Allergens & Tags */}
@@ -208,7 +330,7 @@ export function ItemQuickViewModal({
               {addedToast
                 ? "Added to Order!"
                 : `Add to Order • ${currencySymbol}${(
-                    item.price * quantity
+                    unitPrice * quantity
                   ).toFixed(2)}`}
             </Button>
           </div>

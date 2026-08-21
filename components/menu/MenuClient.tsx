@@ -171,6 +171,16 @@ export function MenuClient({ business, categories, items }: MenuClientProps) {
 
   const handleQuickAdd = (e: React.MouseEvent, item: MenuItemData) => {
     e.stopPropagation();
+
+    // If item has price variations OR add-ons, automatically open quick view modal for user to select options
+    const hasOptions = (item.hasVariants && item.variants && item.variants.length > 0) ||
+                       (item.hasAddons && item.addons && item.addons.length > 0);
+
+    if (hasOptions) {
+      setSelectedItemForModal(item);
+      return;
+    }
+
     addItem({
       id: item._id,
       name: item.name,
@@ -567,10 +577,24 @@ export function MenuClient({ business, categories, items }: MenuClientProps) {
 
                           {/* Price & Add Button */}
                           <div className="flex items-center justify-between pt-2">
-                            <span className="text-sm font-extrabold text-slate-900 tracking-tight font-heading">
-                              {currencySymbol}
-                              {item.price.toFixed(2)}
-                            </span>
+                            <div>
+                              <span className="text-sm font-extrabold text-slate-900 tracking-tight font-heading">
+                                {item.hasVariants && item.variants?.length ? (
+                                  `From ${currencySymbol}${Math.min(...item.variants.map((v) => v.price)).toFixed(2)}`
+                                ) : (
+                                  `${currencySymbol}${item.price.toFixed(2)}`
+                                )}
+                              </span>
+                              {item.hasVariants && item.variants?.length ? (
+                                <span className="block text-[10px] text-indigo-600 font-semibold">
+                                  Customizable ({item.variants.length} types)
+                                </span>
+                              ) : item.hasAddons && item.addons?.length ? (
+                                <span className="block text-[10px] text-indigo-600 font-semibold">
+                                  Customizable (+ Add-ons)
+                                </span>
+                              ) : null}
+                            </div>
 
                             {isStoreOpen && (
                               <button
@@ -585,6 +609,10 @@ export function MenuClient({ business, categories, items }: MenuClientProps) {
                                 {addedItemIds[item._id] ? (
                                   <>
                                     <Check size={13} strokeWidth={3} /> Added
+                                  </>
+                                ) : (item.hasVariants && item.variants?.length) || (item.hasAddons && item.addons?.length) ? (
+                                  <>
+                                    <Plus size={13} strokeWidth={2.5} /> Options
                                   </>
                                 ) : (
                                   <>

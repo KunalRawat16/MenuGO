@@ -59,7 +59,7 @@ export function DashboardSidebar({
               {businessName}
             </h2>
             <p className="text-[11px] text-slate-400 font-mono truncate">
-              {businessSlug ? `/${businessSlug}` : "Dashboard"}
+              {/* {businessSlug ? `/${businessSlug}` : "Dashboard"} */}
             </p>
           </div>
         </div>
@@ -87,7 +87,7 @@ export function DashboardSidebar({
           >
             <div className="flex items-center gap-2">
               <Sparkles size={14} className="text-amber-400" />
-              <span>Live Menu Preview</span>
+              <span>View Menu</span>
             </div>
             <ExternalLink size={13} className="group-hover:translate-x-0.5 transition-transform" />
           </a>
@@ -108,11 +108,10 @@ export function DashboardSidebar({
               key={item.href}
               href={item.href}
               onClick={onMobileClose}
-              className={`flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold transition-all min-h-[44px] ${
-                isActive
-                  ? "bg-indigo-600 text-white shadow-sm shadow-indigo-600/30 font-bold"
-                  : "text-slate-400 hover:text-white hover:bg-slate-800/80"
-              }`}
+              className={`flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold transition-all min-h-[44px] ${isActive
+                ? "bg-indigo-600 text-white shadow-sm shadow-indigo-600/30 font-bold"
+                : "text-slate-400 hover:text-white hover:bg-slate-800/80"
+                }`}
             >
               <Icon size={18} className={isActive ? "text-white" : "text-slate-400"} />
               <span>{item.label}</span>
@@ -137,7 +136,7 @@ export function DashboardSidebar({
   return (
     <>
       {/* Desktop Fixed Sidebar */}
-      <aside className="hidden md:flex w-64 h-screen sticky top-0 border-r border-slate-800 shrink-0">
+      <aside className="hidden md:flex w-48 h-screen sticky top-0 border-r border-slate-800 shrink-0">
         {SidebarContent}
       </aside>
 

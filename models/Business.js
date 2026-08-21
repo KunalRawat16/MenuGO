@@ -52,6 +52,15 @@ const BusinessSettingsSchema = new mongoose.Schema(
     allowTakeaway: { type: Boolean, default: false },
     allowDelivery: { type: Boolean, default: false },
     allowBooking: { type: Boolean, default: false },  // spa/salon appointments
+
+    // Quick Cart Upsells (Water Bottle & Quick Extras)
+    cartUpsells: [
+      {
+        name: { type: String, required: true, default: 'Mineral Water Bottle (1L)' },
+        price: { type: Number, required: true, default: 20 },
+        isEnabled: { type: Boolean, default: true },
+      },
+    ],
   },
   { _id: false }
 );
@@ -135,6 +144,28 @@ const BusinessSchema = new mongoose.Schema(
     settings: { type: BusinessSettingsSchema, default: () => ({}) },
     subscription: { type: SubscriptionSchema, default: () => ({}) },
 
+    // Global Add-ons / Modifiers Master Library
+    globalAddons: [
+      {
+        name: { type: String, required: true, trim: true },
+        price: { type: Number, required: true, default: 0 },
+        groupName: { type: String, default: 'General' },
+      },
+    ],
+
+    // Global Price Variations / Sizes Master Library
+    globalVariants: [
+      {
+        templateName: { type: String, required: true, trim: true },
+        variants: [
+          {
+            name: { type: String, required: true, trim: true },
+            price: { type: Number, required: true, default: 0 },
+          },
+        ],
+      },
+    ],
+
     // Metrics
     rating: { type: Number, default: 0 },
     ratingCount: { type: Number, default: 0 },
@@ -151,5 +182,13 @@ BusinessSchema.index({ slug: 1 });
 BusinessSchema.index({ ownerId: 1 });
 BusinessSchema.index({ type: 1 });
 BusinessSchema.index({ 'subscription.plan': 1 });
+
+if (
+  mongoose.models.Business &&
+  (!mongoose.models.Business.schema.path('globalAddons') ||
+    !mongoose.models.Business.schema.path('globalVariants'))
+) {
+  delete mongoose.models.Business;
+}
 
 export default mongoose.models.Business || mongoose.model('Business', BusinessSchema);

@@ -2,13 +2,21 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 
+export interface CartAddon {
+  name: string;
+  price: number;
+}
+
 export interface CartItem {
-  id: string; // menuItemId
+  id: string; // Unique cart item ID (menuItemId, menuItemId-variantName, or menuItemId-addons)
+  menuItemId?: string; // Original menuItemId
   name: string;
   price: number;
   quantity: number;
   image?: string | null;
   dietary?: string | null;
+  variantName?: string;
+  selectedAddons?: CartAddon[];
   specialRequest?: string;
 }
 
@@ -67,8 +75,17 @@ export function CartProvider({ children, slug }: { children: React.ReactNode; sl
   }, [items, tableNumber, slug, isLoaded]);
 
   const addItem = (newItem: Omit<CartItem, "quantity">) => {
+    const rawId = newItem.menuItemId || newItem.id;
+    const variantPart = newItem.variantName ? `-${newItem.variantName}` : "";
+    const addonsPart = newItem.selectedAddons?.length
+      ? `-${newItem.selectedAddons.map((a) => a.name).sort().join("+")}`
+      : "";
+    const cartItemId = `${rawId}${variantPart}${addonsPart}`;
+
     setItems((prev) => {
-      const existingIndex = prev.findIndex((i) => i.id === newItem.id);
+      const existingIndex = prev.findIndex(
+        (i) => i.id === cartItemId && i.specialRequest === newItem.specialRequest
+      );
       if (existingIndex > -1) {
         const copy = [...prev];
         copy[existingIndex] = {
@@ -78,7 +95,15 @@ export function CartProvider({ children, slug }: { children: React.ReactNode; sl
         };
         return copy;
       }
-      return [...prev, { ...newItem, quantity: 1 }];
+      return [
+        ...prev,
+        {
+          ...newItem,
+          id: cartItemId,
+          menuItemId: rawId,
+          quantity: 1,
+        },
+      ];
     });
   };
 

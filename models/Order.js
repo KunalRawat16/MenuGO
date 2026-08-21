@@ -6,13 +6,21 @@ const OrderItemSchema = new mongoose.Schema(
     menuItemId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'MenuItem',
-      required: true,
+      required: false,
+      default: null,
     },
     name: { type: String, required: true },
     price: { type: Number, required: true },
     quantity: { type: Number, required: true, min: 1 },
     image: { type: String, default: null },
     dietary: { type: String, default: null },
+    variantName: { type: String, default: null },
+    addons: [
+      {
+        name: { type: String, required: true },
+        price: { type: Number, required: true, default: 0 },
+      },
+    ],
     specialRequest: { type: String, default: '' },   // Per-item note
   },
   { _id: false }
@@ -65,6 +73,11 @@ const OrderSchema = new mongoose.Schema(
       default: 'dine-in',
     },
 
+    // Customer Rating & Feedback
+    rating: { type: Number, min: 1, max: 5, default: null },
+    feedback: { type: String, default: '' },
+    feedbackSubmittedAt: { type: Date, default: null },
+
     // Timestamps for each status transition (analytics)
     acceptedAt: { type: Date, default: null },
     preparingAt: { type: Date, default: null },
@@ -78,6 +91,7 @@ const OrderSchema = new mongoose.Schema(
 OrderSchema.index({ restaurantId: 1, status: 1, createdAt: -1 });
 OrderSchema.index({ restaurantSlug: 1, status: 1, createdAt: -1 });
 OrderSchema.index({ restaurantId: 1, createdAt: -1 });
+OrderSchema.index({ restaurantId: 1, rating: -1 });
 
 // TTL: Auto-delete completed/rejected orders after 90 days
 OrderSchema.index(

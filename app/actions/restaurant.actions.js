@@ -106,6 +106,33 @@ export async function updateRestaurantInfoAction(restaurantId, data) {
   return { success: true };
 }
 
+export async function updateCartUpsellsAction(restaurantId, cartUpsells) {
+  const session = await requireRestaurantAccess(restaurantId);
+  if (session.error) return { error: session.error };
+
+  await dbConnect();
+
+  if (!Array.isArray(cartUpsells)) {
+    return { error: 'Invalid cart upsells data format.' };
+  }
+
+  const sanitized = cartUpsells
+    .map((item) => ({
+      name: String(item.name || '').trim(),
+      price: Number(item.price) || 0,
+      isEnabled: item.isEnabled !== false,
+    }))
+    .filter((item) => item.name);
+
+  await Business.findByIdAndUpdate(restaurantId, {
+    $set: { 'settings.cartUpsells': sanitized },
+  });
+
+  revalidatePath('/dashboard/settings');
+  revalidatePath(`/${session.restaurantSlug}`);
+  return { success: true };
+}
+
 // ─────────────────────────────────────────────────────────────────────
 // TOGGLE OPEN / CLOSED STATUS
 // ─────────────────────────────────────────────────────────────────────

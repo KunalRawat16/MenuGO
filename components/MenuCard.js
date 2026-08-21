@@ -66,7 +66,9 @@ export default function MenuCard({ item, quantity = 0, onAdd, onUpdateQuantity, 
 
         <div className="flex items-center justify-between mt-auto pt-2">
           <span className="font-black text-gray-900 text-base md:text-lg">
-            ₹{item.price}
+            {item.hasVariants && item.variants?.length
+              ? `From ₹${Math.min(...item.variants.map((v) => v.price))}`
+              : `₹${item.price}`}
           </span>
 
           <div>

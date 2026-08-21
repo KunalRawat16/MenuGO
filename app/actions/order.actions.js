@@ -4,6 +4,7 @@ import dbConnect from '@/lib/db';
 import Order from '@/models/Order';
 import Business from '@/models/Business';
 import { requireRestaurantAccess } from '@/lib/auth';
+import mongoose from 'mongoose';
 
 // ─────────────────────────────────────────────────────────────────────
 // CREATE ORDER (no auth — customer-facing, public endpoint)
@@ -36,6 +37,16 @@ export async function createOrderAction(orderData) {
     return { error: 'This business is currently closed.' };
   }
 
+  // Sanitize items: Ensure menuItemId is a valid ObjectId, otherwise set to null for upsells/extras
+  const sanitizedItems = items.map((item) => {
+    const rawId = item.menuItemId || item.id;
+    const isValidObjectId = rawId && typeof rawId === 'string' && mongoose.Types.ObjectId.isValid(rawId);
+    return {
+      ...item,
+      menuItemId: isValidObjectId ? rawId : null,
+    };
+  });
+
   const order = await Order.create({
     restaurantId: business._id,
     restaurantSlug,
@@ -43,7 +54,7 @@ export async function createOrderAction(orderData) {
     tableNumber: tableNumber || null,
     customerName: customerName?.trim() || 'Guest',
     specialInstructions: specialInstructions?.trim() || '',
-    items,
+    items: sanitizedItems,
     totalAmount,
     orderSource,
     status: 'incoming',
@@ -245,4 +256,44 @@ export async function updateOrderDetailsAction(restaurantId, orderId, updateData
   if (!updated) return { error: 'Order not found or permission denied.' };
 
   return { success: true, order: JSON.parse(JSON.stringify(updated)) };
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// SUBMIT ORDER FEEDBACK & RATING (Public - customer facing)
+// ─────────────────────────────────────────────────────────────────────
+
+export async function submitOrderFeedbackAction(orderId, rating, feedback = '') {
+  if (!orderId) return { error: 'Order ID is required.' };
+  if (!rating || rating < 1 || rating > 5) {
+    return { error: 'Please select a rating between 1 and 5 stars.' };
+  }
+
+  await dbConnect();
+
+  const updated = await Order.findByIdAndUpdate(
+    orderId,
+    {
+      $set: {
+        rating: Number(rating),
+        feedback: String(feedback || '').trim(),
+        feedbackSubmittedAt: new Date(),
+      },
+    },
+    { new: true }
+  );
+
+  if (!updated) return { error: 'Order not found.' };
+
+  const orderObj = JSON.parse(JSON.stringify(updated));
+
+  // SSE broadcast feedback update to dashboard
+  try {
+    const { orderEmitter } = await import('@/lib/sse');
+    orderEmitter.emit(`order:${updated.restaurantSlug}`, {
+      event: 'order_updated',
+      order: orderObj,
+    });
+  } catch {}
+
+  return { success: true, order: orderObj };
 }

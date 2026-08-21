@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { RefreshCw, CheckCircle, XCircle, Loader2, IndianRupee, TrendingUp, Calendar, Download, Trash2, Award, AlertTriangle } from "lucide-react";
+import { RefreshCw, CheckCircle, XCircle, Loader2, IndianRupee, TrendingUp, Calendar, Download, Trash2, Award, AlertTriangle, Star } from "lucide-react";
 
 export default function HistoryDashboard({ restaurantId }) {
   const [orders, setOrders] = useState([]);
@@ -93,7 +93,7 @@ export default function HistoryDashboard({ restaurantId }) {
 
   // Analytics
   const completedOrders = filteredOrders.filter(o => o.status === 'Completed');
-  const totalRevenue = completedOrders.reduce((sum, order) => sum + order.totalPrice, 0);
+  const totalRevenue = completedOrders.reduce((sum, order) => sum + (order.totalPrice || order.totalAmount || 0), 0);
 
   // Top Selling Items Logic
   const topSellingItems = useMemo(() => {
@@ -116,7 +116,7 @@ export default function HistoryDashboard({ restaurantId }) {
 
   // CSV Export
   const downloadCSV = () => {
-    const headers = ["Date", "Order ID", "Customer Name", "Total Items", "Total Price", "Status"];
+    const headers = ["Date", "Order ID", "Customer Name", "Total Items", "Total Price", "Status", "Rating", "Feedback"];
     const csvContent = [
       headers.join(","),
       ...filteredOrders.map(order => [
@@ -124,8 +124,10 @@ export default function HistoryDashboard({ restaurantId }) {
         order._id,
         `"${order.customerName}"`,
         (order.items || []).reduce((sum, item) => sum + (item.quantity || 1), 0),
-        order.totalPrice,
-        order.status
+        order.totalPrice || order.totalAmount,
+        order.status,
+        `"${order.rating ? `${order.rating}/5` : "N/A"}"`,
+        `"${(order.feedback || "").replace(/"/g, '""')}"`
       ].join(","))
     ].join("\n");
 
@@ -296,13 +298,14 @@ export default function HistoryDashboard({ restaurantId }) {
                 <th className="px-6 py-4">Customer</th>
                 <th className="px-6 py-4">Items</th>
                 <th className="px-6 py-4">Total</th>
+                <th className="px-6 py-4">Rating & Review</th>
                 <th className="px-6 py-4 text-right">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
               {filteredOrders.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="px-6 py-16 text-center text-gray-500 font-medium">
+                  <td colSpan="7" className="px-6 py-16 text-center text-gray-500 font-medium">
                     No historical orders found for the selected period.
                   </td>
                 </tr>
@@ -322,7 +325,31 @@ export default function HistoryDashboard({ restaurantId }) {
                     <td className="px-6 py-4 font-medium text-gray-600">
                       {(order.items || []).reduce((sum, item) => sum + (item.quantity || 1), 0)} items
                     </td>
-                    <td className="px-6 py-4 font-black text-gray-900">₹{order.totalPrice}</td>
+                    <td className="px-6 py-4 font-black text-gray-900">₹{order.totalPrice || order.totalAmount}</td>
+                    <td className="px-6 py-4">
+                      {order.rating ? (
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-0.5 text-amber-500">
+                            {[1, 2, 3, 4, 5].map((s) => (
+                              <Star
+                                key={s}
+                                size={12}
+                                fill={order.rating && order.rating >= s ? "currentColor" : "none"}
+                                className={order.rating && order.rating >= s ? "text-amber-400" : "text-gray-300"}
+                              />
+                            ))}
+                            <span className="text-[11px] font-bold text-gray-700 ml-1">{order.rating}/5</span>
+                          </div>
+                          {order.feedback && (
+                            <p className="text-[10px] text-gray-500 italic max-w-xs truncate" title={order.feedback}>
+                              "{order.feedback}"
+                            </p>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-[10px] text-gray-400 italic">No rating</span>
+                      )}
+                    </td>
                     <td className="px-6 py-4 text-right">
                       <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold border ${getStatusColor(order.status)} whitespace-nowrap`}>
                         {getStatusIcon(order.status)}

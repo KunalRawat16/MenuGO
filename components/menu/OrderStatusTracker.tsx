@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { getOrderByIdPublicAction } from "@/app/actions/order.actions";
+import { getOrderByIdPublicAction, submitOrderFeedbackAction } from "@/app/actions/order.actions";
 
 export interface OrderStatusTrackerProps {
   initialOrder: any;
@@ -40,7 +40,60 @@ const STEPS = [
 export function OrderStatusTracker({ initialOrder, slug, business }: OrderStatusTrackerProps) {
   const [order, setOrder] = useState(initialOrder);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [userRating, setUserRating] = useState<number | null>(null);
+  const [userRating, setUserRating] = useState<number | null>(initialOrder?.rating || null);
+  const [feedbackComment, setFeedbackComment] = useState<string>(initialOrder?.feedback || "");
+  const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState<boolean>(!!initialOrder?.rating);
+  const [feedbackSuccessMsg, setFeedbackSuccessMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (order?.rating) {
+      setUserRating(order.rating);
+      setFeedbackSubmitted(true);
+    }
+    if (order?.feedback) {
+      setFeedbackComment(order.feedback);
+    }
+  }, [order?.rating, order?.feedback]);
+
+  const handleSelectStar = async (star: number) => {
+    setUserRating(star);
+    if (!order?._id) return;
+    try {
+      const res = await submitOrderFeedbackAction(order._id, star, feedbackComment);
+      if (res.success && res.order) {
+        setOrder(res.order);
+        setFeedbackSubmitted(true);
+        setFeedbackSuccessMsg(`✨ Thank you! Saved your ${star}-star rating.`);
+      }
+    } catch (err) {
+      console.error("Star rate error:", err);
+    }
+  };
+
+  const handleSubmitFeedback = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!order?._id || !userRating) return;
+
+    setIsSubmittingFeedback(true);
+    setFeedbackSuccessMsg(null);
+
+    try {
+      const res = await submitOrderFeedbackAction(order._id, userRating, feedbackComment);
+      if (res.success && res.order) {
+        setOrder(res.order);
+        setFeedbackSubmitted(true);
+        setFeedbackSuccessMsg("✨ Thank you! Your rating and review comment have been saved.");
+      } else {
+        alert(res.error || "Failed to submit feedback.");
+      }
+    } catch (err) {
+      console.error("Feedback submit error:", err);
+      alert("An error occurred while submitting feedback.");
+    } finally {
+      setIsSubmittingFeedback(false);
+    }
+  };
 
   const fetchLatestOrder = async () => {
     if (!order?._id) return;
@@ -168,17 +221,19 @@ export function OrderStatusTracker({ initialOrder, slug, business }: OrderStatus
               </p>
             </div>
 
-            {/* Interactive Feedback Form Teaser */}
-            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20 text-center space-y-2">
-              <p className="text-xs font-bold text-white flex items-center justify-center gap-1.5">
-                <Heart size={14} className="text-rose-300 fill-rose-300" /> How was your experience today?
+            {/* Interactive Feedback & Review Rating Form */}
+            <form onSubmit={handleSubmitFeedback} className="bg-white/10 backdrop-blur-md rounded-2xl p-4 sm:p-5 border border-white/20 text-center space-y-3 text-left">
+              <p className="text-xs font-bold text-white flex items-center justify-center gap-1.5 text-center">
+                <Heart size={15} className="text-rose-300 fill-rose-300" /> How was your experience today?
               </p>
-              <div className="flex items-center justify-center gap-2 pt-1">
+
+              {/* Star Selection */}
+              <div className="flex items-center justify-center gap-2 py-1">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <button
                     key={star}
                     type="button"
-                    onClick={() => setUserRating(star)}
+                    onClick={() => handleSelectStar(star)}
                     className={`p-1 transition-all ${
                       userRating && userRating >= star
                         ? "text-amber-300 scale-110"
@@ -186,18 +241,41 @@ export function OrderStatusTracker({ initialOrder, slug, business }: OrderStatus
                     }`}
                     title={`Rate ${star} Stars`}
                   >
-                    <Star size={24} fill={userRating && userRating >= star ? "currentColor" : "none"} />
+                    <Star size={26} fill={userRating && userRating >= star ? "currentColor" : "none"} />
                   </button>
                 ))}
               </div>
+
+              {/* Feedback Textarea & Submit */}
               {userRating ? (
-                <p className="text-xs font-bold text-amber-300 animate-in fade-in-50">
-                  ✨ Thank you for rating us {userRating}/5 stars!
-                </p>
+                <div className="space-y-2 pt-1 animate-in fade-in-50">
+                  <input
+                    type="text"
+                    placeholder="Add a review comment (e.g. Delicious food, fast service!)..."
+                    value={feedbackComment}
+                    onChange={(e) => setFeedbackComment(e.target.value)}
+                    className="w-full rounded-xl border border-white/30 bg-white/20 text-white placeholder:text-emerald-100/70 px-3.5 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-amber-300 font-medium"
+                  />
+                  <Button
+                    type="submit"
+                    variant="secondary"
+                    size="sm"
+                    className="w-full justify-center bg-amber-400 hover:bg-amber-500 text-slate-950 font-extrabold shadow-md text-xs"
+                    isLoading={isSubmittingFeedback}
+                  >
+                    {feedbackSubmitted ? "Update Rating & Review" : "Submit Rating & Review"}
+                  </Button>
+                </div>
               ) : (
-                <p className="text-[10px] text-emerald-200">Tap a star to leave feedback</p>
+                <p className="text-[10px] text-emerald-200 text-center">Tap a star to leave your review rating</p>
               )}
-            </div>
+
+              {feedbackSuccessMsg && (
+                <p className="text-xs font-bold text-amber-300 text-center animate-in fade-in-50 pt-1">
+                  {feedbackSuccessMsg}
+                </p>
+              )}
+            </form>
 
             <div className="pt-2">
               <Link href={`/${slug}`}>
@@ -315,6 +393,11 @@ export function OrderStatusTracker({ initialOrder, slug, business }: OrderStatus
                   <p className="font-bold text-slate-900">
                     {item.quantity}× {item.name}
                   </p>
+                  {item.addons && item.addons.length > 0 && (
+                    <p className="text-[10px] text-indigo-600 font-medium">
+                      + Extras: {item.addons.map((a: any) => `${a.name} (+₹${a.price})`).join(", ")}
+                    </p>
+                  )}
                   {item.specialRequest && (
                     <p className="text-[10px] text-amber-700 italic">
                       Note: {item.specialRequest}
